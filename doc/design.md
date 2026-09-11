@@ -87,6 +87,45 @@ both name `_BitInt` itself, since it is exempt from promotion. The public
 domain currently begins at two because Clang has not yet implemented N3747's
 signed `_BitInt(1)`.
 
+### `bitwise_operators`
+
+`integer_class` pruned to the half that is about bits rather than numbers:
+regularity, the complement, and the three logical operators and the two
+shifts, each in both its compound and its binary form. Nothing arithmetic,
+nothing about range, no conversions, no increment, no ordering.
+
+The shape is `std::bitset`'s. That template generalized exactly this set from
+the built-in integers — [template.bitset] has `&=`, `|=`, `^=`, `<<=`, `>>=`,
+`~`, `&`, `|`, `^`, `<<` and `>>`, and no `+`, no `<`, and no conversion to a
+number — so a concept for *a fixed-width field of bits* is `integer_class`
+with the numeric half removed. The clause references are kept where they
+stood, so what was dropped is visible beside what was not.
+
+Three omissions are load-bearing rather than incidental.
+
+The strong ordering under /9 is gone because `std::bitset` has no `operator<`
+at all. Requiring an order would exclude the very type the concept is shaped
+after, so a bit container's order stays its wrapper's business.
+
+`-=` goes with the rest of /7.5's arithmetic, and for one reason beyond being
+arithmetic: on an unsigned integer it is subtraction, and on a container of
+bits the same spelling reads as set difference. A structural concept cannot
+tell those apart, so it declines to ask for the operator whose meaning it
+could not pin down.
+
+`bool` is admitted, where `integer_class` excludes it. Every operator asked
+for here is valid on a `bool` through integral promotion; what excluded it
+there was `++` and `--`, which are not bitwise. The admission is a consequence
+of the pruning rather than a judgement about `bool`, and the test pins it so
+it fails loudly if the pruning ever changes.
+
+`promoted_t` does the work it does in `integer_class`, for the same reason:
+`~` on an `unsigned char` yields `int`, so stating the closure against `T`
+would reject every narrow built-in. The concept is cv-transparent by the same
+idiom too — every requirement is stated of the cv-stripped `T`, so a `const`,
+`volatile` or `const volatile` spelling models it exactly when the bare type
+does.
+
 ### Conditional `noexcept`
 
 All integer operations are `constexpr`. Their `noexcept` is conditional, on
