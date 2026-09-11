@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheThreeAgreeOnASingleBit, T, worded_unsigned_type
         static_assert(xstd::popcount(T{1}) == 1);
 
         if constexpr (W >= 128) {
-                constexpr auto bit64 = static_cast<T>(T{1} << 64);
+                constexpr auto bit64 = static_cast<T>(T{1} << 64U);
                 static_assert(xstd::countl_zero(bit64) + xstd::countr_zero(bit64) == W - 1);
                 static_assert(xstd::popcount(bit64) == 1);
 

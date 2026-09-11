@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(AgreesWithStdWhereStdAnswers)
         XSTD_CONSTEXPR_CHECK(xstd::countr_zero(std::uint64_t{0}) == std::countr_zero(std::uint64_t{0}));
         XSTD_CONSTEXPR_CHECK(xstd::countr_zero(std::uint64_t{1}) == std::countr_zero(std::uint64_t{1}));
         XSTD_CONSTEXPR_CHECK(xstd::countr_zero(~std::uint64_t{0}) == std::countr_zero(~std::uint64_t{0}));
-        XSTD_CONSTEXPR_CHECK(xstd::countr_zero(std::uint64_t{1} << 63) == std::countr_zero(std::uint64_t{1} << 63));
+        XSTD_CONSTEXPR_CHECK(xstd::countr_zero(std::uint64_t{1} << 63U) == std::countr_zero(std::uint64_t{1} << 63U));
 }
 
 // Total across every width the library carries, the 128-bit classes included -- which is where this reaches
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheWordBoundary, T, worded_unsigned_types)
 {
         constexpr auto W = xstd::numeric_limits<T>::digits;
         if constexpr (W >= 128) {
-                constexpr auto bit64 = static_cast<T>(T{1} << 64);
+                constexpr auto bit64 = static_cast<T>(T{1} << 64U);
                 static_assert(xstd::countr_zero(bit64) == 64);
         }
         BOOST_CHECK(true);
