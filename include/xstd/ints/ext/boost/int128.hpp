@@ -11,6 +11,7 @@
 #include <xstd/ints/type_traits/make_signed.hpp>   // make_signed
 #include <xstd/ints/type_traits/make_unsigned.hpp> // make_unsigned
 #include <boost/int128.hpp>                        // IWYU pragma: export; int128, uint128
+#include <bit>                                     // countl_zero, countr_zero, popcount
 #include <type_traits>                             // type_identity
 
 // The export stops where Boost's own do: its pair is declared in detail/, which no public header re-exports.
@@ -26,6 +27,28 @@ struct make_unsigned<boost::int128::int128> : std::type_identity<boost::int128::
 template<>
 struct make_signed<boost::int128::uint128> : std::type_identity<boost::int128::int128>
 {};
+
+// boost::int128::uint128 is a class, so <bit> declines it; these read its own words. The members are named
+// low and high in both endiannesses -- upstream reverses their DECLARATION ORDER under a -Wreorder
+// suppression, so reading by name is portable where reading by position would silently swap the halves on a
+// big-endian target. [xstd/ints/bit/popcount.hpp]
+[[nodiscard]] constexpr auto popcount(boost::int128::uint128 x) noexcept
+        -> int
+{
+        return std::popcount(x.low) + std::popcount(x.high);
+}
+
+[[nodiscard]] constexpr auto countl_zero(boost::int128::uint128 x) noexcept
+        -> int
+{
+        return x.high != 0 ? std::countl_zero(x.high) : 64 + std::countl_zero(x.low);
+}
+
+[[nodiscard]] constexpr auto countr_zero(boost::int128::uint128 x) noexcept
+        -> int
+{
+        return x.low != 0 ? std::countr_zero(x.low) : 64 + std::countr_zero(x.high);
+}
 
 } // namespace xstd
 

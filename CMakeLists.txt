@@ -47,6 +47,10 @@ target_sources(
     BASE_DIRS include
     FILES
         include/xstd/ints.hpp
+        include/xstd/ints/bit.hpp
+        include/xstd/ints/bit/countl_zero.hpp
+        include/xstd/ints/bit/countr_zero.hpp
+        include/xstd/ints/bit/popcount.hpp
         include/xstd/ints/charconv.hpp
         include/xstd/ints/charconv/to_chars.hpp
         include/xstd/ints/concepts.hpp
