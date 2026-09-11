@@ -94,10 +94,12 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsTheBodys)
         static_assert(xstd_answers<unsigned char> == std_answers<unsigned char>);
         static_assert(xstd_answers<std::uint64_t> == std_answers<std::uint64_t>);
 
-        // The widest exact width, which is where the two traits disagree by dialect rather than by type:
-        // xstd::unsigned_integer always admits it, std::unsigned_integral only outside __STRICT_ANSI__, and
-        // <bit> follows the latter. Unconditional, so it holds whichever way the build is configured.
-        static_assert(xstd_answers<xstd::uint128> == std_answers<xstd::uint128>);
+        // NOT an equality for the widest exact width, and that asymmetry is the whole point of this header.
+        // Where xstd::uint128 is the builtin it reaches <bit> and both answer; where it is a class -- MSVC's
+        // std::_Unsigned128, so every MSVC-ABI target including clang-cl -- <bit> declines it and the overload
+        // beside its own header answers instead. So this asserts a basis exists, which is true on every
+        // configured leg, rather than that std has one, which is false on half of them.
+        static_assert(xstd_answers<xstd::uint128>);
 
 #ifdef XSTD_HAS_BIT_INT
         // The tripwire for P3666R4. It makes std::is_integral_v<_BitInt(N)> true -- and so
