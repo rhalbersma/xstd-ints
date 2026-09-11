@@ -12,6 +12,7 @@
 #include <xstd/ints/type_traits/make_unsigned.hpp> // make_unsigned
 #include <boost/int128.hpp>                        // IWYU pragma: export; int128, uint128
 #include <bit>                                     // countl_zero, countr_zero, popcount
+#include <limits>                                  // numeric_limits
 #include <type_traits>                             // type_identity
 
 // The export stops where Boost's own do: its pair is declared in detail/, which no public header re-exports.
@@ -41,13 +42,15 @@ struct make_signed<boost::int128::uint128> : std::type_identity<boost::int128::i
 [[nodiscard]] constexpr auto countl_zero(boost::int128::uint128 x) noexcept
         -> int
 {
-        return x.high != 0 ? std::countl_zero(x.high) : 64 + std::countl_zero(x.low);
+        return x.high != 0 ? std::countl_zero(x.high)
+                           : std::numeric_limits<decltype(x.low)>::digits + std::countl_zero(x.low);
 }
 
 [[nodiscard]] constexpr auto countr_zero(boost::int128::uint128 x) noexcept
         -> int
 {
-        return x.low != 0 ? std::countr_zero(x.low) : 64 + std::countr_zero(x.high);
+        return x.low != 0 ? std::countr_zero(x.low)
+                          : std::numeric_limits<decltype(x.high)>::digits + std::countr_zero(x.high);
 }
 
 } // namespace xstd

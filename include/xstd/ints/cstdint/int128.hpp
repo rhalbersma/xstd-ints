@@ -14,7 +14,8 @@
 #ifdef _MSC_VER
 
 #include <__msvc_int128.hpp>
-#include <bit> // countl_zero, countr_zero, popcount
+#include <bit>    // countl_zero, countr_zero, popcount
+#include <limits> // numeric_limits
 
 namespace xstd {
 
@@ -34,13 +35,15 @@ using uint128 = std::_Unsigned128;
 [[nodiscard]] constexpr auto countl_zero(uint128 x) noexcept
         -> int
 {
-        return x._Word[1] != 0 ? std::countl_zero(x._Word[1]) : 64 + std::countl_zero(x._Word[0]);
+        return x._Word[1] != 0 ? std::countl_zero(x._Word[1])
+                               : std::numeric_limits<decltype(x._Word[0])>::digits + std::countl_zero(x._Word[0]);
 }
 
 [[nodiscard]] constexpr auto countr_zero(uint128 x) noexcept
         -> int
 {
-        return x._Word[0] != 0 ? std::countr_zero(x._Word[0]) : 64 + std::countr_zero(x._Word[1]);
+        return x._Word[0] != 0 ? std::countr_zero(x._Word[0])
+                               : std::numeric_limits<decltype(x._Word[1])>::digits + std::countr_zero(x._Word[1]);
 }
 
 } // namespace xstd

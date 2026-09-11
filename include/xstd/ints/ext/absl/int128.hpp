@@ -12,6 +12,7 @@
 #include <xstd/ints/type_traits/make_unsigned.hpp> // make_unsigned
 #include <absl/numeric/int128.h>                   // IWYU pragma: export; int128, uint128
 #include <bit>                                     // countl_zero, countr_zero, popcount
+#include <limits>                                  // numeric_limits
 #include <type_traits>                             // type_identity
 
 // Abseil introduces the pair and cannot name xstd's traits, so the associations are made here.
@@ -36,13 +37,17 @@ struct make_signed<absl::uint128> : std::type_identity<absl::int128>
 [[nodiscard]] constexpr auto countl_zero(absl::uint128 x) noexcept
         -> int
 {
-        return Uint128High64(x) != 0 ? std::countl_zero(Uint128High64(x)) : 64 + std::countl_zero(Uint128Low64(x));
+        return Uint128High64(x) != 0
+                       ? std::countl_zero(Uint128High64(x))
+                       : std::numeric_limits<decltype(Uint128Low64(x))>::digits + std::countl_zero(Uint128Low64(x));
 }
 
 [[nodiscard]] constexpr auto countr_zero(absl::uint128 x) noexcept
         -> int
 {
-        return Uint128Low64(x) != 0 ? std::countr_zero(Uint128Low64(x)) : 64 + std::countr_zero(Uint128High64(x));
+        return Uint128Low64(x) != 0
+                       ? std::countr_zero(Uint128Low64(x))
+                       : std::numeric_limits<decltype(Uint128Low64(x))>::digits + std::countr_zero(Uint128High64(x));
 }
 
 } // namespace xstd
