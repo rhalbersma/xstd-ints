@@ -12,27 +12,24 @@
 #include <boost/test/unit_test.hpp>      // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK
 #include <bit>                           // countl_zero
 #include <cstdint>                       // uint64_t
-#include <tuple>                         // tuple, tuple_cat
-#include <type_traits>                   // conditional_t
+#include <tuple>                         // tuple_cat
 #include <utility>                       // declval
 
 namespace {
 
-// The exact-width list MINUS the bit-precise types: unsigned _BitInt(N) reaches neither <bit> -- libstdc++
+// Every exact width except the bit-precise ones: unsigned _BitInt(N) reaches neither <bit> -- libstdc++
 // constrains these functions to the five standard unsigned types by is_same -- nor any overload here, and
 // unlike the 128-bit classes it carries no words to read. It waits on an overload of its own.
-// xstd::uint128 is a class on MSVC and carries its own overloads; on GCC and Clang it is the builtin, which
-// reaches <bit> only outside __STRICT_ANSI__. The condition worth testing is the overload's existence, which
-// no #if can spell, so the column is included exactly when something answers for it and test/src/ints/bit.cpp
-// holds the macro to that in both directions. [xstd-bits design.md#uint128-support]
+//
+// xstd::uint128 IS here, and that is a property of how the tests are built rather than of the library: it is
+// a class on MSVC and carries its own overloads, while on GCC and Clang it is the builtin, which reaches
+// std::unsigned_integral only outside __STRICT_ANSI__. test/src/ints/bit.cpp asserts that it has a basis, so
+// turning CMAKE_CXX_EXTENSIONS back off says so there rather than here, at every instantiation list at once.
 template<class T>
 concept has_popcount = requires (T x) { xstd::popcount(x); };
 
-inline constexpr auto uint128_has_basis = has_popcount<xstd::uint128>;
-using uint128_types = std::conditional_t<uint128_has_basis, test::xstd_unsigned_types, std::tuple<>>;
-
 using worded_unsigned_types = decltype(std::tuple_cat(
-        std::declval<test::std_unsigned_types>(), std::declval<uint128_types>(),
+        std::declval<test::std_unsigned_types>(), std::declval<test::xstd_unsigned_types>(),
         std::declval<test::boost_unsigned_types>(), std::declval<test::absl_unsigned_types>()));
 
 } // namespace

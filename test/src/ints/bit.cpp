@@ -8,25 +8,24 @@
 #include <xstd/ints/limits.hpp>       // numeric_limits
 #include <test/exact_width_types.hpp> // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>   // BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK
-#include <tuple>                      // tuple, tuple_cat
-#include <type_traits>                // conditional_t
+#include <tuple>                      // tuple_cat
 #include <utility>                    // declval
 
 namespace {
 
-// See bit/popcount.cpp: unsigned _BitInt(N) is absent from this list because nothing answers for it yet.
-// xstd::uint128 is a class on MSVC and carries its own overloads; on GCC and Clang it is the builtin, which
-// reaches <bit> only outside __STRICT_ANSI__. The condition worth testing is the overload's existence, which
-// no #if can spell, so the column is included exactly when something answers for it and test/src/ints/bit.cpp
-// holds the macro to that in both directions. [xstd-bits design.md#uint128-support]
+// Every exact width except the bit-precise ones: unsigned _BitInt(N) reaches neither <bit> -- libstdc++
+// constrains these functions to the five standard unsigned types by is_same -- nor any overload here, and
+// unlike the 128-bit classes it carries no words to read. It waits on an overload of its own.
+//
+// xstd::uint128 IS here, and that is a property of how the tests are built rather than of the library: it is
+// a class on MSVC and carries its own overloads, while on GCC and Clang it is the builtin, which reaches
+// std::unsigned_integral only outside __STRICT_ANSI__. test/src/ints/bit.cpp asserts that it has a basis, so
+// turning CMAKE_CXX_EXTENSIONS back off says so there rather than here, at every instantiation list at once.
 template<class T>
 concept has_popcount = requires (T x) { xstd::popcount(x); };
 
-inline constexpr auto uint128_has_basis = has_popcount<xstd::uint128>;
-using uint128_types = std::conditional_t<uint128_has_basis, test::xstd_unsigned_types, std::tuple<>>;
-
 using worded_unsigned_types = decltype(std::tuple_cat(
-        std::declval<test::std_unsigned_types>(), std::declval<uint128_types>(),
+        std::declval<test::std_unsigned_types>(), std::declval<test::xstd_unsigned_types>(),
         std::declval<test::boost_unsigned_types>(), std::declval<test::absl_unsigned_types>()));
 
 } // namespace
@@ -69,20 +68,15 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheThreeAgreeOnASingleBit, T, worded_unsigned_type
         BOOST_CHECK(true);
 }
 
-// The macro held to the concept in both directions, so the day the seam grows an overload of its own -- or a
-// new pairing lands on the matrix -- the build says so here rather than at a dozen instantiation lists or,
-// worse, nowhere. [xstd-bits design.md#uint128-support]
-BOOST_AUTO_TEST_CASE(TheBuiltInColumnTracksTheMode)
+// The widest exact width has a basis, on every configured leg. On MSVC because std::_Unsigned128 is a class
+// carrying its own overloads; on GCC and Clang because the tests build as gnu++, which is what carries
+// unsigned __int128 into std::unsigned_integral. This is the whole of what CMAKE_CXX_EXTENSIONS ON buys, and
+// asserting it here is what makes turning it back off a failure with a name rather than a silently narrower
+// test universe. [xstd-bits design.md#uint128-support]
+BOOST_AUTO_TEST_CASE(TheWidestExactWidthHasABasis)
 {
-#ifdef _MSC_VER
-        // std::_Unsigned128 is a class and carries its own overloads, in every mode.
-        static_assert(uint128_has_basis);
-#elifdef __STRICT_ANSI__
-        // unsigned __int128 reaches std::unsigned_integral only outside __STRICT_ANSI__, and nothing else answers.
-        static_assert(not uint128_has_basis);
-#else
-        static_assert(uint128_has_basis);
-#endif
+        static_assert(has_popcount<xstd::uint128>);
+        static_assert(xstd::popcount(xstd::uint128{0}) == 0);
         BOOST_CHECK(true);
 }
 
