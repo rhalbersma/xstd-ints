@@ -94,6 +94,17 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsTheBodys)
         static_assert(xstd_answers<unsigned char> == std_answers<unsigned char>);
         static_assert(xstd_answers<std::uint64_t> == std_answers<std::uint64_t>);
 
+#ifdef XSTD_HAS_BIT_INT
+        // The tripwire for P3666R4. It makes std::is_integral_v<_BitInt(N)> true -- and so
+        // std::unsigned_integral true -- while deliberately keeping <bit> refusing it: the paper asks for
+        // support "basically nowhere (other than type traits)". xstd::unsigned_integer already admits
+        // bit_uint, so on the day that lands the conjunction goes true while the body stays ill-formed, and
+        // the constraint is wider than the body again. This equality fails then, by name, instead of the
+        // header hard-erroring at whatever first calls it.
+        static_assert(xstd_answers<xstd::bit_uint<64>> == std_answers<xstd::bit_uint<64>>);
+        static_assert(xstd_answers<xstd::bit_uint<24>> == std_answers<xstd::bit_uint<24>>);
+#endif
+
         // And those first four really are the gap std::unsigned_integral would have opened.
         static_assert(std::unsigned_integral<bool> and not std_answers<bool>);
         static_assert(std::unsigned_integral<char8_t> and not std_answers<char8_t>);
