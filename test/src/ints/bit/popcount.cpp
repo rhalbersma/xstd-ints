@@ -51,9 +51,9 @@ BOOST_AUTO_TEST_CASE(AgreesWithStdWhereStdAnswers)
 BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsOfEveryWidth, T, worded_unsigned_types)
 {
         constexpr auto W = xstd::numeric_limits<T>::digits;
-        static_assert(xstd::popcount(T{0}) == (0));
-        static_assert(xstd::popcount(T{1}) == (1));
-        static_assert(xstd::popcount(xstd::numeric_limits<T>::max()) == (W));
+        static_assert(xstd::popcount(T{0}) == 0);
+        static_assert(xstd::popcount(T{1}) == 1);
+        static_assert(xstd::popcount(xstd::numeric_limits<T>::max()) == W);
         BOOST_CHECK(true);
 }
 
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheWordBoundary, T, worded_unsigned_types)
         constexpr auto W = xstd::numeric_limits<T>::digits;
         if constexpr (W >= 128) {
                 constexpr auto bit64 = static_cast<T>(T{1} << 64);
-                static_assert(xstd::popcount(bit64) == (1));
+                static_assert(xstd::popcount(bit64) == 1);
         }
         BOOST_CHECK(true);
 }
