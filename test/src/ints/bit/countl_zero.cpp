@@ -10,6 +10,7 @@
 #include <test/constexpr_check.hpp>      // XSTD_CONSTEXPR_CHECK
 #include <test/exact_width_types.hpp>    // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>      // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK
+#include <concepts>                      // unsigned_integral
 #include <bit>                           // countl_zero
 #include <cstdint>                       // uint64_t
 #include <tuple>                         // tuple_cat
@@ -67,6 +68,35 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheWordBoundary, T, worded_unsigned_types)
                 constexpr auto bit64 = static_cast<T>(T{1} << 64);
                 static_assert(xstd::countl_zero(bit64) == W - 65);
         }
+        BOOST_CHECK(true);
+}
+
+// The constraint is exactly what the body needs, not a hair wider. std::unsigned_integral would have been
+// wider: it admits bool and the three unicode character types, which <bit> refuses, so an overload
+// constrained on it advertises four types it cannot serve and hard-errors inside instead of not matching.
+// Asserted as an equality so it fails just as loudly if this ever became NARROWER than <bit>.
+namespace {
+
+template<class T>
+concept xstd_answers = requires (T x) { xstd::countl_zero(x); };
+
+template<class T>
+concept std_answers = requires (T x) { std::countl_zero(x); };
+
+} // namespace
+
+BOOST_AUTO_TEST_CASE(TheConstraintIsTheBodys)
+{
+        static_assert(xstd_answers<bool> == std_answers<bool>);
+        static_assert(xstd_answers<char8_t> == std_answers<char8_t>);
+        static_assert(xstd_answers<char16_t> == std_answers<char16_t>);
+        static_assert(xstd_answers<char32_t> == std_answers<char32_t>);
+        static_assert(xstd_answers<unsigned char> == std_answers<unsigned char>);
+        static_assert(xstd_answers<std::uint64_t> == std_answers<std::uint64_t>);
+
+        // And those first four really are the gap std::unsigned_integral would have opened.
+        static_assert(std::unsigned_integral<bool> and not std_answers<bool>);
+        static_assert(std::unsigned_integral<char8_t> and not std_answers<char8_t>);
         BOOST_CHECK(true);
 }
 

@@ -6,13 +6,21 @@
 #ifndef XSTD_INTS_BIT_COUNTR_ZERO_HPP
 #define XSTD_INTS_BIT_COUNTR_ZERO_HPP
 
-#include <bit>      // countr_zero
-#include <concepts> // unsigned_integral
+#include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
+#include <bit>
+#include <concepts> // unsigned_integral // countr_zero
 
 // See bit/popcount.hpp for why the 128-bit integer classes carry their own overloads.
 namespace xstd {
 
-template<std::unsigned_integral T>
+// Both traits, which is exactly <bit>'s domain and no wider. std::unsigned_integral alone would not be:
+// it admits bool and char8_t, char16_t and char32_t, which <bit> refuses, so an overload constrained on it
+// advertises four types it cannot serve and hard-errors inside instead of not matching. xstd::unsigned_integer
+// alone would not be either, in the other direction: it is the open trait, and admits unsigned _BitInt(N) and
+// the 128-bit integer classes, which <bit> also refuses. The conjunction is the intersection, and the test
+// asserts that equality rather than trusting it.
+template<class T>
+        requires xstd::unsigned_integer<T> and std::unsigned_integral<T>
 [[nodiscard]] constexpr auto countr_zero(T x) noexcept
         -> int
 {

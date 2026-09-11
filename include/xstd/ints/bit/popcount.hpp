@@ -6,8 +6,9 @@
 #ifndef XSTD_INTS_BIT_POPCOUNT_HPP
 #define XSTD_INTS_BIT_POPCOUNT_HPP
 
-#include <bit>      // popcount
-#include <concepts> // unsigned_integral
+#include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
+#include <bit>
+#include <concepts> // unsigned_integral // popcount
 
 // The bit basis, one overload set per function. <bit> takes std::unsigned_integral alone, which every
 // 128-bit integer CLASS fails -- MSVC's std::_Unsigned128, absl::uint128 and boost::int128::uint128 alike --
@@ -16,7 +17,14 @@
 // std::unsigned_integral outside __STRICT_ANSI__, which is the mode the bits matrix compiles in.
 namespace xstd {
 
-template<std::unsigned_integral T>
+// Both traits, which is exactly <bit>'s domain and no wider. std::unsigned_integral alone would not be:
+// it admits bool and char8_t, char16_t and char32_t, which <bit> refuses, so an overload constrained on it
+// advertises four types it cannot serve and hard-errors inside instead of not matching. xstd::unsigned_integer
+// alone would not be either, in the other direction: it is the open trait, and admits unsigned _BitInt(N) and
+// the 128-bit integer classes, which <bit> also refuses. The conjunction is the intersection, and the test
+// asserts that equality rather than trusting it.
+template<class T>
+        requires xstd::unsigned_integer<T> and std::unsigned_integral<T>
 [[nodiscard]] constexpr auto popcount(T x) noexcept
         -> int
 {
