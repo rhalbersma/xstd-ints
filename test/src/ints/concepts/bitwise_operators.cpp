@@ -48,18 +48,20 @@ BOOST_AUTO_TEST_CASE(StandardIntegral)
 // the admission is a consequence of what was pruned, so it should fail loudly if the pruning changes.
 BOOST_AUTO_TEST_CASE(BoolIsAdmittedWhereIntegerClassExcludesIt)
 {
-        static_assert(    xstd::bitwise_operators<bool>);
+        static_assert(xstd::bitwise_operators<bool>);
         static_assert(not xstd::integer_class<bool>);
         BOOST_CHECK(true);
 }
 
 namespace {
 
-struct plain {};
+struct plain
+{
+};
 enum unscoped_enum { unscoped_value };
 enum class scoped_enum { scoped_value };
 
-}       // namespace
+} // namespace
 
 // What stays out. An enumeration promotes far enough for ~e and e & e, and no further: there is no assignment
 // back into the enumeration, so the compound forms reject it. A floating type has no bitwise operator at all,
@@ -82,9 +84,10 @@ BOOST_AUTO_TEST_CASE(RejectsWhatIsNotAFieldOfBits)
 // exclude it, so a bit container's order stays its wrapper's business.
 namespace {
 
-template<class T> concept ordered = requires (T const a, T const b) { a < b; };
+template<class T>
+concept ordered = requires (T const a, T const b) { a < b; };
 
-}       // namespace
+} // namespace
 
 BOOST_AUTO_TEST_CASE(NoOrderingIsRequired)
 {

@@ -57,8 +57,7 @@ concept bitwise_operators =
                 { a & b } -> std::same_as<promoted_t<T>>;
                 { a ^ b } -> std::same_as<promoted_t<T>>;
                 { a | b } -> std::same_as<promoted_t<T>>;
-        }
-;
+        };
 
 // /2, /6, /7.1, /7.2, /7.4, /8, /10, /11 and /12 are all dropped: they are about being a NUMBER -- the
 // numeric_limits interrogation, the conversions in and out, increment and decrement, the contextual conversion
