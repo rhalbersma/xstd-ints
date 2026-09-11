@@ -6,6 +6,7 @@
 #ifndef XSTD_INTS_TYPE_TRAITS_HPP
 #define XSTD_INTS_TYPE_TRAITS_HPP
 
+#include <xstd/ints/type_traits/is_character.hpp>  // IWYU pragma: export; is_character
 #include <xstd/ints/type_traits/is_signed.hpp>     // IWYU pragma: export; is_signed
 #include <xstd/ints/type_traits/is_unsigned.hpp>   // IWYU pragma: export; is_unsigned
 #include <xstd/ints/type_traits/make_signed.hpp>   // IWYU pragma: export; make_signed

@@ -81,6 +81,7 @@ target_sources(
         include/xstd/ints/memory/align_up.hpp
         include/xstd/ints/memory/is_aligned.hpp
         include/xstd/ints/type_traits.hpp
+        include/xstd/ints/type_traits/is_character.hpp
         include/xstd/ints/type_traits/is_signed.hpp
         include/xstd/ints/type_traits/is_unsigned.hpp
         include/xstd/ints/type_traits/make_signed.hpp

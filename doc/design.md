@@ -101,7 +101,7 @@ number — so a concept for *a fixed-width field of bits* is `integer_class`
 with the numeric half removed. The clause references are kept where they
 stood, so what was dropped is visible beside what was not.
 
-Three omissions are load-bearing rather than incidental.
+Two omissions are load-bearing rather than incidental, and one exclusion is.
 
 The strong ordering under /9 is gone because `std::bitset` has no `operator<`
 at all. Requiring an order would exclude the very type the concept is shaped
@@ -113,11 +113,48 @@ bits the same spelling reads as set difference. A structural concept cannot
 tell those apart, so it declines to ask for the operator whose meaning it
 could not pin down.
 
-`bool` is admitted, where `integer_class` excludes it. Every operator asked
-for here is valid on a `bool` through integral promotion; what excluded it
-there was `++` and `--`, which are not bitwise. The admission is a consequence
-of the pruning rather than a judgement about `bool`, and the test pins it so
-it fails loudly if the pruning ever changes.
+`bool` and the five character types are excluded **by name** — the one
+boundary in this library drawn by a list rather than by behaviour, and stated
+as such where it is drawn.
+
+The pruning would admit all six. Every operator this concept asks for is valid
+on each of them through integral promotion, so no structural clause can reach
+them; `integer_class` kept `bool` out only via `++` and `--`, which are not
+bitwise and are not asked for here, and kept the character types out via the
+pair law, which is arithmetic's law and has nothing to say about holding bits.
+What disqualifies them is what the operators *mean*, and meaning is exactly
+what a concept cannot interrogate.
+
+`bool` is not modular. Its conversion back from the promoted `int` is a
+nonzero test rather than a reduction, so `~true` is `true` and `true <<= 1` is
+`true`, where a one-bit field gives `false` both times; `&=`, `^=` and `|=`
+come out right only because the nonzero test and mod 2 agree on `{0, 1}`. Both
+front ends already say so independently — `~b` is `-Wbool-operation` on GCC
+and Clang alike, and `b <<= 1` is `-Wint-in-bool-context` on GCC — so the
+concept is restating in its own vocabulary a judgement the compilers had
+already made.
+
+`char` and `wchar_t` have implementation-defined signedness, so `>>` may
+sign-extend and the same source yields different bits on different targets.
+`char8_t`, `char16_t` and `char32_t` are guaranteed unsigned and would be
+sound; they go for the other reason, that they are text and every width they
+reach is reached better by the `uintN_t` that names it.
+
+`signed char` and `unsigned char` are deliberately untouched. They are narrow
+character types but standard *integer* types, which is what keeps `int8_t` and
+`uint8_t` — a block type the bits library actually instantiates — on the
+admitted side. `is_character_v` draws that line and is closed where xstd's
+signedness traits are open: the core language fixes this list and no user type
+can join it.
+
+The alternative was considered and rejected. A nested requirement *can* state
+modularity — `requires T(~T(~T{})) == T{}` is well-formed and does reject
+`bool` — but it cannot quantify, since a requires-expression's own parameters
+are not constant expressions and naming one there is a hard error rather than
+a substitution failure; it drags `constexpr` into the concept, so `std::bitset`
+would model it under C++23 and hard-error under C++20; and it wrongly *admits*
+`char`, which is genuinely modular. A spot check that is weaker than the list
+it replaces is not worth the machinery.
 
 `promoted_t` does the work it does in `integer_class`, for the same reason:
 `~` on an `unsigned char` yields `int`, so stating the closure against `T`
