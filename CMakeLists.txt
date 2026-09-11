@@ -51,6 +51,7 @@ target_sources(
         include/xstd/ints/charconv/to_chars.hpp
         include/xstd/ints/concepts.hpp
         include/xstd/ints/concepts/alignable.hpp
+        include/xstd/ints/concepts/bitwise_operators.hpp
         include/xstd/ints/concepts/integer.hpp
         include/xstd/ints/concepts/integer_class.hpp
         include/xstd/ints/concepts/nothrow_const_operators.hpp

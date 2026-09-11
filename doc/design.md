@@ -87,6 +87,100 @@ both name `_BitInt` itself, since it is exempt from promotion. The public
 domain currently begins at two because Clang has not yet implemented N3747's
 signed `_BitInt(1)`.
 
+### `bitwise_operators`
+
+`integer_class` pruned to the half that is about bits rather than numbers:
+regularity, the complement, and the three logical operators and the two
+shifts, each in both its compound and its binary form. Nothing arithmetic,
+nothing about range, no conversions, no increment, no ordering.
+
+The shape is `std::bitset`'s. That template generalized exactly this set from
+the built-in integers — [template.bitset] has `&=`, `|=`, `^=`, `<<=`, `>>=`,
+`~`, `&`, `|`, `^`, `<<` and `>>`, and no `+`, no `<`, and no conversion to a
+number — so a concept for *a fixed-width field of bits* is `integer_class`
+with the numeric half removed. The clause references are kept where they
+stood, so what was dropped is visible beside what was not.
+
+Two omissions are load-bearing rather than incidental, and one boundary is.
+
+The strong ordering under /9 is gone because `std::bitset` has no `operator<`
+at all. Requiring an order would exclude the very type the concept is shaped
+after, so a bit container's order stays its wrapper's business.
+
+`-=` goes with the rest of /7.5's arithmetic, and for one reason beyond being
+arithmetic: on an unsigned integer it is subtraction, and on a container of
+bits the same spelling reads as set difference. A structural concept cannot
+tell those apart, so it declines to ask for the operator whose meaning it
+could not pin down.
+
+The domain is narrowed to a **field of bits**, by a law rather than a list:
+
+```cpp
+unsigned_integer<T> or not (signed_integer<T> or std::integral<T>)
+```
+
+An integer must be an unsigned one; a type that is no kind of integer is
+judged by its operators alone. The second disjunct is what admits
+`std::bitset` and the bit containers, which are fields of bits without being
+numbers at all, and the test pins that `std::bitset` models the concept.
+
+Some narrowing is needed because the pruning alone admits too much. `bool`,
+the five character types and every signed built-in answer every requirement
+stated here, through integral promotion, so no structural clause among the
+operators can reach them. `integer_class` kept `bool` out via `++` and `--`,
+which are not bitwise and are not asked for, and kept the character types out
+via the pair law, which is arithmetic's law and says nothing about holding
+bits.
+
+**This is the line `<bit>` already draws.** Measured across all sixteen
+built-in candidates, the types this concept admits are exactly the types
+`std::popcount`, `std::countr_zero`, `std::rotl` and `std::bit_width` accept
+— the standard unsigned integer types and nothing else. `bool`, the character
+types and every signed built-in are refused there, so a concept for a
+fixed-width field of bits refuses them here. A case in the test asserts that
+agreement type by type rather than describing it.
+
+What each half turns away. `std::integral` catches `bool`, whose conversion
+back from the promoted `int` is a nonzero test rather than a reduction —
+`~true` is `true` and `true <<= 1` is `true`, where a one-bit field gives
+`false` both times, and `&=`, `^=` and `|=` come out right only because the
+nonzero test and mod 2 agree on `{0, 1}`. Both front ends say so
+independently: `~b` is `-Wbool-operation` on GCC and Clang alike and
+`b <<= 1` is `-Wint-in-bool-context` on GCC, and GCC diagnoses them even
+inside an unevaluated requires-expression, which is why the test pins the
+refusal by its result rather than by writing the expressions out. The same
+predicate catches the character types and the signed built-ins, whose `>>` is
+arithmetic — it preserves the sign rather than moving the bits. `char` and
+`wchar_t` are only implementation-definedly signed; `int` is signed always,
+so if the one disqualifies then the other does a fortiori.
+
+`signed_integer` catches that same thing among integer classes, which
+`std::integral` does not see. Without it `absl::int128` would be admitted
+while `long long` was refused; the exact-width signed list in the test reaches
+both, so the asymmetry is pinned where those types exist.
+
+`unsigned char` stays admitted, which is what keeps `uint8_t` — a block type
+the bits library actually instantiates — on the right side. `signed char` does
+not, and `int8_t` goes with it.
+
+Two alternatives were considered. Spelling the six out by name works, but
+stops one step short of its own argument: it excludes `char` for
+*maybe* sign-extending while admitting `int`, which certainly does. And a
+nested requirement *can* state modularity — `requires T(~T(~T{})) == T{}` is
+well-formed and does reject `bool` — but it cannot quantify, since a
+requires-expression's own parameters are not constant expressions and naming
+one there is a hard error rather than a substitution failure; it drags
+`constexpr` into the concept, so `std::bitset` would model it under C++23 and
+hard-error under C++20; and it wrongly *admits* `char`, which is genuinely
+modular.
+
+`promoted_t` does the work it does in `integer_class`, for the same reason:
+`~` on an `unsigned char` yields `int`, so stating the closure against `T`
+would reject every narrow built-in. The concept is cv-transparent by the same
+idiom too — every requirement is stated of the cv-stripped `T`, so a `const`,
+`volatile` or `const volatile` spelling models it exactly when the bare type
+does.
+
 ### Conditional `noexcept`
 
 All integer operations are `constexpr`. Their `noexcept` is conditional, on
