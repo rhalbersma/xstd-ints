@@ -17,8 +17,9 @@ project(
 
 include(GNUInstallDirs)
 
-# The strictly conforming dialect, for every target this project creates.
-# Set before any of them; consumers keep control over their own.
+# The strictly conforming dialect, for the library and anything a consumer builds
+# against it. Set before any target; consumers keep control over their own. The test
+# matrix relaxes it below, and only there.
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(
@@ -47,6 +48,10 @@ target_sources(
     BASE_DIRS include
     FILES
         include/xstd/ints.hpp
+        include/xstd/ints/bit.hpp
+        include/xstd/ints/bit/countl_zero.hpp
+        include/xstd/ints/bit/countr_zero.hpp
+        include/xstd/ints/bit/popcount.hpp
         include/xstd/ints/charconv.hpp
         include/xstd/ints/charconv/to_chars.hpp
         include/xstd/ints/concepts.hpp
@@ -93,6 +98,16 @@ target_sources(
 if(PROJECT_IS_TOP_LEVEL)
     include(CTest)
     if(BUILD_TESTING)
+        # Relaxed to gnu++ for the tests alone, leaving the library's own dialect above
+        # untouched. The reason is specific: <bit>'s functions take std::unsigned_integral,
+        # and libstdc++ and libc++ carry unsigned __int128 into that concept only outside
+        # __STRICT_ANSI__. Strictly conforming, xstd::uint128 is the one exact width with no
+        # bit basis on GCC and Clang -- on MSVC it is a class and carries its own -- so the
+        # 128-bit column would drop out of the bit/ instantiation lists rather than fail,
+        # which is the worse of the two outcomes. xstd-bits relaxes it in the same place and
+        # for the same reason. [xstd-bits design.md#uint128-support]
+        set(CMAKE_CXX_EXTENSIONS ON)
+
         add_subdirectory(test)
     endif()
 endif()
