@@ -6,11 +6,12 @@
 #ifndef XSTD_INTS_CONCEPTS_BITWISE_OPERATORS_HPP
 #define XSTD_INTS_CONCEPTS_BITWISE_OPERATORS_HPP
 
-#include <xstd/ints/type_traits/is_character.hpp> // is_character_v
-#include <xstd/ints/type_traits/promoted.hpp>     // promoted_t
-#include <concepts>                               // regular, same_as
-#include <cstddef>                                // size_t
-#include <type_traits>                            // remove_cv_t
+#include <xstd/ints/concepts/signed_integer.hpp>   // signed_integer
+#include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
+#include <xstd/ints/type_traits/promoted.hpp>      // promoted_t
+#include <concepts>                                // integral, regular, same_as
+#include <cstddef>                                 // size_t
+#include <type_traits>                             // remove_cv_t
 
 // integer_class pruned to the bitwise half: what a type offers when it is a fixed-width field of bits rather
 // than a number. std::bitset generalized exactly this set from the built-in integers -- the operators and
@@ -25,22 +26,24 @@ concept bitwise_operators =
         // guards the defaulted parameter against being given something else.
         std::same_as<T, std::remove_cv_t<T_cv>> and
 
-        // The one boundary drawn by name rather than by behaviour, against this library's habit everywhere
-        // else. Each of the six below answers every requirement stated under it, so no structural clause can
-        // reach them; what disqualifies them is what the operators MEAN, and meaning is what a concept cannot
-        // ask about. Stated here so the exclusion is visible rather than emergent.
+        // An integer here must be an unsigned one; a type that is no kind of integer is judged by its
+        // operators alone. That second disjunct is what admits std::bitset and the bit containers, which are
+        // fields of bits without being numbers at all.
         //
-        // bool is not modular. Its conversion back from the promoted int is a nonzero test, not a reduction:
-        // ~true is true and true <<= 1 is true, where a one-bit field gives false both times. &=, ^= and |=
-        // come out right only because the nonzero test and mod 2 agree on {0, 1}.
+        // This is the line [bit.pop] and its neighbours already draw. Measured across all sixteen built-ins,
+        // the types this admits are exactly the types std::popcount, countr_zero, rotl and bit_width accept:
+        // the standard unsigned integer types and nothing else. bool, the five character types and every
+        // SIGNED built-in are refused there, so a concept for a fixed-width field of bits refuses them here.
         //
-        // char and wchar_t have implementation-defined signedness, so >> may sign-extend: the same source
-        // yields different bits on different targets, and a field of bits that is not portable is not one.
+        // What each half turns away. std::integral catches bool -- whose conversion back from the promoted
+        // int is a nonzero test rather than a reduction, so ~true is true and true <<= 1 is true where a
+        // one-bit field gives false both times -- and the character types, and the signed built-ins, whose
+        // >> is arithmetic: it preserves the sign rather than moving the bits. signed_integer catches the
+        // same thing among integer classes, which std::integral does not see; without it absl::int128 would
+        // be admitted while long long was refused.
         //
-        // char8_t, char16_t and char32_t are unsigned and modular, and would be sound. They go for the other
-        // reason: they are text, and every width they reach is reached better by the uintN_t that names it.
-        not std::same_as<T, bool> and
-        not is_character_v<T> and
+        // Said by a law rather than a list, so nothing has to be maintained as the language grows a type.
+        (unsigned_integer<T> or (not signed_integer<T> and not std::integral<T>)) and
 
         // /9: regularity, which carries == and != with it. The strong ordering is NOT kept: std::bitset has no
         // operator< at all, so requiring an order would exclude the type this concept is shaped after.
