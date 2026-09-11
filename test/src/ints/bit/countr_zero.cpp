@@ -94,6 +94,11 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsTheBodys)
         static_assert(xstd_answers<unsigned char> == std_answers<unsigned char>);
         static_assert(xstd_answers<std::uint64_t> == std_answers<std::uint64_t>);
 
+        // The widest exact width, which is where the two traits disagree by dialect rather than by type:
+        // xstd::unsigned_integer always admits it, std::unsigned_integral only outside __STRICT_ANSI__, and
+        // <bit> follows the latter. Unconditional, so it holds whichever way the build is configured.
+        static_assert(xstd_answers<xstd::uint128> == std_answers<xstd::uint128>);
+
 #ifdef XSTD_HAS_BIT_INT
         // The tripwire for P3666R4. It makes std::is_integral_v<_BitInt(N)> true -- and so
         // std::unsigned_integral true -- while deliberately keeping <bit> refusing it: the paper asks for
