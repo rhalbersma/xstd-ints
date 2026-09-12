@@ -17,14 +17,7 @@
 
 namespace {
 
-// Every exact width except the bit-precise ones: unsigned _BitInt(N) reaches neither <bit> -- libstdc++
-// constrains these functions to the five standard unsigned types by is_same -- nor any overload here, and
-// unlike the 128-bit classes it carries no words to read. It waits on an overload of its own.
-//
-// xstd::uint128 IS here, and that is a property of how the tests are built rather than of the library: it is
-// a class on MSVC and carries its own overloads, while on GCC and Clang it is the builtin, which reaches
-// std::unsigned_integral only outside __STRICT_ANSI__. test/src/ints/bit.cpp asserts that it has a basis, so
-// turning CMAKE_CXX_EXTENSIONS back off says so there rather than here, at every instantiation list at once.
+// Every exact width but the bit-precise: unsigned _BitInt(N) reaches neither <bit> nor any overload here, carrying no words to read. xstd::uint128 is here because the tests build as gnu++.
 template<class T>
 concept has_popcount = requires (T x) { xstd::popcount(x); };
 
@@ -47,8 +40,7 @@ BOOST_AUTO_TEST_CASE(AgreesWithStdWhereStdAnswers)
         XSTD_CONSTEXPR_CHECK(xstd::popcount(std::uint64_t{1} << 63U) == std::popcount(std::uint64_t{1} << 63U));
 }
 
-// Total across every width the library carries, the 128-bit classes included -- which is where this reaches
-// past <bit>, since MSVC's std::_Unsigned128, absl::uint128 and boost::int128::uint128 all decline it.
+// Total across every width the library carries, the 128-bit classes included, which is where this reaches past <bit>.
 BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsOfEveryWidth, T, worded_unsigned_types)
 {
         constexpr auto W = xstd::numeric_limits<T>::digits;
@@ -58,8 +50,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsOfEveryWidth, T, worded_unsigned_types)
         BOOST_CHECK(true);
 }
 
-// The word boundary, which is what pins each class's low half to its low half: read through the wrong
-// accessor, a type answers this with the halves swapped, so it fails rather than merely looking odd.
+// The word boundary, which pins each class's low half to its low half: read through the wrong accessor a type answers with the halves swapped.
 BOOST_AUTO_TEST_CASE_TEMPLATE(TheWordBoundary, T, worded_unsigned_types)
 {
         constexpr auto W = xstd::numeric_limits<T>::digits;
@@ -70,10 +61,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheWordBoundary, T, worded_unsigned_types)
         BOOST_CHECK(true);
 }
 
-// The constraint is exactly what the body needs, not a hair wider. std::unsigned_integral would have been
-// wider: it admits bool and the three unicode character types, which <bit> refuses, so an overload
-// constrained on it advertises four types it cannot serve and hard-errors inside instead of not matching.
-// Asserted as an equality so it fails just as loudly if this ever became NARROWER than <bit>.
+// The constraint is exactly what the body needs, asserted as an equality so it fails as loudly if it ever became wider OR narrower than <bit>.
 namespace {
 
 template<class T>
@@ -93,20 +81,11 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsTheBodys)
         static_assert(xstd_answers<unsigned char> == std_answers<unsigned char>);
         static_assert(xstd_answers<std::uint64_t> == std_answers<std::uint64_t>);
 
-        // NOT an equality for the widest exact width, and that asymmetry is the whole point of this header.
-        // Where xstd::uint128 is the builtin it reaches <bit> and both answer; where it is a class -- MSVC's
-        // std::_Unsigned128, so every MSVC-ABI target including clang-cl -- <bit> declines it and the overload
-        // beside its own header answers instead. So this asserts a basis exists, which is true on every
-        // configured leg, rather than that std has one, which is false on half of them.
+        // NOT an equality at the widest exact width: where xstd::uint128 is a class <bit> declines it and the overload beside its own header answers, so this asserts a basis exists rather than that std has one.
         static_assert(xstd_answers<xstd::uint128>);
 
 #ifdef XSTD_HAS_BIT_INT
-        // The tripwire for P3666R4. It makes std::is_integral_v<_BitInt(N)> true -- and so
-        // std::unsigned_integral true -- while deliberately keeping <bit> refusing it: the paper asks for
-        // support "basically nowhere (other than type traits)". xstd::unsigned_integer already admits
-        // bit_uint, so on the day that lands the conjunction goes true while the body stays ill-formed, and
-        // the constraint is wider than the body again. This equality fails then, by name, instead of the
-        // header hard-erroring at whatever first calls it.
+        // The tripwire for P3666R4: when is_integral_v<_BitInt(N)> goes true while <bit> still refuses it, this equality fails by name instead of the header hard-erroring at whatever first calls it.
         static_assert(xstd_answers<xstd::bit_uint<64>> == std_answers<xstd::bit_uint<64>>);
         static_assert(xstd_answers<xstd::bit_uint<24>> == std_answers<xstd::bit_uint<24>>);
 #endif

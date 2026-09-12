@@ -13,14 +13,7 @@
 
 namespace {
 
-// Every exact width except the bit-precise ones: unsigned _BitInt(N) reaches neither <bit> -- libstdc++
-// constrains these functions to the five standard unsigned types by is_same -- nor any overload here, and
-// unlike the 128-bit classes it carries no words to read. It waits on an overload of its own.
-//
-// xstd::uint128 IS here, and that is a property of how the tests are built rather than of the library: it is
-// a class on MSVC and carries its own overloads, while on GCC and Clang it is the builtin, which reaches
-// std::unsigned_integral only outside __STRICT_ANSI__. test/src/ints/bit.cpp asserts that it has a basis, so
-// turning CMAKE_CXX_EXTENSIONS back off says so there rather than here, at every instantiation list at once.
+// Every exact width but the bit-precise: unsigned _BitInt(N) reaches neither <bit> nor any overload here, carrying no words to read. xstd::uint128 is here because the tests build as gnu++.
 template<class T>
 concept has_popcount = requires (T x) { xstd::popcount(x); };
 
@@ -33,8 +26,7 @@ using worded_unsigned_types = decltype(std::tuple_cat(
 BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(Bit)
 
-// The three together, which is the only place the halves can be cross-checked against each other: a type read
-// through swapped accessors keeps every single-function identity below and breaks the sum.
+// The three together, the only place the halves cross-check: swapped accessors keep every single-function identity and break the sum.
 BOOST_AUTO_TEST_CASE_TEMPLATE(TheThreeAgreeOnASingleBit, T, worded_unsigned_types)
 {
         constexpr auto W = xstd::numeric_limits<T>::digits;
@@ -68,11 +60,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheThreeAgreeOnASingleBit, T, worded_unsigned_type
         BOOST_CHECK(true);
 }
 
-// The widest exact width has a basis, on every configured leg. On MSVC because std::_Unsigned128 is a class
-// carrying its own overloads; on GCC and Clang because the tests build as gnu++, which is what carries
-// unsigned __int128 into std::unsigned_integral. This is the whole of what CMAKE_CXX_EXTENSIONS ON buys, and
-// asserting it here is what makes turning it back off a failure with a name rather than a silently narrower
-// test universe. [xstd-bits design.md#uint128-support]
+// The widest exact width has a basis on every configured leg, which is the whole of what CMAKE_CXX_EXTENSIONS ON buys. [xstd-bits design.md#uint128-support]
 BOOST_AUTO_TEST_CASE(TheWidestExactWidthHasABasis)
 {
         static_assert(has_popcount<xstd::uint128>);

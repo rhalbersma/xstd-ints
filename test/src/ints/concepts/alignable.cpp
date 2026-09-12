@@ -30,8 +30,7 @@ struct light
         std::size_t v = 0;
 
         constexpr light() = default;
-        // Implicit on purpose: alignable asks convertible_to<size_t, T>, which an explicit one would fail.
-        // NOLINTNEXTLINE(misc-explicit-constructor, google-explicit-constructor)
+        // NOLINTNEXTLINE(misc-explicit-constructor, google-explicit-constructor): implicit on purpose, alignable asking convertible_to<size_t, T>.
         constexpr light(std::size_t n)
             : v(n) {}
 

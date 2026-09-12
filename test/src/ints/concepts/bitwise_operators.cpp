@@ -24,9 +24,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(AdmitsTheUnsignedExactWidthTypesThroughCv, T, test
         BOOST_CHECK(true);
 }
 
-// The other half of the same list, and the half that pins the signed_integer disjunct: std::integral does not
-// see an integer class, so without it absl::int128 and boost::int128 would be admitted here while long long
-// was refused. This case is where those two types are reached, since neither exists on every target.
+// The half that pins the signed_integer disjunct: std::integral does not see an integer class, so absl::int128 would be admitted here while long long was refused.
 BOOST_AUTO_TEST_CASE_TEMPLATE(RejectsTheSignedExactWidthTypesThroughCv, T, test::exact_width_signed_integer_types)
 {
         static_assert(not xstd::bitwise_operators<T>);
@@ -47,9 +45,7 @@ BOOST_AUTO_TEST_CASE(TheStandardUnsignedIntegerTypes)
         BOOST_CHECK(true);
 }
 
-// Every signed built-in goes, and for the reason the character types go: >> is arithmetic on them, preserving
-// the sign rather than moving the bits. char and wchar_t are only implementation-definedly signed; these are
-// signed always, so if the one disqualifies the other does a fortiori.
+// Every signed built-in goes, for the reason the character types go: >> is arithmetic on them, preserving the sign rather than moving the bits.
 BOOST_AUTO_TEST_CASE(TheSignedBuiltInsAreRefused)
 {
         static_assert(not xstd::bitwise_operators<signed char>);
@@ -60,12 +56,7 @@ BOOST_AUTO_TEST_CASE(TheSignedBuiltInsAreRefused)
         BOOST_CHECK(true);
 }
 
-// bool and the five character types. Each answers every operator requirement through integral promotion, so
-// nothing structural rejects them -- std::integral is what does, by keeping them inside the net that
-// unsigned_integer then refuses. bool's own failure is that its conversion back from the promoted int is a
-// nonzero test rather than a reduction, which is also why this case cannot demonstrate it: ~b is
-// -Wbool-operation on GCC and Clang alike and b <<= 1 is -Wint-in-bool-context on GCC, and GCC diagnoses both
-// even inside an unevaluated requires-expression. Both front ends already call these a mistake.
+// bool and the five character types, kept out by std::integral rather than by any operator clause: bool's ~ and <<= are diagnosed by both front ends even unevaluated, so this case cannot demonstrate its own reason.
 BOOST_AUTO_TEST_CASE(BoolAndTheCharacterTypesAreRefused)
 {
         static_assert(not xstd::bitwise_operators<bool>);
@@ -79,16 +70,13 @@ BOOST_AUTO_TEST_CASE(BoolAndTheCharacterTypesAreRefused)
         static_assert(not xstd::bitwise_operators<char volatile>);
         static_assert(not xstd::bitwise_operators<char32_t const volatile>);
 
-        // Still integral, and integer_class still admits the character types, so the narrowing is this
-        // concept's own rather than something it inherited.
+        // Still integral, and integer_class still admits the character types, so the narrowing is this concept's own.
         static_assert(std::integral<bool>);
         static_assert(xstd::integer_class<char8_t>);
         BOOST_CHECK(true);
 }
 
-// The boundary is the one <bit> already draws. Over the built-ins this concept admits exactly the types
-// std::popcount and its neighbours accept, which is what makes it the concept a bit container's storage
-// answers in.
+// The boundary is the one <bit> already draws: over the built-ins this admits exactly the types std::popcount and its neighbours accept.
 namespace {
 
 template<class T>
@@ -109,9 +97,7 @@ BOOST_AUTO_TEST_CASE(OverTheBuiltInsThisIsExactlyTheDomainOfBit)
         BOOST_CHECK(true);
 }
 
-// And where the two part company, deliberately: a type that is no kind of integer is judged by its operators
-// alone, which is the disjunct that admits a field of bits that is not a number. std::bitset answers no <bit>
-// function and belongs here anyway -- it is the type the whole concept is shaped after.
+// Where the two part company: a non-integer is judged by its operators alone, the disjunct that admits std::bitset, the type the whole concept is shaped after.
 BOOST_AUTO_TEST_CASE(AFieldOfBitsThatIsNotANumberIsAdmitted)
 {
         static_assert(xstd::bitwise_operators<std::bitset<8>>);
@@ -131,10 +117,7 @@ enum class scoped_enum { scoped_value };
 
 } // namespace
 
-// What the operator clauses still keep out on their own, the gate having let them through. An enumeration
-// promotes far enough for ~e and e & e, and no further: there is no assignment back into the enumeration, so
-// the compound forms reject it. A floating type has no bitwise operator at all, and a pointer's arithmetic is
-// not bitwise.
+// What the operator clauses keep out on their own: an enumeration promotes far enough for ~e and e & e and no further, a floating type has no bitwise operator, a pointer's arithmetic is not bitwise.
 BOOST_AUTO_TEST_CASE(RejectsWhatIsNotAFieldOfBits)
 {
         static_assert(not xstd::bitwise_operators<float>);
@@ -148,9 +131,7 @@ BOOST_AUTO_TEST_CASE(RejectsWhatIsNotAFieldOfBits)
         BOOST_CHECK(true);
 }
 
-// The ordering is deliberately absent. integer_class asks for a strong ordering under /9; this does not,
-// because std::bitset -- the type the concept is shaped after -- has no operator< at all. Asking for one would
-// exclude it, so a bit container's order stays its wrapper's business.
+// The ordering is deliberately absent: integer_class asks a strong ordering under /9, std::bitset has no operator< at all, so a bit container's order stays its wrapper's business.
 namespace {
 
 template<class T>
