@@ -13,52 +13,27 @@
 #include <cstddef>                                 // size_t
 #include <type_traits>                             // remove_cv_t
 
-// integer_class pruned to the bitwise half: what a type offers when it is a fixed-width field of bits rather
-// than a number. std::bitset generalized exactly this set from the built-in integers -- the operators and
-// nothing arithmetic -- so it is the set a bit container answers in, and the built-in widths answer in it too.
+// integer_class pruned to the bitwise half: the operator set std::bitset generalized from the built-in integers, and nothing arithmetic.
 namespace xstd {
 
 // The clause references are integer_class's, which this is pruned from; what is dropped is named where it was.
 template<class T_cv, class T = std::remove_cv_t<T_cv>>
 concept bitwise_operators =
-        // cv-transparent, as integer_class is: every requirement below is stated of the cv-stripped T, so a
-        // const, volatile or const volatile spelling models this exactly when the bare type does. The same_as
-        // guards the defaulted parameter against being given something else.
+        // cv-transparent, as integer_class is: every requirement is stated of the cv-stripped T, the same_as guarding the defaulted parameter.
         std::same_as<T, std::remove_cv_t<T_cv>> and
 
-        // An integer here must be an unsigned one; a type that is no kind of integer is judged by its
-        // operators alone. That second disjunct is what admits std::bitset and the bit containers, which are
-        // fields of bits without being numbers at all.
-        //
-        // This is the line [bit.pop] and its neighbours already draw. Measured across all sixteen built-ins,
-        // the types this admits are exactly the types std::popcount, countr_zero, rotl and bit_width accept:
-        // the standard unsigned integer types and nothing else. bool, the five character types and every
-        // SIGNED built-in are refused there, so a concept for a fixed-width field of bits refuses them here.
-        //
-        // What each half turns away. std::integral catches bool -- whose conversion back from the promoted
-        // int is a nonzero test rather than a reduction, so ~true is true and true <<= 1 is true where a
-        // one-bit field gives false both times -- and the character types, and the signed built-ins, whose
-        // >> is arithmetic: it preserves the sign rather than moving the bits. signed_integer catches the
-        // same thing among integer classes, which std::integral does not see; without it absl::int128 would
-        // be admitted while long long was refused.
-        //
-        // Said by a law rather than a list, so nothing has to be maintained as the language grows a type.
+        // An integer must be an unsigned one and a non-integer is judged by its operators alone, which is what admits std::bitset and the bit containers: the line [bit.pop] draws, said as a law rather than a list.
         (unsigned_integer<T> or (not signed_integer<T> and not std::integral<T>)) and
 
-        // /9: regularity, which carries == and != with it. The strong ordering is NOT kept: std::bitset has no
-        // operator< at all, so requiring an order would exclude the type this concept is shaped after.
+        // /9: regularity, carrying == and != with it; no strong ordering, std::bitset having no operator< to require.
         std::regular<T> and
 
-        // /7.3: of the four unary operators only the complement is bitwise; +, - and ! are arithmetic or
-        // contextual. Against promoted_t so a built-in subject to [conv.prom] still qualifies -- ~ on an
-        // unsigned char yields int, not unsigned char.
+        // /7.3: of the four unary operators only ~ is bitwise, against promoted_t so a built-in subject to [conv.prom] still qualifies.
         requires (T const a) {
                 { ~a } -> std::same_as<promoted_t<T>>;
         } and
 
-        // /7.5: same-type compound assignment, the shifts taking a width rather than a T. The arithmetic five,
-        // *= /= %= += -=, are dropped; -= especially, because on an unsigned integer it is subtraction and on a
-        // bit container it would read as set difference, and a concept cannot tell those apart.
+        // /7.5: same-type compound assignment, the shifts taking a width; the arithmetic five go, -= especially, reading as set difference on a bit container.
         requires (T a, std::size_t const n) {
                 { a <<= n } -> std::same_as<T&>;
                 { a >>= n } -> std::same_as<T&>;
@@ -80,10 +55,7 @@ concept bitwise_operators =
                 { a | b } -> std::same_as<promoted_t<T>>;
         };
 
-// /2, /6, /7.1, /7.2, /7.4, /8, /10, /11 and /12 are all dropped: they are about being a NUMBER -- the
-// numeric_limits interrogation, the conversions in and out, increment and decrement, the contextual conversion
-// to bool, value initialization producing zero, min() and max(), and the mixed-mode common_type. A field of
-// bits answers none of them and does not need to.
+// /2, /6, /7.1, /7.2, /7.4, /8, /10, /11 and /12 are dropped: they are about being a NUMBER, which a field of bits is not.
 
 } // namespace xstd
 

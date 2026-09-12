@@ -29,10 +29,7 @@ template<>
 struct make_signed<boost::int128::uint128> : std::type_identity<boost::int128::int128>
 {};
 
-// boost::int128::uint128 is a class, so <bit> declines it; these read its own words. The members are named
-// low and high in both endiannesses -- upstream reverses their DECLARATION ORDER under a -Wreorder
-// suppression, so reading by name is portable where reading by position would silently swap the halves on a
-// big-endian target. [xstd/ints/bit/popcount.hpp]
+// boost::int128::uint128 is a class, so <bit> declines it; read by NAME, upstream reversing the halves' declaration order by endianness. [xstd/ints/bit/popcount.hpp]
 [[nodiscard]] constexpr auto popcount(boost::int128::uint128 x) noexcept
         -> int
 {

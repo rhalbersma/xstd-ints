@@ -22,15 +22,7 @@ namespace xstd {
 using int128 = std::_Signed128;
 using uint128 = std::_Unsigned128;
 
-// remove_cvref_t is load-bearing: _Word is an ARRAY, so x._Word[0] is a subscript and decltype gives
-// uint64_t& -- numeric_limits of a reference is the primary template, whose digits is 0, which silently
-// makes the half width zero rather than 64. Boost's .low is a member access and Abseil's accessor returns
-// by value, so neither needs it; only an indexed word does.
-//
-// std::_Unsigned128 is a class, so <bit> declines it in every mode; these read the words it already holds.
-// _Word is unspecified, as the type itself is: naming the alias above already depends on this header, so the
-// members add no exposure the alias did not. _Word[0] is the low half -- _Base128::_Left_shift moves _Word[0]
-// into _Word[1] past 64 -- and the test pins that rather than trusting the reading.
+// remove_cvref_t is load-bearing: _Word is an ARRAY, so decltype gives uint64_t& and numeric_limits of a reference reports 0 digits; _Word[0] is the low half, which the test pins.
 [[nodiscard]] constexpr auto popcount(uint128 x) noexcept
         -> int
 {
