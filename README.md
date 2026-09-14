@@ -25,10 +25,9 @@
 xstd-ints is a small, portable, header-only collection of integer extensions to
 the C++ standard library: concepts, traits, limits, division, alignment and
 character conversion, open to integer-class types where the standard is closed
-over the built-ins. It relies on the [C++23](https://wg21.link/N4950) standard and targets the
-draft [C++29](https://wg21.link/std) standard library. All public APIs
-are in namespace `xstd`. The metaprogramming and layout utilities that used to
-sit beside them live in [xstd-misc](https://github.com/rhalbersma/xstd-misc).
+over the built-ins. It relies on the [C++23](https://wg21.link/N4950) standard
+and targets the draft [C++29](https://wg21.link/std) standard library. All
+public APIs are in namespace `xstd`.
 
 ## Requirements
 
