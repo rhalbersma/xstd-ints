@@ -164,8 +164,8 @@ We continuously test the stable, qualification, and development branches of the
 major [C++23](https://wg21.link/N4950) toolchains (compilers and standard
 libraries) in both Debug and Release mode:
 
-| Platform | Compiler   | Standard Library | Stable                    | Qualification             | Development                    | CI    |
-| :------- | :--------- | :--------------- | :------------------------ | :------------------------ | :----------------------------- | :---- |
+| Platform | Compiler   | Standard Library | Stable                    | Qualification             | Development                    | Status |
+| :------- | :--------- | :--------------- | :------------------------ | :------------------------ | :----------------------------- | :----- |
 | Linux    | GCC        | libstdc++        | 15                        | 16                        | 17-SVN                         | [![GCC](https://github.com/rhalbersma/xstd-ints/actions/workflows/gcc.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/gcc.yml) |
 | Windows  | MinGW      | libstdc++        | 15                        | 16                        | —                              | [![MinGW](https://github.com/rhalbersma/xstd-ints/actions/workflows/mingw.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/mingw.yml) |
 | Linux    | Clang      | libstdc++        | 22 (libstdc++ 15)         | 23 (libstdc++ 16)         | 24-SVN (libstdc++ 17-SVN)      | [![Clang](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang.yml) |
