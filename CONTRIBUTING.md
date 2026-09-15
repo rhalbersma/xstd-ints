@@ -35,7 +35,7 @@ The library itself has no dependencies outside `<xstd/ext/>`, whose headers each
 | :--- | :--------- | :---- |
 | A conforming C++23 compiler | everything | Same requirement as the library; see the table in [README.md](README.md) for the versions under CI |
 | [CMake](https://cmake.org/) 3.28+ | configuring and building | `cmake_minimum_required` in [`CMakeLists.txt`](CMakeLists.txt); CTest ships with it |
-| [Boost.Test](https://www.boost.org/doc/libs/release/libs/test/) 1.70+ | the unit tests under `test/src/` | 1.70 introduced arbitrary type-list support for `BOOST_AUTO_TEST_CASE_TEMPLATE`, which the tests use with `std::tuple`; declared in the checked-in [`vcpkg.json`](vcpkg.json) manifest, the `*-vcpkg` presets pick it up from a `VCPKG_ROOT`-configured vcpkg, or install it with your system package manager |
+| [Boost.Test](https://www.boost.org/doc/libs/release/libs/test/) 1.70+ | the unit tests under `test/src/` | 1.70 introduced arbitrary type-list support for `BOOST_AUTO_TEST_CASE_TEMPLATE`, which the tests use with `std::tuple`; declared under the `test` feature of the checked-in [`vcpkg.json`](vcpkg.json) manifest, which the `*-vcpkg` presets select from a `VCPKG_ROOT`-configured vcpkg, or install it with your system package manager |
 | [Boost.Int128](https://github.com/cppalliance/int128) | testing the integer-class extension points against a type from outside the library, and the `<xstd/ext/boost/int128.hpp>` associations that pair it | Optional, and resolved without a manual step: `test/CMakeLists.txt` uses an installed copy where `find_package(boost_int128 CONFIG)` finds one - Boost 1.92 ships it - and otherwise fetches a pinned upstream commit. Configure with `-DXSTD_INTS_TEST_FETCH_BOOST_INT128=OFF` to build offline without it; the affected cases then run over xstd's own types alone |
 | [Abseil](https://github.com/abseil/abseil-cpp) | testing the same extension points against a type that declares no `noexcept` anywhere, and the `<xstd/ext/absl/int128.hpp>` associations that pair it | Optional, and resolved the same way: an installed copy where `find_package(absl CONFIG)` finds one, and otherwise a pinned release tag, of which only `absl/numeric/int128.cc` is compiled. Configure with `-DXSTD_INTS_TEST_FETCH_ABSL_INT128=OFF` to build offline without it; the affected cases then do not run, no other type in the suite leaving `noexcept` off |
 | [gcovr](https://gcovr.com/) | reproducing the coverage gate | Only for the workflow below; `pip install gcovr` |
@@ -43,6 +43,15 @@ The library itself has no dependencies outside `<xstd/ext/>`, whose headers each
 | `clang-format` 22+ | the formatting gate | Run `clang-format -i` on changed files before pushing; older versions rewrite the requires-expressions in `concepts/` |
 
 ## Building and testing locally
+
+Two paths, and which one you want depends on whether you are developing xstd-ints or only checking that it configures, installs and consumes. The library is header-only, so without the tests there is nothing to find and nothing to compile:
+
+```sh
+cmake --preset no-tests
+cmake --build --preset no-tests
+```
+
+The full suite needs Boost.Test, from the table above:
 
 ```sh
 cmake -S . -B build
@@ -65,6 +74,8 @@ cmake --preset dev-vcpkg
 cmake --build --preset dev-vcpkg
 ctest --preset dev-vcpkg
 ```
+
+Those dependencies are the test suite's, not the package's, so `test` is a feature of [`vcpkg.json`](vcpkg.json) and not a default one: an ordinary manifest-mode install of xstd-ints resolves no Boost at all, and these presets ask for it by name through `VCPKG_MANIFEST_FEATURES`. Nothing in the manifest pins a `builtin-baseline`, so the version each dependency resolves to is whatever the vcpkg checkout at `VCPKG_ROOT` carries; pin that checkout if you need one build to reproduce another.
 
 ### Reproducing the coverage gate
 
