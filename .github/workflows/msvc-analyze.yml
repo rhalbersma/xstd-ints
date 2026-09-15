@@ -20,10 +20,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  # MSVC's /analyze, in the role Clang-Tidy fills on the other side. Still no
-  # inputs, but the default underneath moved: v0.7.0 runs all three MSVC rungs
+  # MSVC's /analyze, in the role Clang-Tidy fills on the other side. Its one
+  # input is not about the ladder, and the default underneath moved: v0.7.0 runs all three MSVC rungs
   # rather than the qualification one alone, which is what Clang-Tidy has done
   # since v0.6.0. The C++ Core Guidelines checkers stay off until there is a
   # reason to turn them on.
   msvc_analyze:
-    uses: rhalbersma/cpp-ci/.github/workflows/msvc-analyze.yml@8156138fa6336f5d870e72e62b72033632a1c56b # v0.9.0
+    uses: rhalbersma/cpp-ci/.github/workflows/msvc-analyze.yml@4ccffd02f1a880e23597610589c47be5320eb1bd # main, past v0.9.0
+    with:
+      # Boost.Test, which vcpkg.json keeps out of its default features so that
+      # consuming this library resolves no Boost at all.
+      vcpkg_features: test

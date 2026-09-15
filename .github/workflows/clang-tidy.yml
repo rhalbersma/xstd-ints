@@ -21,7 +21,7 @@ on:
 
 jobs:
   clang_tidy:
-    uses: rhalbersma/cpp-ci/.github/workflows/clang-tidy.yml@8156138fa6336f5d870e72e62b72033632a1c56b # v0.9.0
+    uses: rhalbersma/cpp-ci/.github/workflows/clang-tidy.yml@4ccffd02f1a880e23597610589c47be5320eb1bd # main, past v0.9.0
     with:
       # The generated per-header units, as run-clang-tidy matches them against
       # the compile database's absolute paths. They are the one tree that cannot
@@ -33,3 +33,6 @@ jobs:
       include_exclude: include/xstd/config/*
       # The ext/ headers need the library each adapts, which Configure fetches.
       adapted_dirs: build/_deps/absl_int128-src build/_deps/boost_int128-src/include
+      # Boost.Test, which vcpkg.json keeps out of its default features so that
+      # consuming this library resolves no Boost at all.
+      vcpkg_features: test
