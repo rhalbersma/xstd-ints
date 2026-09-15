@@ -20,8 +20,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  # No inputs: this library is C++23 and builds on every stable rung, which is
-  # what the shared workflow defaults to. A repository needing a newer compiler
-  # names the rung instead of the version, and this one may yet.
+  # One input, and not about the rungs: this library is C++23 and builds on every
+  # stable rung, which is what the shared workflow defaults to. A repository
+  # needing a newer compiler names the rung instead of the version, and this one
+  # may yet.
   sanitizers:
-    uses: rhalbersma/cpp-ci/.github/workflows/sanitizers.yml@8156138fa6336f5d870e72e62b72033632a1c56b # v0.9.0
+    uses: rhalbersma/cpp-ci/.github/workflows/sanitizers.yml@4ccffd02f1a880e23597610589c47be5320eb1bd # main, past v0.9.0
+    with:
+      # Boost.Test, which vcpkg.json keeps out of its default features so that
+      # consuming this library resolves no Boost at all.
+      vcpkg_features: test
