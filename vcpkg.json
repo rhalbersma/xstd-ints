@@ -4,6 +4,9 @@
   "description": "Do as the ints do",
   "homepage": "https://github.com/rhalbersma/xstd-ints",
   "license": "BSL-1.0",
+  "default-features": [
+    "test"
+  ],
   "features": {
     "test": {
       "description": "Build the Boost.Test-based unit tests",
