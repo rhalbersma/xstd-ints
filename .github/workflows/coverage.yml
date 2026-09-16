@@ -32,7 +32,10 @@ jobs:
   # cannot lower it without a commit in this repository. xstd-bits and tabula
   # state theirs for the same reason; tabula's is a ratchet below 100.
   coverage:
-    uses: rhalbersma/cpp-ci/.github/workflows/coverage.yml@8156138fa6336f5d870e72e62b72033632a1c56b # v0.9.0
+    uses: rhalbersma/cpp-ci/.github/workflows/coverage.yml@4ccffd02f1a880e23597610589c47be5320eb1bd # main, past v0.9.0
     with:
       fail_under_line: 100
       fail_under_branch: 100
+      # Boost.Test, which vcpkg.json keeps out of its default features so that
+      # consuming this library resolves no Boost at all.
+      vcpkg_features: test
