@@ -21,4 +21,4 @@ on:
 
 jobs:
   consumption:
-    uses: rhalbersma/cpp-ci/.github/workflows/consumption.yml@4ccffd02f1a880e23597610589c47be5320eb1bd # main, past v0.9.0
+    uses: rhalbersma/cpp-ci/.github/workflows/consumption.yml@95dead5b4064510969ca3991849f7c63cf643079 # v0.10.0
