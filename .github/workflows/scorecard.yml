@@ -32,4 +32,4 @@ jobs:
       security-events: write
       id-token: write
       actions: read
-    uses: rhalbersma/cpp-ci/.github/workflows/scorecard.yml@95dead5b4064510969ca3991849f7c63cf643079 # v0.10.0
+    uses: rhalbersma/cpp-ci/.github/workflows/scorecard.yml@18949f87a8a7fb439c60ae7988c573831523c18e # v0.10.1
