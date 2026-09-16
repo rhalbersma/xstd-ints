@@ -26,8 +26,11 @@ jobs:
   # MSVC STL instead of cl. Its own cache prefix, since the two callers build
   # the dependencies with different compilers.
   clang_cl:
-    uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@8156138fa6336f5d870e72e62b72033632a1c56b # v0.9.0
+    uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@4ccffd02f1a880e23597610589c47be5320eb1bd # main, past v0.9.0
     with:
       toolset: ClangCL,host=x64
       preview_toolset_prefix: "ClangCL,"
       cache_prefix: clang-cl
+      # Boost.Test, which vcpkg.json keeps out of its default features so that
+      # consuming this library resolves no Boost at all.
+      vcpkg_features: test
