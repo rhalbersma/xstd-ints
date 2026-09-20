@@ -51,17 +51,20 @@ struct numeric_limits<signed _BitInt(N)> : std::numeric_limits<signed _BitInt(N)
         static constexpr auto digits = static_cast<int>(N) - 1;
         static constexpr auto radix = 2;
 
-        [[nodiscard]] static constexpr auto min() noexcept -> type
+        [[nodiscard]] static constexpr auto min() noexcept
+                -> type
         {
                 return static_cast<type>(-max() - type{1});
         }
 
-        [[nodiscard]] static constexpr auto max() noexcept -> type
+        [[nodiscard]] static constexpr auto max() noexcept
+                -> type
         {
                 return static_cast<type>(static_cast<unsigned_type>(~unsigned_type{0}) >> 1U);
         }
 
-        [[nodiscard]] static constexpr auto lowest() noexcept -> type
+        [[nodiscard]] static constexpr auto lowest() noexcept
+                -> type
         {
                 return min();
         }
@@ -81,17 +84,20 @@ struct numeric_limits<unsigned _BitInt(N)> : std::numeric_limits<unsigned _BitIn
         static constexpr auto digits = static_cast<int>(N);
         static constexpr auto radix = 2;
 
-        [[nodiscard]] static constexpr auto min() noexcept -> type
+        [[nodiscard]] static constexpr auto min() noexcept
+                -> type
         {
                 return type{0};
         }
 
-        [[nodiscard]] static constexpr auto max() noexcept -> type
+        [[nodiscard]] static constexpr auto max() noexcept
+                -> type
         {
                 return static_cast<type>(~type{0});
         }
 
-        [[nodiscard]] static constexpr auto lowest() noexcept -> type
+        [[nodiscard]] static constexpr auto lowest() noexcept
+                -> type
         {
                 return min();
         }

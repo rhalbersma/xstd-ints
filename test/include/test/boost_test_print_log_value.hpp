@@ -21,7 +21,8 @@
 namespace test {
 
 template<xstd::integer I>
-auto print_integer(std::ostream& ostr, I const value) -> void
+auto print_integer(std::ostream& ostr, I const value)
+        -> void
 {
         auto buffer = std::array<char, xstd::to_chars_max_size<I>>{};
         auto const result = xstd::to_chars(buffer.data(), buffer.data() + buffer.size(), value);
@@ -36,7 +37,8 @@ namespace boost::test_tools::tt_detail {
 template<>
 struct print_log_value<xstd::int128>
 {
-        auto operator()(std::ostream& ostr, xstd::int128 const value) const -> void
+        auto operator()(std::ostream& ostr, xstd::int128 const value) const
+                -> void
         {
                 test::print_integer(ostr, value);
         }
@@ -45,7 +47,8 @@ struct print_log_value<xstd::int128>
 template<>
 struct print_log_value<xstd::uint128>
 {
-        auto operator()(std::ostream& ostr, xstd::uint128 const value) const -> void
+        auto operator()(std::ostream& ostr, xstd::uint128 const value) const
+                -> void
         {
                 test::print_integer(ostr, value);
         }
@@ -56,7 +59,8 @@ struct print_log_value<xstd::uint128>
 template<std::size_t N>
 struct print_log_value<signed _BitInt(N)>
 {
-        auto operator()(std::ostream& ostr, signed _BitInt(N) const value) const -> void
+        auto operator()(std::ostream& ostr, signed _BitInt(N) const value) const
+                -> void
         {
                 test::print_integer(ostr, value);
         }
@@ -65,7 +69,8 @@ struct print_log_value<signed _BitInt(N)>
 template<std::size_t N>
 struct print_log_value<unsigned _BitInt(N)>
 {
-        auto operator()(std::ostream& ostr, unsigned _BitInt(N) const value) const -> void
+        auto operator()(std::ostream& ostr, unsigned _BitInt(N) const value) const
+                -> void
         {
                 test::print_integer(ostr, value);
         }
@@ -76,7 +81,8 @@ struct print_log_value<unsigned _BitInt(N)>
 template<xstd::integer I>
 struct print_log_value<xstd::div_result<I>>
 {
-        auto operator()(std::ostream& ostr, xstd::div_result<I> const& d) const -> void
+        auto operator()(std::ostream& ostr, xstd::div_result<I> const& d) const
+                -> void
         {
                 ostr << '(';
                 test::print_integer(ostr, d.quotient);

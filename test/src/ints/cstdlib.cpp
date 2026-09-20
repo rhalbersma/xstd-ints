@@ -44,14 +44,16 @@ namespace {
 
 // The identity reconstructed in int: div_floor(1, -2) gives -1, and -1 * -2 is 2, which _BitInt(2) cannot hold.
 template<class T>
-auto reconstructs(T quotient, T denom, T remainder, T numer) -> bool
+auto reconstructs(T quotient, T denom, T remainder, T numer)
+        -> bool
 {
         return (static_cast<int>(quotient) * static_cast<int>(denom)) + static_cast<int>(remainder) == static_cast<int>(numer);
 }
 
 // Truncated: the quotient identity, the remainder bound, and the numerator's sign.
 template<class T>
-auto check_truncated(T numer, T denom) -> void
+auto check_truncated(T numer, T denom)
+        -> void
 {
         auto const [quotient, remainder] = xstd::div(numer, denom);
         BOOST_CHECK(reconstructs(quotient, denom, remainder, numer));
@@ -61,7 +63,8 @@ auto check_truncated(T numer, T denom) -> void
 
 // Floored: the same identity, and a nonzero remainder carrying the denominator's sign.
 template<class T>
-auto check_floored(T numer, T denom) -> void
+auto check_floored(T numer, T denom)
+        -> void
 {
         auto const [quotient, remainder] = xstd::div_floor(numer, denom);
         BOOST_CHECK(reconstructs(quotient, denom, remainder, numer));
@@ -70,7 +73,8 @@ auto check_floored(T numer, T denom) -> void
 
 // Euclidean: the same identity, and a remainder that is never negative.
 template<class T>
-auto check_euclidean(T numer, T denom) -> void
+auto check_euclidean(T numer, T denom)
+        -> void
 {
         auto const [quotient, remainder] = xstd::div_euclid(numer, denom);
         BOOST_CHECK(reconstructs(quotient, denom, remainder, numer));
@@ -79,7 +83,8 @@ auto check_euclidean(T numer, T denom) -> void
 
 // Every ordered pair the type can hold, which only a width this narrow makes affordable.
 template<class T>
-auto sweep() -> void
+auto sweep()
+        -> void
 {
         using limits = xstd::numeric_limits<T>;
         auto const lo = static_cast<int>(limits::min());
