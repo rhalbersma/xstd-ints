@@ -26,7 +26,7 @@ jobs:
   # shared workflow offers, which for MinGW is two -- it drops the development
   # rung with a notice rather than failing, as it does for Apple Clang.
   mingw:
-    uses: rhalbersma/cpp-ci/.github/workflows/mingw.yml@18949f87a8a7fb439c60ae7988c573831523c18e # v0.10.1
+    uses: rhalbersma/cpp-ci/.github/workflows/mingw.yml@29fdd6605bf237863ad39c3919c2cf389cfb6d38 # v0.10.2
     with:
       # Boost.Test, which vcpkg.json keeps out of its default features so that
       # consuming this library resolves no Boost at all.
