@@ -59,13 +59,19 @@ tools/setup-toolchain.sh
 
 In a [Claude Code cloud](https://code.claude.com/docs/en/claude-code-on-the-web) environment, the environment's
 setup script runs it, so every session starts with the rung already in place. That field holds a script rather than
-a command, so it needs its own shebang:
+a command, and it runs from outside the checkout, so it needs a shebang and an absolute path:
 
 ```sh
 #!/usr/bin/env bash
 set -euo pipefail
-cd "$(git rev-parse --show-toplevel 2>/dev/null || echo .)"
-./tools/setup-toolchain.sh
+for dir in /home/user/*/; do
+        script="${dir}tools/setup-toolchain.sh"
+        if [ -x "$script" ]; then
+                exec "$script"
+        fi
+done
+echo "setup-toolchain.sh not found in any checkout under /home/user" >&2
+exit 1
 ```
 
 The field is configured on the environment, not in this repository, and one environment serves every repository it
