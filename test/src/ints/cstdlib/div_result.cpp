@@ -14,7 +14,7 @@ BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(CStdLib)
 BOOST_AUTO_TEST_SUITE(DivResult)
 
-// div_result{q, r} spells a div result at the argument's own width, as the four names used to.
+// div_result{q, r} spells a div result at the argument's own width.
 BOOST_AUTO_TEST_CASE(DeducesItsElementTypeFromTheArguments)
 {
         static_assert(std::same_as<decltype(xstd::div_result{1, 2}), xstd::div_result<int>>);

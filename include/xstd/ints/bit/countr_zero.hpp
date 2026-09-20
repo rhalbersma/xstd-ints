@@ -11,7 +11,7 @@
 // See bit/popcount.hpp for why the 128-bit integer classes carry their own overloads.
 namespace xstd {
 
-// Constrained on the call itself, so constraint and body cannot drift: std::unsigned_integral admits four types <bit> refuses, and on libc++ carries _BitInt in while <bit> declines it (P3666R4).
+// Constrained on the call, so constraint and body cannot drift: std::unsigned_integral admits what <bit> refuses.
 template<class T>
         requires requires (T x) { std::countr_zero(x); }
 [[nodiscard]] constexpr auto countr_zero(T x) noexcept

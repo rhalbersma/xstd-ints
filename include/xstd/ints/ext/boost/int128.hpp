@@ -29,7 +29,7 @@ template<>
 struct make_signed<boost::int128::uint128> : std::type_identity<boost::int128::int128>
 {};
 
-// boost::int128::uint128 is a class, so <bit> declines it; read by NAME, upstream reversing the halves' declaration order by endianness. [xstd/ints/bit/popcount.hpp]
+// boost::int128::uint128 is a class, so <bit> declines it; read by name, upstream ordering halves by endianness.
 [[nodiscard]] constexpr auto popcount(boost::int128::uint128 x) noexcept
         -> int
 {

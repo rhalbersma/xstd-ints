@@ -18,7 +18,7 @@
 
 namespace {
 
-// Every exact width but the bit-precise: unsigned _BitInt(N) reaches neither <bit> nor any overload here, carrying no words to read. xstd::uint128 is here because the tests build as gnu++.
+// Every exact width but the bit-precise: unsigned _BitInt(N) reaches neither <bit> nor any overload here.
 template<class T>
 concept has_popcount = requires (T x) { xstd::popcount(x); };
 
@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsOfEveryWidth, T, worded_unsigned_types)
         BOOST_CHECK(true);
 }
 
-// The word boundary, which pins each class's low half to its low half: read through the wrong accessor a type answers with the halves swapped.
+// The word boundary, pinning each class's low half: read through the wrong accessor the halves come back swapped.
 BOOST_AUTO_TEST_CASE_TEMPLATE(TheWordBoundary, T, worded_unsigned_types)
 {
         constexpr auto W = xstd::numeric_limits<T>::digits;
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheWordBoundary, T, worded_unsigned_types)
         BOOST_CHECK(true);
 }
 
-// The constraint is exactly what the body needs, asserted as an equality so it fails as loudly if it ever became wider OR narrower than <bit>.
+// The constraint is what the body needs, asserted as an equality so it fails if it is wider or narrower than <bit>.
 namespace {
 
 template<class T>
@@ -82,11 +82,11 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsTheBodys)
         static_assert(xstd_answers<unsigned char> == std_answers<unsigned char>);
         static_assert(xstd_answers<std::uint64_t> == std_answers<std::uint64_t>);
 
-        // NOT an equality at the widest exact width: where xstd::uint128 is a class <bit> declines it and the overload beside its own header answers, so this asserts a basis exists rather than that std has one.
+        // Not an equality at the widest width: xstd::uint128 is a class, so this asserts a basis exists, not std's.
         static_assert(xstd_answers<xstd::uint128>);
 
 #ifdef XSTD_HAS_BIT_INT
-        // The tripwire for P3666R4: when is_integral_v<_BitInt(N)> goes true while <bit> still refuses it, this equality fails by name instead of the header hard-erroring at whatever first calls it.
+        // The tripwire for P3666R4: if is_integral_v<_BitInt(N)> goes true while <bit> refuses it, this fails by name.
         static_assert(xstd_answers<xstd::bit_uint<64>> == std_answers<xstd::bit_uint<64>>);
         static_assert(xstd_answers<xstd::bit_uint<24>> == std_answers<xstd::bit_uint<24>>);
 #endif
