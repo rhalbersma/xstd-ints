@@ -22,7 +22,7 @@ namespace xstd {
 using int128 = std::_Signed128;
 using uint128 = std::_Unsigned128;
 
-// remove_cvref_t is load-bearing: _Word is an ARRAY, so decltype gives uint64_t& and numeric_limits of a reference reports 0 digits; _Word[0] is the low half, which the test pins.
+// remove_cvref_t is load-bearing: _Word is an array, so decltype gives uint64_t& and numeric_limits reports 0 digits.
 [[nodiscard]] constexpr auto popcount(uint128 x) noexcept
         -> int
 {

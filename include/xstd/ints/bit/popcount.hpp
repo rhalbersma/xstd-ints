@@ -8,10 +8,10 @@
 
 #include <bit> // popcount
 
-// The bit basis, one overload set per function: <bit> takes std::unsigned_integral, which every 128-bit integer CLASS fails, so each carries its own overload beside its header.
+// One overload set per function: <bit> takes std::unsigned_integral, which every 128-bit integer class fails.
 namespace xstd {
 
-// Constrained on the call itself, so constraint and body cannot drift: std::unsigned_integral admits four types <bit> refuses, and on libc++ carries _BitInt in while <bit> declines it (P3666R4).
+// Constrained on the call, so constraint and body cannot drift: std::unsigned_integral admits what <bit> refuses.
 template<class T>
         requires requires (T x) { std::popcount(x); }
 [[nodiscard]] constexpr auto popcount(T x) noexcept

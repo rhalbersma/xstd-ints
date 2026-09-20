@@ -28,12 +28,12 @@ template<alignable T>
         return static_cast<T>(sum - static_cast<T>(sum & mask));
 }
 
-// The same arithmetic in the address space, delegating rather than repeating the mask; qualified as cstdlib's calls are.
+// The same arithmetic in the address space, delegating rather than repeating the mask.
 template<class T>
 [[nodiscard]] auto align_up(T* pointer, std::size_t alignment) noexcept
         -> T*
 {
-        // NOLINTNEXTLINE(performance-no-int-to-ptr): the address is what was aligned, and it has to become a pointer again
+        // NOLINTNEXTLINE(performance-no-int-to-ptr): the aligned address has to become a pointer again
         return reinterpret_cast<T*>(xstd::align_up(reinterpret_cast<std::uintptr_t>(pointer), alignment));
 }
 

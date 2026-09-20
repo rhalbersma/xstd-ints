@@ -48,7 +48,7 @@ template<std::integral I>
         return std::to_chars(first, last, value, base);
 }
 
-// NOLINTNEXTLINE(readability-magic-numbers): the standard's own default base; deleted as the standard deletes it, bool not being formatted as 0 or 1.
+// NOLINTNEXTLINE(readability-magic-numbers): the standard's own default base
 auto to_chars(char*, char*, bool, int = 10) -> std::to_chars_result = delete;
 
 // For xstd integers the standard library does not cover.

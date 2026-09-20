@@ -26,7 +26,7 @@ template<>
 struct make_signed<absl::uint128> : std::type_identity<absl::int128>
 {};
 
-// absl::uint128 is a class, so <bit> declines it; these read its own words through Abseil's documented accessors, found by ADL. [xstd/ints/bit/popcount.hpp]
+// absl::uint128 is a class, so <bit> declines it; these read its words through Abseil's accessors, found by ADL.
 [[nodiscard]] constexpr auto popcount(absl::uint128 x) noexcept
         -> int
 {

@@ -13,7 +13,7 @@
 
 namespace {
 
-// Every exact width but the bit-precise: unsigned _BitInt(N) reaches neither <bit> nor any overload here, carrying no words to read. xstd::uint128 is here because the tests build as gnu++.
+// Every exact width but the bit-precise: unsigned _BitInt(N) reaches neither <bit> nor any overload here.
 template<class T>
 concept has_popcount = requires (T x) { xstd::popcount(x); };
 
@@ -26,7 +26,7 @@ using worded_unsigned_types = decltype(std::tuple_cat(
 BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(Bit)
 
-// The three together, the only place the halves cross-check: swapped accessors keep every single-function identity and break the sum.
+// The three together cross-check the halves: swapped accessors keep each single-function identity and break the sum.
 BOOST_AUTO_TEST_CASE_TEMPLATE(TheThreeAgreeOnASingleBit, T, worded_unsigned_types)
 {
         constexpr auto W = xstd::numeric_limits<T>::digits;
@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheThreeAgreeOnASingleBit, T, worded_unsigned_type
         BOOST_CHECK(true);
 }
 
-// The widest exact width has a basis on every configured leg, which is the whole of what CMAKE_CXX_EXTENSIONS ON buys. [xstd-bits design.md#uint128-support]
+// The widest exact width has a basis on every configured leg, which is what CMAKE_CXX_EXTENSIONS ON buys.
 BOOST_AUTO_TEST_CASE(TheWidestExactWidthHasABasis)
 {
         static_assert(has_popcount<xstd::uint128>);

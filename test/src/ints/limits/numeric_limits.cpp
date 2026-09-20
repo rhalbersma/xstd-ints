@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(SaysNothingOutsideThatDomain)
         // NOLINTNEXTLINE(modernize-avoid-c-arrays): a built-in array is the type under test, not a container choice
         static_assert(not has_limits<int[3]>);
         static_assert(not has_limits<void()>);
-        // NOLINTNEXTLINE(modernize-avoid-c-arrays): routed through the cv specialization, which inherits the primary and so has to be complete.
+        // NOLINTNEXTLINE(modernize-avoid-c-arrays): routed through the cv specialization, which must be complete
         static_assert(not has_limits<int const[3]>);
         // NOLINTNEXTLINE(modernize-avoid-c-arrays): as above
         static_assert(std::is_empty_v<xstd::numeric_limits<int[3]>>);

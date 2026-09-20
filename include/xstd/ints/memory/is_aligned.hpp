@@ -21,7 +21,7 @@ template<alignable T>
 {
         assert(std::has_single_bit(alignment));
         auto const mask = static_cast<T>(alignment - 1);
-        // Zero through the size_t conversion alignable asks for: T{} would need a default constructor it never requires.
+        // Zero through the size_t conversion alignable asks for, T{} needing a constructor it never requires.
         return static_cast<T>(value & mask) == static_cast<T>(0UZ);
 }
 

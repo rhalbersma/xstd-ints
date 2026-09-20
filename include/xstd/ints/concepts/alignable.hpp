@@ -52,7 +52,7 @@ concept nothrow_alignable =
         std::same_as<T, std::remove_cv_t<T_cv>> and
         alignable<T> and
 
-        // What the three functions spend on every call and never name: an operand in and a T out, not assignment or swap.
+        // What the three functions spend per call and never name: an operand in and a T out.
         std::is_nothrow_destructible_v<T> and
         std::is_nothrow_move_constructible_v<T> and
         std::is_nothrow_copy_constructible_v<T> and
