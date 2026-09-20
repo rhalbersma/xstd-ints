@@ -30,9 +30,11 @@ struct light
         std::size_t v = 0;
 
         light() = default;
+
         // NOLINTNEXTLINE(misc-explicit-constructor, google-explicit-constructor): alignable asks convertible_to
         constexpr light(std::size_t n)
-            : v(n) {}
+                : v(n)
+        {}
 
         // Explicit is enough the other way, alignable asking only constructible_from<size_t, T> there.
         [[nodiscard]] explicit constexpr operator std::size_t() const
@@ -77,9 +79,10 @@ struct no_spaceship
         std::size_t v = 0;
 
         no_spaceship() = default;
+
         // NOLINTNEXTLINE(misc-explicit-constructor, google-explicit-constructor)
         constexpr no_spaceship(std::size_t n) noexcept
-            : v(n)
+                : v(n)
         {}
 
         [[nodiscard]] explicit constexpr operator std::size_t() const noexcept
@@ -188,9 +191,11 @@ BOOST_AUTO_TEST_CASE(AndRejectsTheRestOnTheirMerits)
         static_assert(not xstd::alignable<double>);
         static_assert(not xstd::alignable<void*>);
         static_assert(not xstd::alignable<std::uint8_t*>);
+
         // Nothing at all.
         struct udt
         {};
+
         static_assert(not xstd::alignable<udt>);
         static_assert(not xstd::alignable<void>);
         BOOST_CHECK(true);

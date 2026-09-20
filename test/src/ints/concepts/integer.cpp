@@ -19,6 +19,7 @@ concept cv_rejected_integer =
 BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(Concepts)
 BOOST_AUTO_TEST_SUITE(Integer)
+
 BOOST_AUTO_TEST_CASE_TEMPLATE(AdmitsTheExactWidthTypesThroughCv, T, test::exact_width_integer_types)
 {
         static_assert(xstd::integer<T>);
@@ -27,6 +28,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(AdmitsTheExactWidthTypesThroughCv, T, test::exact_
         static_assert(xstd::integer<T const volatile>);
         BOOST_CHECK(true);
 }
+
 BOOST_AUTO_TEST_CASE(RejectsTheCharacterAndNonIntegralTypes)
 {
         static_assert(xstd::integer<signed char>);
@@ -77,6 +79,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SignedRoundTrip, T, test::exact_width_signed_integ
         static_assert(std::same_as<xstd::make_signed_t<xstd::make_unsigned_t<T>>, T>);
         BOOST_CHECK(true);
 }
+
 BOOST_AUTO_TEST_CASE_TEMPLATE(UnsignedRoundTrip, T, test::exact_width_unsigned_integer_types)
 {
         static_assert(std::same_as<xstd::make_unsigned_t<T>, T>);

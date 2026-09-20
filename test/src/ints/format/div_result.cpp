@@ -37,8 +37,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(Formatter, T, test::exact_width_signed_integer_typ
 // Rendered by xstd where the library has no 128-bit formatter, so the value must come out.
 BOOST_AUTO_TEST_CASE(Boundaries)
 {
-        BOOST_CHECK_EQUAL(std::format("{}", xstd::div_result<xstd::int128>{std::numeric_limits<xstd::int128>::min(), 7}),
-                          "(-170141183460469231731687303715884105728, 7)");
+        BOOST_CHECK_EQUAL(std::format("{}", xstd::div_result<xstd::int128>{std::numeric_limits<xstd::int128>::min(), 7}), "(-170141183460469231731687303715884105728, 7)");
 }
 
 // Fill, alignment and width stay the base's; this renders "(quotient, remainder)" and hands it over.
