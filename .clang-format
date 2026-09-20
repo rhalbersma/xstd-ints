@@ -8,6 +8,7 @@ Language: Cpp
 Standard: Latest
 BasedOnStyle: LLVM
 
+AccessModifierOffset: -8
 IndentWidth: 8
 ContinuationIndentWidth: 8
 TabWidth: 8
