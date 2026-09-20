@@ -89,37 +89,44 @@ struct no_spaceship
 
         [[nodiscard]] auto operator==(no_spaceship const&) const noexcept -> bool = default;
 
-        [[nodiscard]] constexpr auto operator<(no_spaceship const& other) const noexcept -> bool
+        [[nodiscard]] constexpr auto operator<(no_spaceship const& other) const noexcept
+                -> bool
         {
                 return v < other.v;
         }
 
-        [[nodiscard]] constexpr auto operator>(no_spaceship const& other) const noexcept -> bool
+        [[nodiscard]] constexpr auto operator>(no_spaceship const& other) const noexcept
+                -> bool
         {
                 return other.v < v;
         }
 
-        [[nodiscard]] constexpr auto operator<=(no_spaceship const& other) const noexcept -> bool
+        [[nodiscard]] constexpr auto operator<=(no_spaceship const& other) const noexcept
+                -> bool
         {
                 return not(other.v < v);
         }
 
-        [[nodiscard]] constexpr auto operator>=(no_spaceship const& other) const noexcept -> bool
+        [[nodiscard]] constexpr auto operator>=(no_spaceship const& other) const noexcept
+                -> bool
         {
                 return not(v < other.v);
         }
 
-        [[nodiscard]] constexpr auto operator+(no_spaceship other) const noexcept -> no_spaceship
+        [[nodiscard]] constexpr auto operator+(no_spaceship other) const noexcept
+                -> no_spaceship
         {
                 return {v + other.v};
         }
 
-        [[nodiscard]] constexpr auto operator-(no_spaceship other) const noexcept -> no_spaceship
+        [[nodiscard]] constexpr auto operator-(no_spaceship other) const noexcept
+                -> no_spaceship
         {
                 return {v - other.v};
         }
 
-        [[nodiscard]] constexpr auto operator&(no_spaceship other) const noexcept -> no_spaceship
+        [[nodiscard]] constexpr auto operator&(no_spaceship other) const noexcept
+                -> no_spaceship
         {
                 return {v & other.v};
         }

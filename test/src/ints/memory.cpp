@@ -33,7 +33,8 @@ BOOST_AUTO_TEST_CASE(AgreesWithBoostAlignment)
 
 // Every value and power-of-two alignment below the width where a result still fits.
 template<class I>
-auto agrees_with_boost_align() -> void
+auto agrees_with_boost_align()
+        -> void
 {
         for (auto alignment = 1UZ; alignment <= 16UZ; alignment *= 2UZ) {
                 for (auto value = 0UZ; value < 48UZ; ++value) {
@@ -58,7 +59,8 @@ BOOST_AUTO_TEST_CASE(AgreesWithBoostAlignmentAtEveryWidth)
 // What align_up and align_down leave behind is aligned, and what they are given is left alone once it is.
 namespace {
 
-auto agrees_with_the_other_two(std::size_t value, std::size_t alignment) -> void
+auto agrees_with_the_other_two(std::size_t value, std::size_t alignment)
+        -> void
 {
         BOOST_CHECK(xstd::is_aligned(xstd::align_up(value, alignment), alignment));
         BOOST_CHECK(xstd::is_aligned(xstd::align_down(value, alignment), alignment));
@@ -79,7 +81,8 @@ BOOST_AUTO_TEST_CASE(ThePredicateAgreesWithTheTwoAdjustments)
 
 namespace {
 
-auto agrees_with_boost_pointers(char* p, std::size_t alignment) -> void
+auto agrees_with_boost_pointers(char* p, std::size_t alignment)
+        -> void
 {
         BOOST_CHECK_EQUAL(static_cast<void*>(xstd::align_up(p, alignment)),
                           boost::alignment::align_up(static_cast<void*>(p), alignment));
