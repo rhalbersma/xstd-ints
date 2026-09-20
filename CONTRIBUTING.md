@@ -51,15 +51,25 @@ installs the `stable` column of [README.md](README.md)'s matrix — GCC 15, clan
 Boost.Test — from apt.llvm.org and the Ubuntu toolchain PPA:
 
 ```sh
-sudo tools/setup-toolchain.sh
+tools/setup-toolchain.sh
 ```
 
 `XSTD_TOOLCHAIN_FULL=1` adds GCC 16, the qualification rung, whose libstdc++ is the oldest carrying
 `<inplace_vector>`. The script is idempotent, so re-running it on a warm container is safe.
 
-In a [Claude Code cloud](https://code.claude.com/docs/en/claude-code-on-the-web) environment, point the
-environment's setup script at it so every session starts with the rung already in place. That field is configured
-on the environment itself, not in this repository.
+In a [Claude Code cloud](https://code.claude.com/docs/en/claude-code-on-the-web) environment, the environment's
+setup script runs it, so every session starts with the rung already in place. That field holds a script rather than
+a command, so it needs its own shebang:
+
+```sh
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel 2>/dev/null || echo .)"
+./tools/setup-toolchain.sh
+```
+
+The field is configured on the environment, not in this repository, and one environment serves every repository it
+opens — so each of them needs this script at this path.
 
 ## Building and testing locally
 
