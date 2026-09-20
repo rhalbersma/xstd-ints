@@ -8,7 +8,8 @@
 #include <xstd/ints/format.hpp>
 #include <format>
 
-int main()
+auto main()
+        -> int
 {
         static_assert(xstd::integer<int>);
         static_assert(xstd::div_euclid(-8, 3).remainder == 1);
