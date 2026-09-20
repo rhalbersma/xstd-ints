@@ -42,6 +42,25 @@ The library itself has no dependencies outside `<xstd/ext/>`, whose headers each
 | `clang-tidy` and `run-clang-tidy` | reproducing the clang-tidy gate | Only for the workflow below |
 | `clang-format` 22+ | the formatting gate | Run `clang-format -i` on changed files before pushing; older versions rewrite the requires-expressions in `concepts/` |
 
+## Getting a toolchain
+
+Ubuntu 24.04 ships GCC 13 and clang 18, neither of which can build this library: GCC 13 rejects `-std=c++2c`, and
+clang-format before 22 reads `{ a * b }` in a requires-expression as a pointer declaration, so it calls files dirty
+that are clean against [`.clang-format`](.clang-format). [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh)
+installs the `stable` column of [README.md](README.md)'s matrix — GCC 15, clang 22, libc++ 22, clang-format 22, and Boost with
+Boost.Test — from apt.llvm.org and the Ubuntu toolchain PPA:
+
+```sh
+sudo tools/setup-toolchain.sh
+```
+
+`XSTD_TOOLCHAIN_FULL=1` adds GCC 16, the qualification rung, whose libstdc++ is the oldest carrying
+`<inplace_vector>`. The script is idempotent, so re-running it on a warm container is safe.
+
+In a [Claude Code cloud](https://code.claude.com/docs/en/claude-code-on-the-web) environment, point the
+environment's setup script at it so every session starts with the rung already in place. That field is configured
+on the environment itself, not in this repository.
+
 ## Building and testing locally
 
 Two paths, and which one you want depends on whether you are developing xstd-ints or only checking that it configures, installs and consumes. The library is header-only, so without the tests there is nothing to find and nothing to compile:
