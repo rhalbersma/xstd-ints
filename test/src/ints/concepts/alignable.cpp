@@ -29,7 +29,7 @@ struct light
 {
         std::size_t v = 0;
 
-        constexpr light() = default;
+        light() = default;
         // NOLINTNEXTLINE(misc-explicit-constructor, google-explicit-constructor): alignable asks convertible_to
         constexpr light(std::size_t n)
             : v(n) {}
@@ -40,8 +40,8 @@ struct light
                 return v;
         }
 
-        [[nodiscard]] constexpr auto operator<=>(light const&) const -> std::strong_ordering = default;
-        [[nodiscard]] constexpr auto operator==(light const&) const -> bool = default;
+        [[nodiscard]] auto operator<=>(light const&) const -> std::strong_ordering = default;
+        [[nodiscard]] auto operator==(light const&) const -> bool = default;
 
         [[nodiscard]] constexpr auto operator+(light o) const
                 -> light
@@ -76,7 +76,7 @@ struct no_spaceship
 {
         std::size_t v = 0;
 
-        constexpr no_spaceship() = default;
+        no_spaceship() = default;
         // NOLINTNEXTLINE(misc-explicit-constructor, google-explicit-constructor)
         constexpr no_spaceship(std::size_t n) noexcept
             : v(n)
@@ -87,7 +87,7 @@ struct no_spaceship
                 return v;
         }
 
-        [[nodiscard]] constexpr auto operator==(no_spaceship const&) const noexcept -> bool = default;
+        [[nodiscard]] auto operator==(no_spaceship const&) const noexcept -> bool = default;
 
         [[nodiscard]] constexpr auto operator<(no_spaceship const& other) const noexcept -> bool
         {
