@@ -8,7 +8,7 @@
 
 #include <bit> // countl_zero
 
-// See bit/popcount.hpp for why the 128-bit integer classes carry their own overloads.
+// One overload set per function: <bit> takes std::unsigned_integral, which every 128-bit integer class fails.
 namespace xstd {
 
 // Constrained on the call, so constraint and body cannot drift: std::unsigned_integral admits what <bit> refuses.
