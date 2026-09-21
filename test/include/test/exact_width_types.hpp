@@ -99,10 +99,12 @@ using widest_bit_precise_unsigned_types = std::tuple<>;
 
 using bit_precise_signed_types = decltype(std::tuple_cat(
         std::declval<narrow_bit_precise_signed_types>(), std::declval<wide_bit_precise_signed_types>(),
-        std::declval<widest_bit_precise_signed_types>()));
+        std::declval<widest_bit_precise_signed_types>()
+));
 using bit_precise_unsigned_types = decltype(std::tuple_cat(
         std::declval<narrow_bit_precise_unsigned_types>(), std::declval<wide_bit_precise_unsigned_types>(),
-        std::declval<widest_bit_precise_unsigned_types>()));
+        std::declval<widest_bit_precise_unsigned_types>()
+));
 #else
 using bit_precise_signed_types = std::tuple<>;
 using bit_precise_unsigned_types = std::tuple<>;
@@ -118,21 +120,26 @@ using constexpr_absl_unsigned_types = absl_unsigned_types;
 #endif
 using constexpr_exact_width_signed_integer_types = decltype(std::tuple_cat(
         std::declval<std_signed_types>(), std::declval<xstd_signed_types>(), std::declval<boost_signed_types>(),
-        std::declval<constexpr_absl_signed_types>(), std::declval<bit_precise_signed_types>()));
+        std::declval<constexpr_absl_signed_types>(), std::declval<bit_precise_signed_types>()
+));
 using constexpr_exact_width_unsigned_integer_types = decltype(std::tuple_cat(
         std::declval<std_unsigned_types>(), std::declval<xstd_unsigned_types>(), std::declval<boost_unsigned_types>(),
-        std::declval<constexpr_absl_unsigned_types>(), std::declval<bit_precise_unsigned_types>()));
+        std::declval<constexpr_absl_unsigned_types>(), std::declval<bit_precise_unsigned_types>()
+));
 
 // The authoritative configured test universe; subsets remain for contracts that differ by sign.
 using exact_width_signed_integer_types = decltype(std::tuple_cat(
         std::declval<std_signed_types>(), std::declval<xstd_signed_types>(), std::declval<boost_signed_types>(),
-        std::declval<absl_signed_types>(), std::declval<bit_precise_signed_types>()));
+        std::declval<absl_signed_types>(), std::declval<bit_precise_signed_types>()
+));
 using exact_width_unsigned_integer_types = decltype(std::tuple_cat(
         std::declval<std_unsigned_types>(), std::declval<xstd_unsigned_types>(), std::declval<boost_unsigned_types>(),
-        std::declval<absl_unsigned_types>(), std::declval<bit_precise_unsigned_types>()));
+        std::declval<absl_unsigned_types>(), std::declval<bit_precise_unsigned_types>()
+));
 using exact_width_integer_types = decltype(std::tuple_cat(
         std::declval<exact_width_signed_integer_types>(),
-        std::declval<exact_width_unsigned_integer_types>()));
+        std::declval<exact_width_unsigned_integer_types>()
+));
 
 } // namespace test
 

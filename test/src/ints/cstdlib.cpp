@@ -24,10 +24,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(UnsignedDivisionConventionsAgree, T, test::exact_w
         XSTD_CONSTEXPR_CHECK_EQUAL_IF(test::has_constexpr_division<T>, (xstd::div(T{1}, T{2})), (xstd::div_floor(T{1}, T{2})));
 
         using limits = xstd::numeric_limits<T>;
-        XSTD_CONSTEXPR_CHECK_EQUAL_IF(test::has_constexpr_division<T>,
-                                      (xstd::div(limits::max(), T{3})), (xstd::div_euclid(limits::max(), T{3})));
-        XSTD_CONSTEXPR_CHECK_EQUAL_IF(test::has_constexpr_division<T>,
-                                      (xstd::div(limits::max(), T{3})), (xstd::div_floor(limits::max(), T{3})));
+        XSTD_CONSTEXPR_CHECK_EQUAL_IF(test::has_constexpr_division<T>, (xstd::div(limits::max(), T{3})), (xstd::div_euclid(limits::max(), T{3})));
+        XSTD_CONSTEXPR_CHECK_EQUAL_IF(test::has_constexpr_division<T>, (xstd::div(limits::max(), T{3})), (xstd::div_floor(limits::max(), T{3})));
 }
 
 // An exact division has no convention-dependent remainder, even for signed operands.

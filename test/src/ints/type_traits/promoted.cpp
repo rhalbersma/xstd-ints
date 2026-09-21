@@ -27,10 +27,8 @@ BOOST_AUTO_TEST_CASE(MatchesTheIntegralPromotions)
         static_assert(std::same_as<xstd::promoted_t<unsigned long long>, unsigned long long>);
 
         // Which of int and unsigned a narrow type promotes to is the platform's call, so assert only that it is one.
-        static_assert(std::same_as<xstd::promoted_t<unsigned short>, int> or
-                      std::same_as<xstd::promoted_t<unsigned short>, unsigned int>);
-        static_assert(std::same_as<xstd::promoted_t<char32_t>, int> or
-                      std::same_as<xstd::promoted_t<char32_t>, unsigned int>);
+        static_assert(std::same_as<xstd::promoted_t<unsigned short>, int> or std::same_as<xstd::promoted_t<unsigned short>, unsigned int>);
+        static_assert(std::same_as<xstd::promoted_t<char32_t>, int> or std::same_as<xstd::promoted_t<char32_t>, unsigned int>);
 
         // A non-integral type is its own, and is never asked for a unary operator+.
         static_assert(std::same_as<xstd::promoted_t<std::type_identity<void>>, std::type_identity<void>>);

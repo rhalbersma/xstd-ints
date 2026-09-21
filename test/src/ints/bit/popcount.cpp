@@ -23,7 +23,8 @@ concept has_popcount = requires (T x) { xstd::popcount(x); };
 
 using worded_unsigned_types = decltype(std::tuple_cat(
         std::declval<test::std_unsigned_types>(), std::declval<test::xstd_unsigned_types>(),
-        std::declval<test::boost_unsigned_types>(), std::declval<test::absl_unsigned_types>()));
+        std::declval<test::boost_unsigned_types>(), std::declval<test::absl_unsigned_types>()
+));
 
 } // namespace
 
