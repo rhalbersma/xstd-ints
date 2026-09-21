@@ -68,6 +68,7 @@ BOOST_AUTO_TEST_CASE(DelegatesWhereTheStandardLibraryCovers)
         // The ambiguous case reaches the digits path too, as libstdc++ produces for __int128.
         struct not_an_integer
         {};
+
         static_assert(not has_std_to_chars<not_an_integer>);
 
         static_assert(has_xstd_to_chars<xstd::int128>);
@@ -102,8 +103,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(DigitsPathMatchesTheStandard, T, test::std_signed_
                              xstd::numeric_limits<T>::min(),
                              xstd::numeric_limits<T>::max(),
                      }) {
-                        BOOST_CHECK_EQUAL(rendered(static_cast<xstd::int128>(value), base),
-                                          rendered_by_std(value, base));
+                        BOOST_CHECK_EQUAL(rendered(static_cast<xstd::int128>(value), base), rendered_by_std(value, base));
                 }
         }
 }
@@ -195,7 +195,8 @@ BOOST_AUTO_TEST_CASE(Int128Boundaries)
         // The short-buffer return in the unsigned instantiation, counted separately.
         auto buffer = std::array<char, xstd::to_chars_max_size<xstd::uint128>>{};
         auto const truncated = xstd::to_chars(
-                buffer.data(), buffer.data(), xstd::numeric_limits<xstd::uint128>::max(), 2);
+                buffer.data(), buffer.data(), xstd::numeric_limits<xstd::uint128>::max(), 2
+        );
         BOOST_CHECK(truncated.ec == std::errc::value_too_large);
 }
 
@@ -213,10 +214,8 @@ BOOST_AUTO_TEST_CASE(UsableInAConstantExpression)
 {
         static_assert(rendered_at_compile_time(255, 16, "ff"));
         static_assert(rendered_at_compile_time(-42, 10, "-42"));
-        static_assert(rendered_at_compile_time(xstd::numeric_limits<xstd::int128>::min(), 10,
-                                               "-170141183460469231731687303715884105728"));
-        static_assert(rendered_at_compile_time(xstd::numeric_limits<xstd::uint128>::max(), 16,
-                                               "ffffffffffffffffffffffffffffffff"));
+        static_assert(rendered_at_compile_time(xstd::numeric_limits<xstd::int128>::min(), 10, "-170141183460469231731687303715884105728"));
+        static_assert(rendered_at_compile_time(xstd::numeric_limits<xstd::uint128>::max(), 16, "ffffffffffffffffffffffffffffffff"));
 }
 
 // Asked of every type in the lists: a third party is constexpr only where it says so.

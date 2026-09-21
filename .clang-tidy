@@ -4,7 +4,10 @@
 #          http://www.boost.org/LICENSE_1_0.txt)
 
 ---
-# Static analysis for the public headers, over the generated self-sufficiency units.
+# Static analysis for the public headers and the test fixtures, over the generated self-sufficiency units.
+# A diagnostic raised inside a header is reported only if that header matches HeaderFilterRegex, which is why
+# the filter carries test/include as well as include/xstd: a fixture header left out of it is analyzed and
+# then silently discarded.
 # test/.clang-tidy inherits this and drops the four checks that only misfire on fixtures.
 Checks: >
   bugprone-*,
@@ -20,7 +23,7 @@ Checks: >
   -readability-named-parameter,
   -readability-simplify-boolean-expr
 WarningsAsErrors: '*'
-HeaderFilterRegex: 'include/xstd/.*'
+HeaderFilterRegex: '(include/xstd|test/include)/.*'
 FormatStyle: none
 CheckOptions:
   # Prefer alternative tokens for logical operators.

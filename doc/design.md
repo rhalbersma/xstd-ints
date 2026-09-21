@@ -552,3 +552,30 @@ Development jobs are required where a usable development compiler exists; the
 README records the versions currently assigned to each channel. Building the
 tests requires the dependencies documented in
 [CONTRIBUTING.md](../CONTRIBUTING.md).
+
+## Contracts
+
+
+Each function states its domain twice. What a *type* must be is a concept, and a
+type outside it is a compile error. What a *value* must be is a precondition, and
+a value outside it is an `assert`: diagnosed where assertions are enabled, and
+undefined behaviour where `NDEBUG` has removed them. Neither is reported as a
+value at run time, and `to_chars` is no exception: its `std::errc` says the buffer
+was too small, never that the call was out of domain.
+
+| Function | Precondition |
+| :------- | :----------- |
+| `abs(x)` | `x != numeric_limits<I>::min()`, whose negation is unrepresentable; `unsigned_abs` is the total form of the same question and has none |
+| `div(numer, denom)` <br> `div_euclid(numer, denom)` <br> `div_floor(numer, denom)` | `denom` is not zero, and `numer` is not `numeric_limits<I>::min()` with `denom` at `-1`. Both are the undefined behaviour `/` and `%` already have; the assert is reached first |
+| `to_chars(first, last, value, base)` | `2 <= base` and `base <= 36`, and `[first, last)` a valid range |
+| `align_up(value, alignment)` <br> `align_down(value, alignment)` <br> `is_aligned(value, alignment)` | `alignment` is a power of two, which is not zero; `align_up` additionally that the rounded result is representable |
+
+`sign`, `unsigned_abs`, the three `<bit>` counterparts, and every concept and
+trait are total: every value of a type they accept is in their domain.
+
+The pointer overloads of the three alignment functions are address arithmetic and
+nothing more: convert to `std::uintptr_t`, round, convert back. What comes out is
+an address. It is not checked against the object the argument pointed into, no
+object's lifetime begins there, and nothing makes it safe to dereference.
+`std::align` is the checked form of the same case: it takes the space remaining
+as well, so it can report that a block does not fit, which these cannot.

@@ -112,6 +112,7 @@ namespace {
 struct plain
 {
 };
+
 enum unscoped_enum { unscoped_value };
 enum class scoped_enum { scoped_value };
 

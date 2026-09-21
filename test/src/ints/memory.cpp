@@ -39,10 +39,8 @@ auto agrees_with_boost_align()
         for (auto alignment = 1UZ; alignment <= 16UZ; alignment *= 2UZ) {
                 for (auto value = 0UZ; value < 48UZ; ++value) {
                         auto const x = static_cast<I>(value);
-                        BOOST_CHECK_EQUAL(static_cast<std::size_t>(xstd::align_up(x, alignment)),
-                                          static_cast<std::size_t>(boost::alignment::align_up(x, alignment)));
-                        BOOST_CHECK_EQUAL(static_cast<std::size_t>(xstd::align_down(x, alignment)),
-                                          static_cast<std::size_t>(boost::alignment::align_down(x, alignment)));
+                        BOOST_CHECK_EQUAL(static_cast<std::size_t>(xstd::align_up(x, alignment)), static_cast<std::size_t>(boost::alignment::align_up(x, alignment)));
+                        BOOST_CHECK_EQUAL(static_cast<std::size_t>(xstd::align_down(x, alignment)), static_cast<std::size_t>(boost::alignment::align_down(x, alignment)));
                 }
         }
 }
@@ -84,12 +82,9 @@ namespace {
 auto agrees_with_boost_pointers(char* p, std::size_t alignment)
         -> void
 {
-        BOOST_CHECK_EQUAL(static_cast<void*>(xstd::align_up(p, alignment)),
-                          boost::alignment::align_up(static_cast<void*>(p), alignment));
-        BOOST_CHECK_EQUAL(static_cast<void*>(xstd::align_down(p, alignment)),
-                          boost::alignment::align_down(static_cast<void*>(p), alignment));
-        BOOST_CHECK_EQUAL(xstd::is_aligned(p, alignment),
-                          boost::alignment::is_aligned(static_cast<void const*>(p), alignment));
+        BOOST_CHECK_EQUAL(static_cast<void*>(xstd::align_up(p, alignment)), boost::alignment::align_up(static_cast<void*>(p), alignment));
+        BOOST_CHECK_EQUAL(static_cast<void*>(xstd::align_down(p, alignment)), boost::alignment::align_down(static_cast<void*>(p), alignment));
+        BOOST_CHECK_EQUAL(xstd::is_aligned(p, alignment), boost::alignment::is_aligned(static_cast<void const*>(p), alignment));
 }
 
 } // namespace

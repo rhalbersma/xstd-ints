@@ -1,0 +1,27 @@
+#          Copyright Rein Halbersma 2014-2026.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+# Revisions to skip when walking blame, one per line, newest last. Only
+# whitespace-preserving reformats belong here: a commit listed below must not
+# have changed a token, or blame will silently attribute real edits elsewhere.
+#
+# Squash is the only merge method the branch ruleset allows, so a reformat's
+# revision does not exist until its own merge creates it, and an entry can only
+# ever be written down afterwards. It must also name a merge that carried the
+# reformat alone: a squashed commit that also changed a token would make blame
+# skip that token's edit too.
+#
+# Configure a clone to honour this file once, with:
+#
+#     git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# GitHub's blame view reads it without being asked.
+
+# Separate the definitions, break the templates, indent the lists at eight.
+# Every C++ file it touched is byte-identical once whitespace is stripped. It
+# also carries the .clang-format keys that produced the reformat, which cannot
+# land in a separate merge: the keys alone would fail the clang-format gate,
+# and the reformat alone would not match them.
+b419a6c1b5191c72217c2dbd7bb4f808297f6e6f

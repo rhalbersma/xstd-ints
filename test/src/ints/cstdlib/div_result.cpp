@@ -43,16 +43,14 @@ BOOST_AUTO_TEST_CASE(AggregateMembersAndStructuredBindings)
 // The computed exception specification is the element's; a written one would need keeping.
 BOOST_AUTO_TEST_CASE_TEMPLATE(EqualityTracksTheElementType, T, test::std_signed_types)
 {
-        static_assert(noexcept(std::declval<xstd::div_result<T> const&>() == std::declval<xstd::div_result<T> const&>()) ==
-                      noexcept(std::declval<T const&>() == std::declval<T const&>()));
+        static_assert(noexcept(std::declval<xstd::div_result<T> const&>() == std::declval<xstd::div_result<T> const&>()) == noexcept(std::declval<T const&>() == std::declval<T const&>()));
 
         BOOST_CHECK(true);
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(EqualityTracksTheUnsignedElementType, T, test::std_unsigned_types)
 {
-        static_assert(noexcept(std::declval<xstd::div_result<T> const&>() == std::declval<xstd::div_result<T> const&>()) ==
-                      noexcept(std::declval<T const&>() == std::declval<T const&>()));
+        static_assert(noexcept(std::declval<xstd::div_result<T> const&>() == std::declval<xstd::div_result<T> const&>()) == noexcept(std::declval<T const&>() == std::declval<T const&>()));
 
         BOOST_CHECK(true);
 }
