@@ -73,6 +73,7 @@ target_sources(
         include/xstd/ints/cstdlib/div_result.hpp
         include/xstd/ints/cstdlib/sign.hpp
         include/xstd/ints/cstdlib/unsigned_abs.hpp
+        include/xstd/ints/detail/delegates_to_std.hpp
         include/xstd/ints/ext/absl.hpp
         include/xstd/ints/ext/absl/int128.hpp
         include/xstd/ints/ext/boost.hpp
