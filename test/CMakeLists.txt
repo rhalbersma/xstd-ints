@@ -158,6 +158,9 @@ file(
     ${public_header_dir}/xstd/*.hpp
 )
 
+# A detail header has no contract to mirror: it is exercised through the public header that includes it.
+list(FILTER all_public_headers EXCLUDE REGEX "/detail/")
+
 set(unmirrored_headers)
 foreach(h ${all_public_headers})
     # xstd/ints/cstdlib/abs.hpp is answered by test/src/ints/cstdlib/abs.cpp.
