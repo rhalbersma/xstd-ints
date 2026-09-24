@@ -25,7 +25,7 @@ jobs:
   # One input, and not about the ladder: this library builds on every rung,
   # which is what the shared workflow defaults to.
   clang_libcxx:
-    uses: rhalbersma/cpp-ci/.github/workflows/clang-libc++.yml@29fdd6605bf237863ad39c3919c2cf389cfb6d38 # v0.10.2
+    uses: rhalbersma/cpp-ci/.github/workflows/clang-libc++.yml@480aa17d38efd5c1641b861e9e1a0c6df053a451 # v0.10.3
     with:
       # Boost.Test, which vcpkg.json keeps out of its default features so that
       # consuming this library resolves no Boost at all.
