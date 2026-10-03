@@ -112,6 +112,23 @@ not implicitly `noexcept`: `static_assert(!noexcept(plain(1)))` holds for a lamb
 written on it. Write `noexcept` on a lambda where it is wanted, and keep it where it is already
 there.
 
+## `detail` is exposition-only
+
+What sits in a `detail` namespace plays the part the standard gives an exposition-only name: it is specified by
+the code that uses it, and no user spells it. Follow the standard's practice with it, and go no further.
+
+- **No public header opens a `detail` namespace.** Machinery goes in a header under a `detail/` directory, and the
+  public header includes it. `test/CMakeLists.txt` fails configuration on a public header that does otherwise.
+- **A `detail` name may appear wherever the standard puts an exposition-only one:** as a base class, in a member's
+  body, on the right-hand side of a concept, in a deduction guide, and in a constraint. `subrange` is constrained on
+  *`convertible-to-non-slicing`*, `vector`'s `from_range` constructor on *`container-compatible-range`*, and
+  `span`'s deduction guide returns through *`maybe-static-ext`*.
+- **A default template argument is public where a user may set a later parameter,** since that spells every one
+  before it: `less<Key>`, `char_traits<charT>`, `allocator<T>`, `dynamic_extent`. The standard's one exception,
+  `basic_simd`'s *`native-abi<T>`*, sits on the last parameter, which users reach through the `simd<T, N>` alias.
+- **A constraint becomes a public concept when users have a reason to name it.** A public concept carries
+  semantics: do not promote one to keep a `detail` name out of a signature, and do not merge two to save a name.
+
 ## Checking your work
 
 Compile with the **stable rung** of [README.md](README.md)'s matrix, never with whatever `g++` or `clang++`
