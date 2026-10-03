@@ -181,6 +181,24 @@ if(unmirrored_headers)
     )
 endif()
 
+# The same headers are the interface line: none of them opens a detail namespace, so what a user never spells sits under detail/, where it is excepted from the mirror above.
+set(detail_opening_headers)
+foreach(h ${all_public_headers})
+    file(STRINGS ${public_header_dir}/${h} detail_namespaces REGEX "^namespace [a-z:]*detail")
+    if(detail_namespaces)
+        list(APPEND detail_opening_headers "    include/${h}")
+    endif()
+endforeach()
+
+if(detail_opening_headers)
+    list(JOIN detail_opening_headers "\n" detail_opening_report)
+    message(
+        FATAL_ERROR
+        "These public headers open a detail namespace:\n${detail_opening_report}\n"
+        "Move what they define into a header under a detail/ directory and include it from there."
+    )
+endif()
+
 if(NOT DEFINED Boost_USE_STATIC_LIBS)
     set(Boost_USE_STATIC_LIBS ON)
 endif()
