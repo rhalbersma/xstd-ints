@@ -39,17 +39,17 @@ using bit_uint = unsigned _BitInt(N);
 template<std::size_t N>
 struct numeric_limits<signed _BitInt(N)> : std::numeric_limits<signed _BitInt(N)>
 {
-        using type = signed _BitInt(N);
+        using type          = signed _BitInt(N);
         using unsigned_type = unsigned _BitInt(N);
 
         static constexpr auto is_specialized = true;
-        static constexpr auto is_signed = true;
-        static constexpr auto is_integer = true;
-        static constexpr auto is_exact = true;
-        static constexpr auto is_bounded = true;
-        static constexpr auto is_modulo = false;
-        static constexpr auto digits = static_cast<int>(N) - 1;
-        static constexpr auto radix = 2;
+        static constexpr auto is_signed      = true;
+        static constexpr auto is_integer     = true;
+        static constexpr auto is_exact       = true;
+        static constexpr auto is_bounded     = true;
+        static constexpr auto is_modulo      = false;
+        static constexpr auto digits         = static_cast<int>(N) - 1;
+        static constexpr auto radix          = 2;
 
         [[nodiscard]] static constexpr auto min() noexcept
                 -> type
@@ -76,13 +76,13 @@ struct numeric_limits<unsigned _BitInt(N)> : std::numeric_limits<unsigned _BitIn
         using type = unsigned _BitInt(N);
 
         static constexpr auto is_specialized = true;
-        static constexpr auto is_signed = false;
-        static constexpr auto is_integer = true;
-        static constexpr auto is_exact = true;
-        static constexpr auto is_bounded = true;
-        static constexpr auto is_modulo = true;
-        static constexpr auto digits = static_cast<int>(N);
-        static constexpr auto radix = 2;
+        static constexpr auto is_signed      = false;
+        static constexpr auto is_integer     = true;
+        static constexpr auto is_exact       = true;
+        static constexpr auto is_bounded     = true;
+        static constexpr auto is_modulo      = true;
+        static constexpr auto digits         = static_cast<int>(N);
+        static constexpr auto radix          = 2;
 
         [[nodiscard]] static constexpr auto min() noexcept
                 -> type

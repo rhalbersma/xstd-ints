@@ -24,7 +24,7 @@ template<xstd::integer I>
 auto print_integer(std::ostream& ostr, I const value)
         -> void
 {
-        auto buffer = std::array<char, xstd::to_chars_max_size<I>>{};
+        auto buffer       = std::array<char, xstd::to_chars_max_size<I>>{};
         auto const result = xstd::to_chars(buffer.data(), buffer.data() + buffer.size(), value);
         assert(result.ec == std::errc{});
         ostr << std::string_view(buffer.data(), result.ptr);

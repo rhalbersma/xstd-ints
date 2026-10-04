@@ -35,8 +35,8 @@ struct std::formatter<xstd::div_result<I>, CharT> : std::formatter<std::basic_st
                 -> decltype(ctx.out())
         {
                 constexpr auto N = xstd::to_chars_max_size<I>;
-                auto widened = std::basic_string<CharT>{};
-                auto buffer = std::array<char, N>{};
+                auto widened     = std::basic_string<CharT>{};
+                auto buffer      = std::array<char, N>{};
 
                 auto const append = [&](I const value) XSTD_CONSTEXPR_FORMAT -> void {
                         auto const result = xstd::to_chars(buffer.data(), buffer.data() + N, value);

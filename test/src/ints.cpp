@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE(TheWidestTypeReachesEveryModule)
         BOOST_CHECK(xstd::div(T{8}, T{3}).quotient == T{2});
 
         // charconv, whose std counterpart has no overload this wide
-        auto buffer = std::array<char, xstd::to_chars_max_size<T>>{};
+        auto buffer       = std::array<char, xstd::to_chars_max_size<T>>{};
         auto const result = xstd::to_chars(buffer.data(), buffer.data() + buffer.size(), T{-42});
         BOOST_CHECK(result.ec == std::errc{});
         BOOST_CHECK(std::string_view(buffer.data(), result.ptr) == "-42");
