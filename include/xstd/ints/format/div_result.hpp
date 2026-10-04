@@ -26,10 +26,13 @@
 #define XSTD_CONSTEXPR_FORMAT
 #endif
 
+// NOLINTBEGIN(bugprone-std-namespace-modification): [namespace.std]/2 admits specializing for a program-defined type.
+
+namespace std {
+
 // The one every renderable div_result matches; the string base carries fill, alignment and width.
 template<xstd::integer I, class CharT>
-// NOLINTNEXTLINE(bugprone-std-namespace-modification): permitted by [namespace.std]/2, see above
-struct std::formatter<xstd::div_result<I>, CharT> : std::formatter<std::basic_string_view<CharT>, CharT>
+struct formatter<xstd::div_result<I>, CharT> : formatter<basic_string_view<CharT>, CharT>
 {
         [[nodiscard]] XSTD_CONSTEXPR_FORMAT auto format(xstd::div_result<I> const& d, auto& ctx) const
                 -> decltype(ctx.out())
@@ -55,23 +58,26 @@ struct std::formatter<xstd::div_result<I>, CharT> : std::formatter<std::basic_st
                 append(d.remainder);
                 widened.push_back(static_cast<CharT>(')'));
 
-                return std::formatter<std::basic_string_view<CharT>, CharT>::format(widened, ctx);
+                return formatter<basic_string_view<CharT>, CharT>::format(widened, ctx);
         }
 };
 
 // The more constrained one: asked after the tuple, which covers both ways it can be absent.
 template<xstd::integer I, class CharT>
-        requires std::formattable<std::tuple<I const&, I const&>, CharT>
-// NOLINTNEXTLINE(bugprone-std-namespace-modification): permitted by [namespace.std]/2, see above
-struct std::formatter<xstd::div_result<I>, CharT> : std::formatter<std::tuple<I const&, I const&>, CharT>
+        requires formattable<tuple<I const&, I const&>, CharT>
+struct formatter<xstd::div_result<I>, CharT> : formatter<tuple<I const&, I const&>, CharT>
 {
         [[nodiscard]] XSTD_CONSTEXPR_FORMAT auto format(xstd::div_result<I> const& d, auto& ctx) const
                 -> decltype(ctx.out())
         {
                 // tie yields the base's own type, so nothing is copied on the way in.
-                return std::formatter<std::tuple<I const&, I const&>, CharT>::format(std::tie(d.quotient, d.remainder), ctx);
+                return formatter<tuple<I const&, I const&>, CharT>::format(std::tie(d.quotient, d.remainder), ctx);
         }
 };
+
+} // namespace std
+
+// NOLINTEND(bugprone-std-namespace-modification)
 
 #undef XSTD_CONSTEXPR_FORMAT
 
