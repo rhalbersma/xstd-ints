@@ -90,7 +90,7 @@ struct no_spaceship
                 return v;
         }
 
-        [[nodiscard]] auto operator==(no_spaceship const&) const noexcept -> bool = default;
+        [[nodiscard]] auto operator==(no_spaceship const&) const -> bool = default;
 
         [[nodiscard]] constexpr auto operator<(no_spaceship const& other) const noexcept
                 -> bool
