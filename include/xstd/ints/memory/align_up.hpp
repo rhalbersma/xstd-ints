@@ -21,7 +21,7 @@ template<alignable T>
 {
         assert(std::has_single_bit(alignment));
         auto const mask = static_cast<T>(alignment - 1);
-        auto const sum = static_cast<T>(value + mask);
+        auto const sum  = static_cast<T>(value + mask);
         // The result is representable, said as the addition not having wrapped, which a modular type may ask after.
         assert(sum >= value);
         // Subtracting the remainder is what alignment is; & mask is only how a radix-2 type spells % alignment.

@@ -84,7 +84,7 @@ template<class T>
 auto sweep()
         -> void
 {
-        using limits = xstd::numeric_limits<T>;
+        using limits  = xstd::numeric_limits<T>;
         auto const lo = static_cast<int>(limits::min());
         auto const hi = static_cast<int>(limits::max());
         for (auto n = lo; n <= hi; ++n) {
@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(DivisionOverEveryPair)
 BOOST_AUTO_TEST_CASE_TEMPLATE(SignedExtremes, T, test::bit_precise_signed_types)
 {
         using limits = xstd::numeric_limits<T>;
-        using U = xstd::make_unsigned_t<T>;
+        using U      = xstd::make_unsigned_t<T>;
 
         BOOST_CHECK(xstd::sign(limits::min()) == -1);
         BOOST_CHECK(xstd::sign(limits::max()) == +1);

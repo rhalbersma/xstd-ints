@@ -43,7 +43,7 @@ struct light
         }
 
         [[nodiscard]] auto operator<=>(light const&) const -> std::strong_ordering = default;
-        [[nodiscard]] auto operator==(light const&) const -> bool = default;
+        [[nodiscard]] auto operator==(light const&) const -> bool                  = default;
 
         [[nodiscard]] constexpr auto operator+(light o) const
                 -> light

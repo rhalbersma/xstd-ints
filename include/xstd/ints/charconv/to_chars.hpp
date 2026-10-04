@@ -55,12 +55,12 @@ template<integer I>
         static constexpr auto* digits = "0123456789abcdefghijklmnopqrstuvwxyz";
 
         // The unsigned counterpart holds |min()| and lets both loops stop at the radix.
-        using U = make_unsigned_t<I>;
+        using U          = make_unsigned_t<I>;
         auto const radix = static_cast<U>(base);
 
         // Reduced once here, not per digit; both are well-formed and branchless when unsigned.
-        auto const zero = static_cast<I>(0);
-        auto const negative = value < zero;
+        auto const zero      = static_cast<I>(0);
+        auto const negative  = value < zero;
         auto const magnitude = static_cast<U>(negative ? U{} - static_cast<U>(value) : static_cast<U>(value));
 
         // Converted rather than selected: a conditional would be one-sided when unsigned.
@@ -87,8 +87,8 @@ template<integer I>
         auto rest = magnitude;
         while (rest >= radix) {
                 auto const [quotient, remainder] = xstd::div(rest, radix);
-                *out-- = digits[static_cast<std::size_t>(remainder)];
-                rest = quotient;
+                *out--                           = digits[static_cast<std::size_t>(remainder)];
+                rest                             = quotient;
         }
         // The loop leaves a single digit. No decrement: unsigned, it would step below first.
         *out = digits[static_cast<std::size_t>(rest)];

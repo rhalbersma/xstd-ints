@@ -19,7 +19,7 @@
 
 namespace xstd {
 
-using int128 = std::_Signed128;
+using int128  = std::_Signed128;
 using uint128 = std::_Unsigned128;
 
 // remove_cvref_t is load-bearing: _Word is an array, so decltype gives uint64_t& and numeric_limits reports 0 digits.
@@ -54,7 +54,7 @@ using uint128 = std::_Unsigned128;
 
 namespace xstd {
 
-using int128 = __int128;
+using int128  = __int128;
 using uint128 = unsigned __int128;
 
 } // namespace xstd

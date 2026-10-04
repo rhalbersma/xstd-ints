@@ -35,7 +35,7 @@ template<class T>
 [[nodiscard]] auto rendered(T value, int base)
         -> std::string
 {
-        auto buffer = std::array<char, xstd::to_chars_max_size<T>>{};
+        auto buffer       = std::array<char, xstd::to_chars_max_size<T>>{};
         auto const result = xstd::to_chars(buffer.data(), buffer.data() + buffer.size(), value, base);
         BOOST_CHECK(result.ec == std::errc{});
         return std::string(buffer.data(), result.ptr);
@@ -46,7 +46,7 @@ template<class T>
 [[nodiscard]] auto rendered_by_std(T value, int base)
         -> std::string
 {
-        auto buffer = std::array<char, 160>{};
+        auto buffer       = std::array<char, 160>{};
         auto const result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), value, base);
         BOOST_CHECK(result.ec == std::errc{});
         return std::string(buffer.data(), result.ptr);
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(DigitsPathMatchesTheStandard, T, test::std_signed_
 // The worst case is min() in base 2, where a signed type needs two more characters.
 BOOST_AUTO_TEST_CASE_TEMPLATE(MaxSizeHoldsTheWorstCase, T, test::exact_width_signed_integer_types)
 {
-        auto buffer = std::array<char, xstd::to_chars_max_size<T>>{};
+        auto buffer    = std::array<char, xstd::to_chars_max_size<T>>{};
         auto const min = xstd::to_chars(buffer.data(), buffer.data() + buffer.size(), xstd::numeric_limits<T>::min(), 2);
         BOOST_CHECK(min.ec == std::errc{});
         auto const max = xstd::to_chars(buffer.data(), buffer.data() + buffer.size(), xstd::numeric_limits<T>::max(), 2);
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(MaxSizeHoldsTheWorstCase, T, test::exact_width_sig
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(MaxSizeHoldsTheWorstCaseUnsigned, T, test::exact_width_unsigned_integer_types)
 {
-        auto buffer = std::array<char, xstd::to_chars_max_size<T>>{};
+        auto buffer    = std::array<char, xstd::to_chars_max_size<T>>{};
         auto const max = xstd::to_chars(buffer.data(), buffer.data() + buffer.size(), xstd::numeric_limits<T>::max(), 2);
         BOOST_CHECK(max.ec == std::errc{});
 
@@ -186,14 +186,14 @@ BOOST_AUTO_TEST_CASE(Int128Boundaries)
         BOOST_CHECK_EQUAL(rendered(xstd::int128{35}, 36), "z");
 
         // The default base, which every call above passes explicitly.
-        auto decimal = std::array<char, xstd::to_chars_max_size<xstd::int128>>{};
+        auto decimal    = std::array<char, xstd::to_chars_max_size<xstd::int128>>{};
         auto const wide = xstd::to_chars(decimal.data(), decimal.data() + decimal.size(), xstd::int128{-42});
         BOOST_CHECK_EQUAL(std::string(decimal.data(), wide.ptr), "-42");
         auto const narrow = xstd::to_chars(decimal.data(), decimal.data() + decimal.size(), 42);
         BOOST_CHECK_EQUAL(std::string(decimal.data(), narrow.ptr), "42");
 
         // The short-buffer return in the unsigned instantiation, counted separately.
-        auto buffer = std::array<char, xstd::to_chars_max_size<xstd::uint128>>{};
+        auto buffer          = std::array<char, xstd::to_chars_max_size<xstd::uint128>>{};
         auto const truncated = xstd::to_chars(
                 buffer.data(), buffer.data(), xstd::numeric_limits<xstd::uint128>::max(), 2
         );
@@ -205,7 +205,7 @@ template<class T>
 [[nodiscard]] consteval auto rendered_at_compile_time(T value, int base, std::string_view expected)
         -> bool
 {
-        auto buffer = std::array<char, xstd::to_chars_max_size<T>>{};
+        auto buffer       = std::array<char, xstd::to_chars_max_size<T>>{};
         auto const result = xstd::to_chars(buffer.data(), buffer.data() + buffer.size(), value, base);
         return result.ec == std::errc{} and std::string_view{buffer.data(), result.ptr} == expected;
 }
@@ -223,7 +223,7 @@ template<class T>
 [[nodiscard]] consteval auto renders_at_compile_time(T value, int base)
         -> bool
 {
-        auto buffer = std::array<char, xstd::to_chars_max_size<T>>{};
+        auto buffer       = std::array<char, xstd::to_chars_max_size<T>>{};
         auto const result = xstd::to_chars(buffer.data(), buffer.data() + buffer.size(), value, base);
         return result.ec == std::errc{} and result.ptr != buffer.data();
 }
@@ -244,7 +244,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(UsableInAConstantExpressionPerTypeUnsigned, T, tes
 // A buffer too small reports value_too_large and leaves ptr at last, not a truncation.
 BOOST_AUTO_TEST_CASE(ShortBuffer)
 {
-        auto buffer = std::array<char, 4>{};
+        auto buffer       = std::array<char, 4>{};
         auto const result = xstd::to_chars(buffer.data(), buffer.data() + buffer.size(), 123456, 10);
         BOOST_CHECK(result.ec == std::errc::value_too_large);
         BOOST_CHECK(result.ptr == buffer.data() + buffer.size());
