@@ -104,10 +104,12 @@ The shape is also `std::bitset`'s, which generalized exactly these operators
 from the built-in integers and added only the shifts; it has no `+`, no `<`,
 and no conversion to a number.
 
-The compound forms must return `T&`, as /2's synopsis writes them. That is
-strict enough to turn away libstdc++'s `ios_base` flag types, whose compound
-assignments return `const X&`; the test pins that consequence where the
-library is libstdc++.
+The compound forms need only be valid. /4 defines setting a value as
+evaluating `X |= Y` and clearing it as `X &= ~Y`, and says nothing of what
+either returns; /2's `X&` is one way the type "can be written", not a
+requirement. Asking for it would turn away libstdc++'s `ios_base` flag types,
+whose compound assignments return `const X&`, which the standard names as
+bitmask types.
 
 Two omissions are load-bearing rather than incidental, and one boundary is.
 

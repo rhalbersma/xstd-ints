@@ -10,7 +10,7 @@
 #include <bit>                                  // bit_width, countr_zero, popcount, rotl
 #include <bitset>                               // bitset
 #include <charconv>                             // chars_format
-#include <concepts>                             // integral
+#include <concepts>                             // integral, signed_integral
 #include <filesystem>                           // copy_options, directory_options, perm_options, perms
 #include <future>                               // launch
 #include <ios>                                  // ios_base
@@ -75,14 +75,13 @@ BOOST_AUTO_TEST_CASE(TheStandardBitmaskTypesAreAdmitted)
         BOOST_CHECK(true);
 }
 
-// /2's synopsis returns X& from a compound assignment; libstdc++'s ios_base flags return const X&, and are none.
-BOOST_AUTO_TEST_CASE(TheCompoundFormsReturnAPlainReference)
+// /4 asks only that the compound forms be valid: libstdc++'s ios_base flags return const X&, and are one too.
+BOOST_AUTO_TEST_CASE(TheCompoundFormsNeedOnlyBeValid)
 {
-#ifdef __GLIBCXX__
-        static_assert(not xstd::bit_mask<std::ios_base::fmtflags>);
-        static_assert(not xstd::bit_mask<std::ios_base::iostate>);
-        static_assert(not xstd::bit_mask<std::ios_base::openmode>);
-#endif
+        // An implementation may make these a signed int, which the unsigned narrowing then turns away.
+        static_assert(xstd::bit_mask<std::ios_base::fmtflags> or std::signed_integral<std::ios_base::fmtflags>);
+        static_assert(xstd::bit_mask<std::ios_base::iostate> or std::signed_integral<std::ios_base::iostate>);
+        static_assert(xstd::bit_mask<std::ios_base::openmode> or std::signed_integral<std::ios_base::openmode>);
         BOOST_CHECK(true);
 }
 

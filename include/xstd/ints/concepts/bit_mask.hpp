@@ -31,11 +31,11 @@ concept bit_mask =
                 { ~a } -> std::same_as<promoted_t<T>>;
         } and
 
-        // /2: same-type compound assignment, returning T& as the synopsis writes it.
+        // /4: setting and clearing a value evaluate the compound forms, which need only be valid; /2 shows one way.
         requires (T a, T const b) {
-                { a &= b } -> std::same_as<T&>;
-                { a ^= b } -> std::same_as<T&>;
-                { a |= b } -> std::same_as<T&>;
+                a &= b;
+                a ^= b;
+                a |= b;
         } and
 
         // /2: the binary forms, against promoted_t so [conv.prom] built-ins qualify.
