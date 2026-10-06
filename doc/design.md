@@ -87,28 +87,37 @@ both name `_BitInt` itself, since it is exempt from promotion. The public
 domain currently begins at two because Clang has not yet implemented N3747's
 signed `_BitInt(1)`.
 
-### `bitwise_operators`
+### `bit_mask`
 
-`integer_class` pruned to the half that is about bits rather than numbers:
-regularity, the complement, and the three logical operators and the two
-shifts, each in both its compound and its binary form. Nothing arithmetic,
-nothing about range, no conversions, no increment, no ordering.
+[bitmask.types] gives a bitmask type three implementations: an enumeration
+that overloads the operators, an integer type, or a `std::bitset`. The
+standard's own are mostly the first kind (`std::filesystem::perms`,
+`std::launch`, `std::chars_format`, the `regex_constants` flags), and the
+standard names the requirement without a concept to check it. `bit_mask` asks
+for what /2 writes out: regularity, the complement, and the three logical
+operators in both their compound and their binary form. Nothing arithmetic,
+nothing about range, no conversions, no increment, no ordering, and no shifts:
+[bitmask.types] has none, and an enumeration overloading the rest need not add
+them.
 
-The shape is `std::bitset`'s. That template generalized exactly this set from
-the built-in integers — [template.bitset] has `&=`, `|=`, `^=`, `<<=`, `>>=`,
-`~`, `&`, `|`, `^`, `<<` and `>>`, and no `+`, no `<`, and no conversion to a
-number — so a concept for *a fixed-width field of bits* is `integer_class`
-with the numeric half removed. The clause references are kept where they
-stood, so what was dropped is visible beside what was not.
+The shape is also `std::bitset`'s, which generalized exactly these operators
+from the built-in integers and added only the shifts; it has no `+`, no `<`,
+and no conversion to a number.
+
+The compound forms need only be valid. /4 defines setting a value as
+evaluating `X |= Y` and clearing it as `X &= ~Y`, and says nothing of what
+either returns; /2's `X&` is one way the type "can be written", not a
+requirement. Asking for it would turn away libstdc++'s `ios_base` flag types,
+whose compound assignments return `const X&`, which the standard names as
+bitmask types.
 
 Two omissions are load-bearing rather than incidental, and one boundary is.
 
-The strong ordering under /9 is gone because `std::bitset` has no `operator<`
+No strong ordering is asked for because `std::bitset` has no `operator<`
 at all. Requiring an order would exclude the very type the concept is shaped
 after, so a bit container's order stays its wrapper's business.
 
-`-=` goes with the rest of /7.5's arithmetic, and for one reason beyond being
-arithmetic: on an unsigned integer it is subtraction, and on a container of
+`-=` is not asked for either, and for one reason beyond being arithmetic: on an unsigned integer it is subtraction, and on a container of
 bits the same spelling reads as set difference. A structural concept cannot
 tell those apart, so it declines to ask for the operator whose meaning it
 could not pin down.
@@ -124,13 +133,12 @@ judged by its operators alone. The second disjunct is what admits
 `std::bitset` and the bit containers, which are fields of bits without being
 numbers at all, and the test pins that `std::bitset` models the concept.
 
-Some narrowing is needed because the pruning alone admits too much. `bool`,
+Some narrowing is needed because the operators alone admit too much. `bool`,
 the five character types and every signed built-in answer every requirement
 stated here, through integral promotion, so no structural clause among the
-operators can reach them. `integer_class` kept `bool` out via `++` and `--`,
-which are not bitwise and are not asked for, and kept the character types out
-via the pair law, which is arithmetic's law and says nothing about holding
-bits.
+operators can reach them. `integer_class` keeps `bool` out via `++` and `--`, which are not bitwise and
+are not asked for, and keeps the character types out via the pair law, which is
+arithmetic's law and says nothing about holding bits.
 
 **This is the line `<bit>` already draws.** Measured across all sixteen
 built-in candidates, the types this concept admits are exactly the types
@@ -142,12 +150,10 @@ agreement type by type rather than describing it.
 
 What each half turns away. `std::integral` catches `bool`, whose conversion
 back from the promoted `int` is a nonzero test rather than a reduction —
-`~true` is `true` and `true <<= 1` is `true`, where a one-bit field gives
-`false` both times, and `&=`, `^=` and `|=` come out right only because the
-nonzero test and mod 2 agree on `{0, 1}`. Both front ends say so
-independently: `~b` is `-Wbool-operation` on GCC and Clang alike and
-`b <<= 1` is `-Wint-in-bool-context` on GCC, and GCC diagnoses them even
-inside an unevaluated requires-expression, which is why the test pins the
+`~true` is `true`, where a one-bit field gives `false`, and `&=`, `^=` and
+`|=` come out right only because the nonzero test and mod 2 agree on `{0, 1}`.
+Both front ends say so independently: `~b` is `-Wbool-operation` on GCC and
+Clang alike, and GCC diagnoses it even inside an unevaluated requires-expression, which is why the test pins the
 refusal by its result rather than by writing the expressions out. The same
 predicate catches the character types and the signed built-ins, whose `>>` is
 arithmetic — it preserves the sign rather than moving the bits. `char` and
