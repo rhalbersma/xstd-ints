@@ -15,6 +15,7 @@
 #include <future>                               // launch
 #include <ios>                                  // ios_base
 #include <regex>                                // regex_constants
+#include <utility>                              // to_underlying
 
 BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(Concepts)
@@ -101,25 +102,25 @@ enum class flags : unsigned {
 [[nodiscard]] constexpr auto operator~(flags x) noexcept
         -> flags
 {
-        return static_cast<flags>(~static_cast<unsigned>(x));
+        return static_cast<flags>(~std::to_underlying(x));
 }
 
 [[nodiscard]] constexpr auto operator&(flags x, flags y) noexcept
         -> flags
 {
-        return static_cast<flags>(static_cast<unsigned>(x) & static_cast<unsigned>(y));
+        return static_cast<flags>(std::to_underlying(x) & std::to_underlying(y));
 }
 
 [[nodiscard]] constexpr auto operator^(flags x, flags y) noexcept
         -> flags
 {
-        return static_cast<flags>(static_cast<unsigned>(x) ^ static_cast<unsigned>(y));
+        return static_cast<flags>(std::to_underlying(x) ^ std::to_underlying(y));
 }
 
 [[nodiscard]] constexpr auto operator|(flags x, flags y) noexcept
         -> flags
 {
-        return static_cast<flags>(static_cast<unsigned>(x) | static_cast<unsigned>(y));
+        return static_cast<flags>(std::to_underlying(x) | std::to_underlying(y));
 }
 
 constexpr auto operator&=(flags& x, flags y) noexcept
