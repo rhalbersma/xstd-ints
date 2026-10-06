@@ -3,20 +3,20 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_INTS_CONCEPTS_BITMASK_TYPE_HPP
-#define XSTD_INTS_CONCEPTS_BITMASK_TYPE_HPP
+#ifndef XSTD_INTS_CONCEPTS_BIT_MASK_HPP
+#define XSTD_INTS_CONCEPTS_BIT_MASK_HPP
 
 #include <xstd/ints/concepts/signed_integer.hpp>   // signed_integer
 #include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
 #include <xstd/ints/type_traits/promoted.hpp>      // promoted_t
-#include <concepts>                                // convertible_to, integral, regular, same_as
+#include <concepts>                                // integral, regular, same_as
 #include <type_traits>                             // remove_cv_t
 
 // [bitmask.types]'s bitmask type: an unsigned integer, std::bitset, or an enumeration overloading the operators.
 namespace xstd {
 
 template<class T_cv, class T = std::remove_cv_t<T_cv>>
-concept bitmask_type =
+concept bit_mask =
         // cv-transparent: every requirement is stated of the cv-stripped T, same_as guarding the defaulted parameter.
         std::same_as<T, std::remove_cv_t<T_cv>> and
 
@@ -31,20 +31,22 @@ concept bitmask_type =
                 { ~a } -> std::same_as<promoted_t<T>>;
         } and
 
-        // /2 returns X&; libstdc++'s ios_base flags return X const&, to which the same reference binds.
+        // /2: same-type compound assignment, returning T& as the synopsis writes it.
         requires (T a, T const b) {
-                { a &= b } -> std::convertible_to<T const&>;
-                { a ^= b } -> std::convertible_to<T const&>;
-                { a |= b } -> std::convertible_to<T const&>;
+                { a &= b } -> std::same_as<T&>;
+                { a ^= b } -> std::same_as<T&>;
+                { a |= b } -> std::same_as<T&>;
         } and
 
-        // /2: the binary forms, against promoted_t for the reason the complement is.
+        // /2: the binary forms, against promoted_t so [conv.prom] built-ins qualify.
         requires (T const a, T const b) {
                 { a & b } -> std::same_as<promoted_t<T>>;
                 { a ^ b } -> std::same_as<promoted_t<T>>;
                 { a | b } -> std::same_as<promoted_t<T>>;
         };
 
+// No shifts: [bitmask.types] names none, and an enumeration overloading the rest need not add them.
+
 } // namespace xstd
 
-#endif // XSTD_INTS_CONCEPTS_BITMASK_TYPE_HPP
+#endif // XSTD_INTS_CONCEPTS_BIT_MASK_HPP
