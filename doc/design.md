@@ -87,6 +87,35 @@ both name `_BitInt` itself, since it is exempt from promotion. The public
 domain currently begins at two because Clang has not yet implemented N3747's
 signed `_BitInt(1)`.
 
+### `bitmask_type`
+
+[bitmask.types] gives a bitmask type three implementations: an enumeration
+that overloads the operators, an integer type, or a `std::bitset`. The
+standard's own are the first kind (`std::filesystem::perms`, `std::launch`,
+`std::chars_format`, the `regex_constants` flags) and, in some libraries, the
+`ios_base` flags. The concept asks for what /2 writes out: `~`, the binary
+`&`, `^` and `|`, their compound forms, regularity for /4's test of a value
+against zero, and nothing about shifts or arithmetic.
+
+The integer leg is narrowed to `unsigned_integer`, by the same law
+`bitwise_operators` uses: an integer must be unsigned, and a non-integer is
+judged by its operators alone. The standard admits every integer type, so this
+is a deliberate subset: a signed integer's `~` and `>>` read its sign. Where a
+library implements an `ios_base` flag type as a signed `int`, that type is
+turned away, and the test pins the disjunction rather than either answer.
+
+The binary operators and `~` are checked against `promoted_t<T>`, so the
+narrow unsigned types qualify through [conv.prom] as they do for
+`bitwise_operators`. The compound forms ask only that the result bind to
+`T const&`: /2 specifies `X&`, but libstdc++'s `ios_base` flag types return
+`const X&`, and a stricter check would turn away a type the standard names.
+
+`bitwise_operators` refines it, adding the two shifts and the stricter `T&`
+from its compound assignments, so an overload set constrained on both picks
+the shifting one where both hold. The refinement goes through `bitmask_type<T_cv>`,
+not the cv-stripped `T`: subsumption compares atomic constraints with their
+parameter mappings, and only the same mapping is the same constraint.
+
 ### `bitwise_operators`
 
 `integer_class` pruned to the half that is about bits rather than numbers:
