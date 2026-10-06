@@ -139,7 +139,7 @@ integer-class type, and [CONTRIBUTING.md](CONTRIBUTING.md) to build the library 
 | Header | Additions | Description | Reference |
 | :----- | :-------- | :---------- | :-------- |
 | `<xstd/ints/concepts/integer_class.hpp>` <br> `<xstd/ints/concepts/integer.hpp>` <br> `<xstd/ints/concepts/signed_integer.hpp>` <br> `<xstd/ints/concepts/unsigned_integer.hpp>` <br> `<xstd/ints/concepts/bit_mask.hpp>` <br> `<xstd/ints/concepts/alignable.hpp>` <br> `<xstd/ints/concepts/nothrow_const_operators.hpp>` | `integer_class` <br> `integer` <br> `signed_integer` <br> `unsigned_integer` <br> `bit_mask` <br> `alignable`, `nothrow_alignable` <br> `nothrow_const_operators` | The operations [iterator.concept.winc] states of an integer-class type <br> P3701 arithmetic domain, extended to paired integer-class types <br> Open form of `std::signed_integral` <br> Open form of `std::unsigned_integral` <br> The standard's bitmask type: an unsigned integer, `std::bitset`, or an enumeration overloading the operators <br> What the alignment functions ask of a type, and whether its operations carry `noexcept` <br> Exception specification of the integer functions | [iterator.concept.winc] (integer-class type) <br> [P3701R0](https://wg21.link/P3701R0), [iterator.concept.winc] <br> [iterator.concept.winc] (integer-class types) <br> [iterator.concept.winc] (integer-class types) <br> [bitmask.types] <br> none <br> none |
-| `<xstd/ints/bit.hpp>` | `countl_zero` <br> `countr_zero` <br> `popcount` | `std::countl_zero`, widened to the 128-bit integer classes `<bit>` declines <br> `std::countr_zero`, the same <br> `std::popcount`, the same | [bit.count] <br> [bit.count] <br> [bit.pop] |
+| `<xstd/ints/bit.hpp>` | `countl_zero` <br> `countr_zero` <br> `popcount` | `std::countl_zero`, widened to the 128-bit integer classes and bit-precise widths `<bit>` declines <br> `std::countr_zero`, the same <br> `std::popcount`, the same | [bit.count] <br> [bit.count] <br> [bit.pop] |
 | `<xstd/ints/charconv.hpp>` | `to_chars` <br> `to_chars_max_size` | `std::to_chars`, widened to xstd integers it does not cover <br> Buffer size that holds any value of `T` at any base | [charconv.to.chars] <br> none |
 | `<xstd/ints/cstdint.hpp>` | `bit_int<N>` <br> `bit_uint<N>` <br> `bit_int_max_width` <br> `int128` <br> `uint128` | Native bit-precise signed integer (when available) <br> Native bit-precise unsigned integer (when available) <br> Maximum native bit-precise width (when available) <br> Platform 128-bit signed integer <br> Platform 128-bit unsigned integer | [P3666R0](https://wg21.link/P3666R0) <br> [P3666R0](https://wg21.link/P3666R0) <br> none <br> none <br> none |
 | `<xstd/ints/cstdlib.hpp>` | `div_result` <br> `sign` <br> `abs` <br> `unsigned_abs` <br> `div` <br> `div_euclid` <br> `div_floor` | Defaulted equality comparison <br> `-1`, `0`, or `1`; `0` or `1` when unsigned <br> `constexpr`, any xstd integer <br> Total `\|x\|`, returning the unsigned counterpart <br> Truncated division, any xstd integer <br> Euclidean division <br> Floored division | none <br> [Boost.Math](https://www.boost.org/doc/libs/1_80_0/libs/math/doc/html/math_toolkit/sign_functions.html) <br> [p0533r9](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0533r9.pdf) (reviewed implementation wording) <br> [Rust `unsigned_abs`](https://doc.rust-lang.org/std/primitive.i32.html#method.unsigned_abs) (no C++ equivalent) <br> [p0533r9](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0533r9.pdf) (reviewed implementation wording) <br> [Euclidean division](https://en.wikipedia.org/wiki/Euclidean_division) <br> [Floored division](http://research.microsoft.com/pubs/151917/divmodnote-letter.pdf) |
@@ -171,6 +171,16 @@ carry one each for the type they adapt. Where it is the built-in `unsigned __int
 libstdc++ and libc++ carry it into `std::unsigned_integral` only outside
 `__STRICT_ANSI__`, so a strictly conforming translation unit on GCC or Clang has
 no bit basis for that one width.
+
+The same three take `bit_uint<N>` at every width the compiler offers. libc++
+makes `unsigned _BitInt(N)` integral, and its `<bit>` answers each width
+correctly, so there the standard function is the one called. Where `<bit>`
+refuses the type, as libstdc++'s does, an overload over
+`__builtin_clzg`, `__builtin_ctzg` and `__builtin_popcountg` answers instead,
+the first two given `N` as the result for zero. That overload is constrained on
+`<bit>` refusing the width, so exactly one of the two is ever viable, and it is
+declared only where `XSTD_HAS_BIT_INT` is defined and `__has_builtin` reports
+the builtin. GCC has no `_BitInt` in C++, so there it declares nothing.
 
 If you lint with `clang-tidy` and use any Boost library, `misc-include-cleaner`
 will report that nothing provides the Boost names you write, here and anywhere

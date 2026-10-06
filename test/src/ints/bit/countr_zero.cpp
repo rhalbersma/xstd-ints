@@ -5,26 +5,29 @@
 
 #include <xstd/ints/bit/countr_zero.hpp> // countr_zero
 #include <xstd/ints/bit/popcount.hpp>    // popcount
-#include <xstd/ints/cstdint.hpp>         // uint128
+#include <xstd/ints/cstdint.hpp>         // bit_int, bit_uint, uint128
 #include <xstd/ints/limits.hpp>          // numeric_limits
+#include <test/bit_reference.hpp>        // TEST_HAS_BIT_PRECISE_BIT, bit_precise_sweep_types, for_each_edge_value, for_each_sweep_value, reference_countr_zero
 #include <test/constexpr_check.hpp>      // XSTD_CONSTEXPR_CHECK
 #include <test/exact_width_types.hpp>    // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>      // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK
-#include <concepts>                      // unsigned_integral
 #include <bit>                           // countr_zero
+#include <concepts>                      // unsigned_integral
+#include <cstddef>                       // size_t
 #include <cstdint>                       // uint64_t
 #include <tuple>                         // tuple_cat
 #include <utility>                       // declval
 
 namespace {
 
-// Every exact width but the bit-precise: unsigned _BitInt(N) reaches neither <bit> nor any overload here.
+// Every exact width, the unsigned bit-precise ones reaching <bit> where it takes them and a builtin where it does not.
 template<class T>
 concept has_popcount = requires (T x) { xstd::popcount(x); };
 
-using worded_unsigned_types = decltype(std::tuple_cat(
+using basis_unsigned_types = decltype(std::tuple_cat(
         std::declval<test::std_unsigned_types>(), std::declval<test::xstd_unsigned_types>(),
-        std::declval<test::boost_unsigned_types>(), std::declval<test::absl_unsigned_types>()
+        std::declval<test::boost_unsigned_types>(), std::declval<test::absl_unsigned_types>(),
+        std::declval<test::bit_precise_sweep_types>()
 ));
 
 } // namespace
@@ -43,7 +46,7 @@ BOOST_AUTO_TEST_CASE(AgreesWithStdWhereStdAnswers)
 }
 
 // Total across every width the library carries, the 128-bit classes included, which is where this reaches past <bit>.
-BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsOfEveryWidth, T, worded_unsigned_types)
+BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsOfEveryWidth, T, basis_unsigned_types)
 {
         constexpr auto W = xstd::numeric_limits<T>::digits;
         static_assert(xstd::countr_zero(T{0}) == W);
@@ -53,7 +56,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsOfEveryWidth, T, worded_unsigned_types)
 }
 
 // The word boundary, pinning each class's low half: read through the wrong accessor the halves come back swapped.
-BOOST_AUTO_TEST_CASE_TEMPLATE(TheWordBoundary, T, worded_unsigned_types)
+BOOST_AUTO_TEST_CASE_TEMPLATE(TheWordBoundary, T, basis_unsigned_types)
 {
         constexpr auto W = xstd::numeric_limits<T>::digits;
         if constexpr (W >= 128) {
@@ -72,6 +75,11 @@ concept xstd_answers = requires (T x) { xstd::countr_zero(x); };
 template<class T>
 concept std_answers = requires (T x) { std::countr_zero(x); };
 
+#ifdef TEST_HAS_BIT_PRECISE_BIT
+template<std::size_t N>
+concept builtin_answers = requires (xstd::bit_uint<N> x) { xstd::countr_zero<N>(x); };
+#endif
+
 } // namespace
 
 BOOST_AUTO_TEST_CASE(TheConstraintIsTheBodys)
@@ -86,10 +94,15 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsTheBodys)
         // Not an equality at the widest width: xstd::uint128 is a class, so this asserts a basis exists, not std's.
         static_assert(xstd_answers<xstd::uint128>);
 
-#ifdef XSTD_HAS_BIT_INT
-        // The tripwire for P3666R4: if is_integral_v<_BitInt(N)> goes true while <bit> refuses it, this fails by name.
-        static_assert(xstd_answers<xstd::bit_uint<64>> == std_answers<xstd::bit_uint<64>>);
-        static_assert(xstd_answers<xstd::bit_uint<24>> == std_answers<xstd::bit_uint<24>>);
+#ifdef TEST_HAS_BIT_PRECISE_BIT
+        // Nor here: unsigned bit-precise widths have a basis whether or not <bit> takes them, and signed ones none.
+        static_assert(xstd_answers<xstd::bit_uint<64>>);
+        static_assert(xstd_answers<xstd::bit_uint<24>>);
+        static_assert(not xstd_answers<xstd::bit_int<24>>);
+
+        // And exactly one overload answers it: the builtin is reached only where <bit> refuses the width.
+        static_assert(builtin_answers<64> != std_answers<xstd::bit_uint<64>>);
+        static_assert(builtin_answers<24> != std_answers<xstd::bit_uint<24>>);
 #endif
 
         // And those first four really are the gap std::unsigned_integral would have opened.
@@ -97,6 +110,29 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsTheBodys)
         static_assert(std::unsigned_integral<char8_t> and not std_answers<char8_t>);
         BOOST_CHECK(true);
 }
+
+#ifdef TEST_HAS_BIT_PRECISE_BIT
+namespace {
+
+template<class T>
+constexpr auto agrees_with_the_reference()
+        -> bool
+{
+        auto agrees = true;
+        test::for_each_edge_value<T>([&](T x) -> void { agrees = agrees and xstd::countr_zero(x) == test::reference_countr_zero(x); });
+        return agrees;
+}
+
+} // namespace
+
+// Each bit-precise width against a bit-at-a-time reference: its edges at compile time, its full sweep at run time.
+BOOST_AUTO_TEST_CASE_TEMPLATE(BitPreciseAgreesWithTheReference, T, test::bit_precise_sweep_types)
+{
+        static_assert(agrees_with_the_reference<T>());
+        test::for_each_sweep_value<T>([](T x) -> void { BOOST_CHECK_EQUAL(xstd::countr_zero(x), test::reference_countr_zero(x)); });
+}
+
+#endif
 
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()

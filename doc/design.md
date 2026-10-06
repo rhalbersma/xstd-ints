@@ -87,6 +87,18 @@ both name `_BitInt` itself, since it is exempt from promotion. The public
 domain currently begins at two because Clang has not yet implemented N3747's
 signed `_BitInt(1)`.
 
+The three `<bit>` counterparts follow the same split. Where the standard
+library's `<bit>` takes `unsigned _BitInt(N)`, as libc++'s does, xstd forwards
+to it; where it refuses the type, as libstdc++'s does, an overload deduces `N`
+and calls the compiler's type-generic builtins, passing `N` as the count for
+zero so that the builtin is total. The overload is constrained on the
+standard call being ill-formed rather than on the library in use, so it steps
+aside on its own the day a standard library learns the type, and the two can
+never be ambiguous. The builtins are younger than the type: Clang 19 added
+them, where `_BitInt` reached C++ in Clang 14. So the overload sits behind
+`__has_builtin` and is left undeclared on a compiler with the one and not the
+other, rather than given a fallback that no supported compiler needs.
+
 ### `bit_mask`
 
 [bitmask.types] gives a bitmask type three implementations: an enumeration

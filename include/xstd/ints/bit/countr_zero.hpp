@@ -6,7 +6,9 @@
 #ifndef XSTD_INTS_BIT_COUNTR_ZERO_HPP
 #define XSTD_INTS_BIT_COUNTR_ZERO_HPP
 
-#include <bit> // countr_zero
+#include <xstd/ints/cstdint/bit_int.hpp> // XSTD_HAS_BIT_INT, bit_uint
+#include <bit>                           // countr_zero
+#include <cstddef>                       // size_t
 
 // One overload set per function: <bit> takes std::unsigned_integral, which every 128-bit integer class fails.
 namespace xstd {
@@ -19,6 +21,21 @@ template<class T>
 {
         return std::countr_zero(x);
 }
+
+#ifdef XSTD_HAS_BIT_INT
+#if __has_builtin(__builtin_ctzg)
+
+// Where <bit> refuses unsigned _BitInt(N), as libstdc++ does, the builtin's second argument answers zero.
+template<std::size_t N>
+        requires (not requires (bit_uint<N> x) { std::countr_zero(x); })
+[[nodiscard]] constexpr auto countr_zero(bit_uint<N> x) noexcept
+        -> int
+{
+        return __builtin_ctzg(x, static_cast<int>(N));
+}
+
+#endif
+#endif
 
 } // namespace xstd
 
