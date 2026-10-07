@@ -54,21 +54,14 @@ using bit_precise_sweep_types = std::tuple<>;
 template<class T>
 inline constexpr auto width = static_cast<std::size_t>(xstd::numeric_limits<T>::digits);
 
-template<class T>
-[[nodiscard]] constexpr auto bit_at(T x, std::size_t i) noexcept
-        -> bool
-{
-        return static_cast<T>(static_cast<T>(x >> i) & T{1}) != T{0};
-}
-
-// The three references read one bit at a time, sharing nothing with any implementation under test.
+// The three references walk one bit at a time, sharing nothing with any implementation under test.
 template<class T>
 [[nodiscard]] constexpr auto reference_countl_zero(T x) noexcept
         -> int
 {
-        constexpr auto N = width<T>;
-        auto count       = 0;
-        for (auto i = N - 1UZ; i < N and not bit_at(x, i); --i) {
+        auto const ones = xstd::numeric_limits<T>::max();
+        auto count      = 0;
+        for (auto probe = static_cast<T>(ones ^ (ones >> 1U)); probe != T{0} and (x & probe) == T{0}; probe >>= 1U) {
                 ++count;
         }
         return count;
@@ -78,9 +71,8 @@ template<class T>
 [[nodiscard]] constexpr auto reference_countr_zero(T x) noexcept
         -> int
 {
-        constexpr auto N = width<T>;
-        auto count       = 0;
-        for (auto i = 0UZ; i < N and not bit_at(x, i); ++i) {
+        auto count = 0;
+        for (auto probe = T{1}; probe != T{0} and (x & probe) == T{0}; probe += probe) {
                 ++count;
         }
         return count;
@@ -92,7 +84,7 @@ template<class T>
 {
         auto count = 0;
         for (; x != T{0}; x >>= 1U) {
-                count += bit_at(x, 0UZ) ? 1 : 0;
+                count += (x & T{1}) != T{0} ? 1 : 0;
         }
         return count;
 }
@@ -102,34 +94,48 @@ template<class T, class F>
 constexpr auto for_each_edge_value(F f)
         -> void
 {
-        constexpr auto ones = static_cast<T>(~T{0});
+        auto const ones = xstd::numeric_limits<T>::max();
         f(T{0});
         f(T{1});
         f(ones);
-        for (auto const i : std::views::iota(0UZ, width<T>)) {
-                auto const bit = static_cast<T>(T{1} << i);
+
+        // Doubling walks the bit up the width and wraps it to zero past the top: no shift by a variable count.
+        auto below = T{0};
+        for (auto bit = T{1}; bit != T{0}; bit += bit) {
                 f(bit);
-                f(static_cast<T>(~bit));
-                f(static_cast<T>(bit - T{1}));
-                f(static_cast<T>(ones << i));
+                f(static_cast<T>(ones ^ bit));
+                f(below);
+                f(static_cast<T>(ones ^ below));
+                below |= bit;
         }
 }
 
-// SplitMix64, so a run reproduces: 64 bits at a time until the width is filled.
+// SplitMix64, so a run reproduces.
+[[nodiscard]] constexpr auto next_split_mix_64(std::uint64_t& state) noexcept
+        -> std::uint64_t
+{
+        state += 0x9e37'79b9'7f4a'7c15U;
+        auto z = state;
+        z      = (z ^ (z >> 30U)) * 0xbf58'476d'1ce4'e5b9U;
+        z      = (z ^ (z >> 27U)) * 0x94d0'49bb'1331'11ebU;
+        return z ^ (z >> 31U);
+}
+
+// 64 bits at a time until the width is filled, each earlier draw moved up by a constant 64 to make room.
 template<class T>
 [[nodiscard]] constexpr auto next_pseudo_random(std::uint64_t& state) noexcept
         -> T
 {
-        auto value = T{0};
-        for (auto k = 0UZ; k < width<T>; k += 64UZ) {
-                state += 0x9e37'79b9'7f4a'7c15U;
-                auto z = state;
-                z      = (z ^ (z >> 30U)) * 0xbf58'476d'1ce4'e5b9U;
-                z      = (z ^ (z >> 27U)) * 0x94d0'49bb'1331'11ebU;
-                z ^= z >> 31U;
-                value = static_cast<T>(value | static_cast<T>(static_cast<T>(z) << k));
+        if constexpr (width<T> <= 64UZ) {
+                return static_cast<T>(next_split_mix_64(state));
+        } else {
+                auto value = static_cast<T>(next_split_mix_64(state));
+                for (auto k = 64UZ; k < width<T>; k += 64UZ) {
+                        value <<= 64U;
+                        value |= static_cast<T>(next_split_mix_64(state));
+                }
+                return value;
         }
-        return value;
 }
 
 // Every value up to 13 bits, and past that the edge values with a reproducible pseudo-random sample.
@@ -138,9 +144,12 @@ constexpr auto for_each_sweep_value(F f)
         -> void
 {
         if constexpr (width<T> <= 13UZ) {
-                for (auto const v : std::views::iota(0UZ, 1UZ << width<T>)) {
-                        f(static_cast<T>(v));
-                }
+                // Counting up wraps to zero after the maximum, which ends the walk over every value.
+                auto value = T{0};
+                do {
+                        f(value);
+                        value += T{1};
+                } while (value != T{0});
         } else {
                 for_each_edge_value<T>(f);
                 auto state = std::uint64_t{width<T>};
