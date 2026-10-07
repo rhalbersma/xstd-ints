@@ -6,6 +6,7 @@
 #include <xstd/ints/bit.hpp>          // complete bit basis
 #include <xstd/ints/cstdint.hpp>      // uint128
 #include <xstd/ints/limits.hpp>       // numeric_limits
+#include <test/bit_reference.hpp>     // bit_precise_sweep_types
 #include <test/exact_width_types.hpp> // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>   // BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK
 #include <tuple>                      // tuple_cat
@@ -13,13 +14,14 @@
 
 namespace {
 
-// Every exact width but the bit-precise: unsigned _BitInt(N) reaches neither <bit> nor any overload here.
+// Every exact width, the unsigned bit-precise ones reaching <bit> where it takes them and a builtin where it does not.
 template<class T>
 concept has_popcount = requires (T x) { xstd::popcount(x); };
 
-using worded_unsigned_types = decltype(std::tuple_cat(
+using basis_unsigned_types = decltype(std::tuple_cat(
         std::declval<test::std_unsigned_types>(), std::declval<test::xstd_unsigned_types>(),
-        std::declval<test::boost_unsigned_types>(), std::declval<test::absl_unsigned_types>()
+        std::declval<test::boost_unsigned_types>(), std::declval<test::absl_unsigned_types>(),
+        std::declval<test::bit_precise_sweep_types>()
 ));
 
 } // namespace
@@ -28,7 +30,7 @@ BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(Bit)
 
 // The three together cross-check the halves: swapped accessors keep each single-function identity and break the sum.
-BOOST_AUTO_TEST_CASE_TEMPLATE(TheThreeAgreeOnASingleBit, T, worded_unsigned_types)
+BOOST_AUTO_TEST_CASE_TEMPLATE(TheThreeAgreeOnASingleBit, T, basis_unsigned_types)
 {
         constexpr auto W = xstd::numeric_limits<T>::digits;
 
