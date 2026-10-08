@@ -337,6 +337,36 @@ library and linting its own sources needs the same line, and no library can
 supply it on their behalf: the option belongs to the linter, and CMake carries
 no usage requirement that could propagate one.
 
+### Hashing
+
+Boost.Hash2 serializes an integer through byte writers that stop at 8 bytes, and
+selects that path by `std::is_integral`, which libstdc++ grants `__int128` only
+outside `__STRICT_ANSI__`. Neither the Microsoft STL's `std::_Signed128` nor a
+fundamental type such as `__int128` or `_BitInt(N)` has a namespace in which a
+`tag_invoke` hook could be found by ADL, so no customization reaches them.
+`<xstd/ints/ext/boost/hash2.hpp>` therefore supplies a function to call rather than a
+hook to find: `xstd::hash_append_int(h, f, v)` feeds any xstd integer to Hash2's
+existing writers, which is what keeps every flavor and constant evaluation working.
+
+The message is the value, never the object. A `_BitInt(24)` occupies four bytes
+one of which is padding with no specified contents, so hashing its storage would
+break "equal values hash equal"; the value is read instead. Up to 64 bits it is
+converted to the narrowest exact-width standard type of its signedness that holds
+it, and handed to `hash_append`; past 64 bits it is split into 64-bit words, low
+word first, as many as its width needs. Both steps sign-extend a signed value and
+zero-extend an unsigned one. Two consequences follow, and the tests pin both.
+Under `little_endian_flavor` the message is the value's little-endian bytes, so
+every 128-bit type (native, the Microsoft STL's, Boost.Int128's, Abseil's and
+`_BitInt(128)`) gives one digest. And types of one width agree whatever their
+representation: `bit_int<32>` hashes as `int32_t`, `bit_int<64>` as `int64_t`, and
+`bit_int<100>` as an `int128` of the same value.
+
+Extending every bit-precise width to a whole 64-bit word was rejected: it would
+have hashed `bit_int<32>` as eight bytes and `int32_t` as four, and libc++, which
+makes `_BitInt` integral, already gives Hash2 the four. Under a big-endian flavor
+the words stay low first and only the bytes within each word reverse, which is
+how xstd-bits has always hashed its 128-bit blocks.
+
 ### Traits and concepts
 
 The type utilities intentionally remain narrow:

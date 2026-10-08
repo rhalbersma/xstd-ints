@@ -9,6 +9,7 @@
       "description": "Build the Boost.Test-based unit tests",
       "dependencies": [
         "boost-align",
+        "boost-hash2",
         "boost-test"
       ]
     }

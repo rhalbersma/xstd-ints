@@ -281,10 +281,25 @@ else()
     set(${project_id}_test_absl_int128)
 endif()
 
+# The hashing adapter's library, and not a hard dependency either. Boost ships it from 1.88, and the
+# vcpkg manifest's test feature names it; it has too many Boost dependencies of its own to fetch alone.
+find_package(boost_hash2 CONFIG QUIET)
+
+if(TARGET Boost::hash2)
+    set(${project_id}_test_boost_hash2 Boost::hash2)
+else()
+    set(${project_id}_test_boost_hash2)
+endif()
+
 # The headers held back above, each compiled only where the library it adapts is there to adapt.
+if(TARGET Boost::int128 AND TARGET Boost::hash2)
+    cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/ints/ext/boost.hpp ${${project_id}_test_boost_int128} ${${project_id}_test_boost_hash2})
+endif()
 if(TARGET Boost::int128)
-    cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/ints/ext/boost.hpp ${${project_id}_test_boost_int128})
     cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/ints/ext/boost/int128.hpp ${${project_id}_test_boost_int128})
+endif()
+if(TARGET Boost::hash2)
+    cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/ints/ext/boost/hash2.hpp ${${project_id}_test_boost_hash2})
 endif()
 if(TARGET absl::int128)
     cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/ints/ext/absl.hpp ${${project_id}_test_absl_int128})
@@ -311,6 +326,7 @@ foreach(t ${targets})
         xstd::ints
         Boost::unit_test_framework
         ${${project_id}_test_boost_int128}
+        ${${project_id}_test_boost_hash2}
         ${${project_id}_test_absl_int128}
         ${project_id}_test_options
     )
