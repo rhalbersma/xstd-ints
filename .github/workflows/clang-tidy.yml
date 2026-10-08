@@ -31,8 +31,13 @@ jobs:
       test_dir: test/src
       # config/ is generated per platform and not a public header.
       include_exclude: include/xstd/config/*
-      # The ext/ headers need the library each adapts, which Configure fetches.
-      adapted_dirs: build/_deps/absl_int128-src build/_deps/boost_int128-src/include
+      # The ext/ headers need the library each adapts: the two int128 libraries
+      # Configure fetches, and Boost.Hash2, which vcpkg installs.
+      adapted_dirs: >-
+        build/_deps/absl_int128-src
+        build/_deps/boost_int128-src/include
+        vcpkg_installed/x64-linux/include
+        build/vcpkg_installed/x64-linux/include
       # Boost.Test, which vcpkg.json keeps out of its default features so that
       # consuming this library resolves no Boost at all.
       vcpkg_features: test

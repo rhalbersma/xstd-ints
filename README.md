@@ -130,6 +130,24 @@ static_assert(xstd::signed_integer<i128>);
 auto const [quotient, remainder] = xstd::div_floor(i128{-8}, i128{3});
 ```
 
+Boost.Hash2 writes integers of at most 64 bits, takes `__int128` as integral only
+outside strict ISO mode, cannot be taught a class in namespace `std`, and hashes a
+`_BitInt(24)` through bytes that include its padding. `hash_append_int` hashes any
+xstd integer by its value instead: one of at most 64 bits as the narrowest
+standard type that holds it, and a wider one as 64-bit words, low word first, each
+sign- or zero-extended. Under `little_endian_flavor` the message is the value's
+little-endian bytes, so every 128-bit type gives one digest, a `bit_int<64>` hashes
+as an `int64_t` does and a `bit_int<24>` as an `int32_t`, in constant evaluation too:
+
+```cpp
+#include <xstd/ints/cstdint.hpp>
+#include <xstd/ints/ext/boost/hash2.hpp> // brings Boost.Hash2's flavors with it
+#include <boost/hash2/fnv1a.hpp>
+
+auto h = boost::hash2::fnv1a_64{};
+xstd::hash_append_int(h, boost::hash2::little_endian_flavor{}, xstd::uint128{1} << 100);
+```
+
 See [the design notes](doc/design.md) for rationale and for customizing an
 integer-class type, and [CONTRIBUTING.md](CONTRIBUTING.md) to build the library itself.
 
@@ -144,7 +162,7 @@ integer-class type, and [CONTRIBUTING.md](CONTRIBUTING.md) to build the library 
 | `<xstd/ints/cstdint.hpp>` | `bit_int<N>` <br> `bit_uint<N>` <br> `bit_int_max_width` <br> `int128` <br> `uint128` | Native bit-precise signed integer (when available) <br> Native bit-precise unsigned integer (when available) <br> Maximum native bit-precise width (when available) <br> Platform 128-bit signed integer <br> Platform 128-bit unsigned integer | [P3666R0](https://wg21.link/P3666R0) <br> [P3666R0](https://wg21.link/P3666R0) <br> none <br> none <br> none |
 | `<xstd/ints/cstdlib.hpp>` | `div_result` <br> `sign` <br> `abs` <br> `unsigned_abs` <br> `div` <br> `div_euclid` <br> `div_floor` | Defaulted equality comparison <br> `-1`, `0`, or `1`; `0` or `1` when unsigned <br> `constexpr`, any xstd integer <br> Total `\|x\|`, returning the unsigned counterpart <br> Truncated division, any xstd integer <br> Euclidean division <br> Floored division | none <br> [Boost.Math](https://www.boost.org/doc/libs/1_80_0/libs/math/doc/html/math_toolkit/sign_functions.html) <br> [p0533r9](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0533r9.pdf) (reviewed implementation wording) <br> [Rust `unsigned_abs`](https://doc.rust-lang.org/std/primitive.i32.html#method.unsigned_abs) (no C++ equivalent) <br> [p0533r9](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0533r9.pdf) (reviewed implementation wording) <br> [Euclidean division](https://en.wikipedia.org/wiki/Euclidean_division) <br> [Floored division](http://research.microsoft.com/pubs/151917/divmodnote-letter.pdf) |
 | `<xstd/ints/ext/absl.hpp>` | `make_unsigned<absl::int128>` <br> `make_signed<absl::uint128>` | Pairs Abseil's two integer-class types, so each models `integer` | none <br> none |
-| `<xstd/ints/ext/boost.hpp>` | `make_unsigned<boost::int128::int128>` <br> `make_signed<boost::int128::uint128>` | Pairs Boost.Int128's two integer-class types, so each models `integer` | none <br> none |
+| `<xstd/ints/ext/boost.hpp>` | `make_unsigned<boost::int128::int128>` <br> `make_signed<boost::int128::uint128>` <br> `hash_append_int` | Pairs Boost.Int128's two integer-class types, so each models `integer` <br> Boost.Hash2's `hash_append` for every xstd integer, hashing the value and never the object | none <br> none <br> none |
 | `<xstd/ints/format.hpp>` | `formatter<div_result>` | `std::format` support for every element type `div_result` accepts | [p3391](https://wg21.link/P3391R3) (reviewed constexpr-format wording) |
 | `<xstd/ints/limits.hpp>` | `numeric_limits` | Open `std::numeric_limits`, specialized for xstd extension types | [numeric.limits] |
 | `<xstd/ints/memory.hpp>` | `align_up` <br> `align_down` <br> `is_aligned` | Round a value up to a power-of-two alignment, any xstd unsigned integer <br> Round a value down to a power-of-two alignment <br> Whether rounding would change anything | [Boost.Align](https://www.boost.org/doc/libs/release/doc/html/align.html) (`align_up`), [LLVM `alignTo`](https://llvm.org/doxygen/namespacellvm.html) <br> [Boost.Align](https://www.boost.org/doc/libs/release/doc/html/align.html) (`align_down`), [LLVM `alignDown`](https://llvm.org/doxygen/namespacellvm.html) <br> [Boost.Align](https://www.boost.org/doc/libs/release/doc/html/align.html) (`is_aligned`) |
@@ -155,10 +173,10 @@ The native bit-precise aliases are available when the compiler defines
 minimum width is two so every exposed type has a signed or unsigned counterpart.
 The 128-bit aliases and their `make_signed` and `make_unsigned` associations are
 defined together in `<xstd/ints/cstdint/int128.hpp>`; `<xstd/ints/cstdint.hpp>` is their
-umbrella. The two `<xstd/ext/>` umbrellas export `<xstd/ints/ext/absl/int128.hpp>` and
-`<xstd/ints/ext/boost/int128.hpp>`, and each needs the library it adapts on the
-include path; nothing above them exports either. Each adapted header is
-exported in turn, so including one is enough: `<xstd/ints/ext/absl/int128.hpp>`
+umbrella. The two `<xstd/ext/>` umbrellas export `<xstd/ints/ext/absl/int128.hpp>`, and
+`<xstd/ints/ext/boost/int128.hpp>` with `<xstd/ints/ext/boost/hash2.hpp>`, and each needs
+the libraries it adapts on the include path; nothing above them exports either. Each
+adapted header is exported in turn, so including one is enough: `<xstd/ints/ext/absl/int128.hpp>`
 brings `absl::int128` and `absl::uint128` with it.
 
 `std::countl_zero`, `std::countr_zero` and `std::popcount` take

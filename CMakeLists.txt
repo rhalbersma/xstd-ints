@@ -77,6 +77,7 @@ target_sources(
         include/xstd/ints/ext/absl.hpp
         include/xstd/ints/ext/absl/int128.hpp
         include/xstd/ints/ext/boost.hpp
+        include/xstd/ints/ext/boost/hash2.hpp
         include/xstd/ints/ext/boost/int128.hpp
         include/xstd/ints/format.hpp
         include/xstd/ints/format/div_result.hpp
