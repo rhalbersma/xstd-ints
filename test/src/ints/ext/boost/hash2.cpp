@@ -282,9 +282,12 @@ BOOST_AUTO_TEST_CASE(PaddingNeverReachesTheMessage)
         auto clean_bytes = std::array<unsigned char, sizeof(T)>{};
         std::memcpy(clean_bytes.data(), &clean, sizeof(T));
 
-        constexpr auto padding_byte = std::endian::native == std::endian::little ? sizeof(T) - 1UZ : 0UZ;
-        auto dirty_bytes            = clean_bytes;
-        dirty_bytes.at(padding_byte) ^= 0x5aU;
+        auto dirty_bytes = clean_bytes;
+        if constexpr (std::endian::native == std::endian::little) {
+                dirty_bytes.back() ^= 0x5aU;
+        } else {
+                dirty_bytes.front() ^= 0x5aU;
+        }
         auto dirty = T{};
         std::memcpy(&dirty, dirty_bytes.data(), sizeof(T));
         auto stored_bytes = std::array<unsigned char, sizeof(T)>{};
