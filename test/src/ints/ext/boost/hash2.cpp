@@ -3,22 +3,23 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/ints/cstdint.hpp>               // XSTD_HAS_BIT_INT, bit_int, bit_uint, int128, uint128
-#include <xstd/ints/limits.hpp>                // numeric_limits
-#include <xstd/ints/type_traits/is_signed.hpp> // is_signed_v
-#include <test/constexpr_check.hpp>            // XSTD_CONSTEXPR_CHECK, XSTD_CONSTEXPR_CHECK_EQUAL
-#include <test/exact_width_types.hpp>          // absl_signed_types, absl_unsigned_types, boost_signed_types, boost_unsigned_types, exact_width_integer_types
-#include <boost/test/unit_test.hpp>            // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK
-#include <algorithm>                           // max
-#include <array>                               // array
-#include <bit>                                 // bit_ceil, endian
-#include <cstddef>                             // size_t
-#include <cstdint>                             // int8_t, int16_t, int32_t, int64_t, uint16_t, uint32_t, uint64_t
-#include <cstring>                             // memcpy
-#include <ranges>                              // iota
-#include <tuple>                               // tuple, tuple_cat
-#include <type_traits>                         // conditional_t
-#include <utility>                             // declval
+#include <xstd/ints/cstdint.hpp>                   // XSTD_HAS_BIT_INT, bit_int, bit_uint, int128, uint128
+#include <xstd/ints/limits.hpp>                    // numeric_limits
+#include <xstd/ints/type_traits/is_signed.hpp>     // is_signed_v
+#include <xstd/ints/type_traits/make_unsigned.hpp> // make_unsigned_t
+#include <test/constexpr_check.hpp>                // XSTD_CONSTEXPR_CHECK, XSTD_CONSTEXPR_CHECK_EQUAL
+#include <test/exact_width_types.hpp>              // absl_signed_types, absl_unsigned_types, boost_signed_types, boost_unsigned_types, exact_width_integer_types
+#include <boost/test/unit_test.hpp>                // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK
+#include <algorithm>                               // max
+#include <array>                                   // array
+#include <bit>                                     // bit_ceil, endian
+#include <cstddef>                                 // size_t
+#include <cstdint>                                 // int8_t, int16_t, int32_t, int64_t, uint16_t, uint32_t, uint64_t
+#include <cstring>                                 // memcpy
+#include <ranges>                                  // iota
+#include <tuple>                                   // tuple, tuple_cat
+#include <type_traits>                             // conditional_t
+#include <utility>                                 // declval
 
 // Reached the way a consumer reaches it: the probe here, the adapter behind it.
 #if __has_include(<boost/hash2/hash_append.hpp>)
@@ -109,13 +110,16 @@ template<class T>
 [[nodiscard]] constexpr auto ascending_value()
         -> T
 {
-        auto v = T{0};
-        if constexpr (ascending_size<T> > 0UZ) {
+        if constexpr (ascending_size<T> == 0UZ) {
+                return T{0};
+        } else {
+                using U = xstd::make_unsigned_t<T>;
+                auto v  = U{0};
                 for (auto i = ascending_size<T> - 1UZ; i < ascending_size<T>; --i) {
-                        v = static_cast<T>(static_cast<T>(v << 8U) | static_cast<T>(i + 1UZ));
+                        v = static_cast<U>(static_cast<U>(v << 8U) | static_cast<U>(i + 1UZ));
                 }
+                return static_cast<T>(v);
         }
-        return v;
 }
 
 template<class T>
@@ -188,7 +192,8 @@ template<class T>
 [[nodiscard]] constexpr auto from_words(std::uint64_t low, std::uint64_t high)
         -> T
 {
-        return static_cast<T>(static_cast<T>(static_cast<T>(high) << 64U) | static_cast<T>(low));
+        using U = xstd::make_unsigned_t<T>;
+        return static_cast<T>(static_cast<U>(static_cast<U>(high) << 64U) | static_cast<U>(low));
 }
 
 } // namespace
