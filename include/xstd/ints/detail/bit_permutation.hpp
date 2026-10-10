@@ -11,7 +11,7 @@
 #include <cstdint>     // uint32_t, uint64_t
 #include <limits>      // numeric_limits
 #include <type_traits> // conditional_t, is_class_v
-#include <version>     // __cpp_lib_bitops
+#include <version>     // IWYU pragma: keep; __cpp_lib_bitops
 
 // Chosen at compile time: PEXT and PDEP are microcoded on AMD before Zen 3, so builds for those omit -mbmi2.
 #if defined(__BMI2__) and defined(__x86_64__)

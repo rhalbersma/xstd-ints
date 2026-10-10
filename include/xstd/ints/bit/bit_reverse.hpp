@@ -10,7 +10,7 @@
 #include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
 #include <xstd/ints/detail/bit_permutation.hpp>           // XSTD_HAS_STD_BIT_PERMUTATIONS, bit_limb, bit_limb_width, reverse_limb, shift_count_t, std_permutes_bits
 #include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
-#include <bit>                                            // bit_reverse
+#include <bit>                                            // IWYU pragma: keep; bit_reverse, where the standard library ships it
 
 // P3104R5's bit_reverse, over every unsigned integer xstd knows.
 namespace xstd {

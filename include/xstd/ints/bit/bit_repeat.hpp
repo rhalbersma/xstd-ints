@@ -9,7 +9,7 @@
 #include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
 #include <xstd/ints/detail/bit_permutation.hpp>    // XSTD_HAS_STD_BIT_PERMUTATIONS, shift_count_t, std_permutes_bits
 #include <xstd/ints/limits/numeric_limits.hpp>     // numeric_limits
-#include <bit>                                     // bit_repeat
+#include <bit>                                     // IWYU pragma: keep; bit_repeat, where the standard library ships it
 #include <cassert>                                 // assert
 #include <utility>                                 // unreachable
 
