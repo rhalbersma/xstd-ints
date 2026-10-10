@@ -15,7 +15,7 @@ across the tested toolchains. Consumers need no third-party dependencies.
 - **Generalize integer support.** The standard integral concepts and traits are
   closed over built-in types; xstd's integer concepts also accept paired
   integer-class types, based on their behavior and `xstd::numeric_limits`.
-- **Make semantics explicit.** The three division functions name their rounding
+- **Make semantics explicit.** The four division functions name their rounding
   convention rather than hiding it behind `/` and `%`.
 - **Stay modular and dependency-free.** Linking `xstd::ints` adds include paths
   and the [C++23](https://wg21.link/N4950) requirement, but no runtime library or transitive package.
@@ -278,7 +278,7 @@ the target rather than the type. The whole-surface battery in
 `test/src/cstdlib.cpp` runs over it everywhere, constant-evaluated where the
 intrinsic is there and checked at run time where it is not; its place in the
 exact-width lists is conditional on `ABSL_HAVE_INTRINSIC_INT128` instead, those
-cases constant-evaluating everything. Only the three divisions object at all, and
+cases constant-evaluating everything. Only the four divisions object at all, and
 those are exactly what the battery covers.
 
 ### External pairs
@@ -539,11 +539,11 @@ fit, which these cannot.
 
 ## Integer division
 
-`div_result` is xstd's common result for three complete integer-division
-conventions: truncating `div`, Euclidean `div_euclid`, and floored `div_floor`.
+`div_result` is xstd's common result for four complete integer-division
+conventions: truncating `div`, Euclidean `div_euclid`, floored `div_floor`, and ceiling `div_ceil`.
 Its result vocabulary follows [P3724R4](https://wg21.link/P3724R4), while xstd
 intentionally limits the operation family to these established conventions and
-extends all three across its broader `integer` domain.
+extends all four across its broader `integer` domain.
 
 ```cpp
 template<xstd::integer I>
@@ -565,6 +565,7 @@ numerator == denominator * quotient + remainder
 | `div` | toward zero | zero or numerator's sign |
 | `div_euclid` | chosen for a nonnegative remainder | `0 <= remainder < abs(denominator)` |
 | `div_floor` | toward negative infinity | zero or denominator's sign |
+| `div_ceil` | toward positive infinity | zero or the opposite of denominator's sign; modulo 2^N when unsigned |
 
 ```cpp
 constexpr auto result = xstd::div_floor(-8, 3);
@@ -576,9 +577,14 @@ auto const [q, r] = xstd::div_floor(-8, 3);
 ```
 
 xstd adopts the relevant P3724 result vocabulary and rounding semantics, not the
-complete proposal. No other rounding modes are part of this change. All three
+complete proposal; no other rounding modes are part of xstd. All four
 operations support signed, unsigned, extended, bit-precise, and paired
-integer-class types; for unsigned types all three conventions coincide.
+integer-class types. For unsigned types the first three conventions coincide, while
+`div_ceil` rounds any inexact quotient up and leaves the remainder that requires,
+`numerator - denominator * quotient`, taken modulo 2^N as P3724R4's
+`div_rem_to_pos_inf` words it, so the identity above holds in the type's own
+arithmetic. Its quotient is what counting whole units asks for: the blocks that
+N bits take, at any block width.
 
 ## Requirements and evolution
 
@@ -614,7 +620,7 @@ was too small, never that the call was out of domain.
 | Function | Precondition |
 | :------- | :----------- |
 | `abs(x)` | `x != numeric_limits<I>::min()`, whose negation is unrepresentable; `unsigned_abs` is the total form of the same question and has none |
-| `div(numer, denom)` <br> `div_euclid(numer, denom)` <br> `div_floor(numer, denom)` | `denom` is not zero, and `numer` is not `numeric_limits<I>::min()` with `denom` at `-1`. Both are the undefined behaviour `/` and `%` already have; the assert is reached first |
+| `div(numer, denom)` <br> `div_euclid(numer, denom)` <br> `div_floor(numer, denom)` <br> `div_ceil(numer, denom)` | `denom` is not zero, and `numer` is not `numeric_limits<I>::min()` with `denom` at `-1`. Both are the undefined behaviour `/` and `%` already have; the assert is reached first |
 | `to_chars(first, last, value, base)` | `2 <= base` and `base <= 36`, and `[first, last)` a valid range |
 | `align_up(value, alignment)` <br> `align_down(value, alignment)` <br> `is_aligned(value, alignment)` | `alignment` is a power of two, which is not zero; `align_up` additionally that the rounded result is representable |
 

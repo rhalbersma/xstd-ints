@@ -16,5 +16,6 @@
 #include <xstd/ints/cstdlib/div.hpp>          // IWYU pragma: export; div
 #include <xstd/ints/cstdlib/div_euclid.hpp>   // IWYU pragma: export; div_euclid
 #include <xstd/ints/cstdlib/div_floor.hpp>    // IWYU pragma: export; div_floor
+#include <xstd/ints/cstdlib/div_ceil.hpp>     // IWYU pragma: export; div_ceil
 
 #endif // XSTD_INTS_CSTDLIB_HPP
