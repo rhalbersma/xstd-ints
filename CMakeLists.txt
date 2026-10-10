@@ -70,6 +70,7 @@ target_sources(
         include/xstd/ints/cstdlib/div.hpp
         include/xstd/ints/cstdlib/div_euclid.hpp
         include/xstd/ints/cstdlib/div_floor.hpp
+        include/xstd/ints/cstdlib/div_ceil.hpp
         include/xstd/ints/cstdlib/div_result.hpp
         include/xstd/ints/cstdlib/sign.hpp
         include/xstd/ints/cstdlib/unsigned_abs.hpp

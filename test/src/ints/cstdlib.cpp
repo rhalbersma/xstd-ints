@@ -79,6 +79,20 @@ auto check_euclidean(T numer, T denom)
         BOOST_CHECK(xstd::sign(remainder) >= 0);
 }
 
+// Ceiling: the identity modulo 2^N, one above the floored quotient wherever that leaves a remainder, and its sign.
+template<class T>
+auto check_ceiled(T numer, T denom)
+        -> void
+{
+        auto const [quotient, remainder] = xstd::div_ceil(numer, denom);
+        auto const floored               = xstd::div_floor(numer, denom);
+        BOOST_CHECK(static_cast<T>((static_cast<int>(quotient) * static_cast<int>(denom)) + static_cast<int>(remainder)) == numer);
+        BOOST_CHECK(static_cast<int>(quotient) == static_cast<int>(floored.quotient) + (floored.remainder == T(0) ? 0 : 1));
+        if constexpr (xstd::numeric_limits<T>::is_signed) {
+                BOOST_CHECK(remainder == T(0) or xstd::sign(remainder) == -xstd::sign(denom));
+        }
+}
+
 // Every ordered pair the type can hold, which only a width this narrow makes affordable.
 template<class T>
 auto sweep()
@@ -96,6 +110,7 @@ auto sweep()
                         check_truncated(T(n), T(d));
                         check_floored(T(n), T(d));
                         check_euclidean(T(n), T(d));
+                        check_ceiled(T(n), T(d));
                 }
         }
 }
