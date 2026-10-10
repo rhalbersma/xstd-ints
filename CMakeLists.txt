@@ -49,6 +49,10 @@ target_sources(
     FILES
         include/xstd/ints.hpp
         include/xstd/ints/bit.hpp
+        include/xstd/ints/bit/bit_compress.hpp
+        include/xstd/ints/bit/bit_expand.hpp
+        include/xstd/ints/bit/bit_repeat.hpp
+        include/xstd/ints/bit/bit_reverse.hpp
         include/xstd/ints/bit/countl_zero.hpp
         include/xstd/ints/bit/countr_zero.hpp
         include/xstd/ints/bit/popcount.hpp
@@ -74,6 +78,7 @@ target_sources(
         include/xstd/ints/cstdlib/div_result.hpp
         include/xstd/ints/cstdlib/sign.hpp
         include/xstd/ints/cstdlib/unsigned_abs.hpp
+        include/xstd/ints/detail/bit_permutation.hpp
         include/xstd/ints/detail/delegates_to_std.hpp
         include/xstd/ints/ext/absl.hpp
         include/xstd/ints/ext/absl/int128.hpp

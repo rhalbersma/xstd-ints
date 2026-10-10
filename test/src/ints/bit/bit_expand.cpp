@@ -1,0 +1,152 @@
+//          Copyright Rein Halbersma 2014-2026.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+
+#include <xstd/ints/bit/bit_expand.hpp>                   // bit_expand
+#include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
+#include <xstd/ints/cstdint.hpp>                          // bit_int, bit_uint, uint128
+#include <xstd/ints/limits.hpp>                           // numeric_limits
+#include <test/bit_reference.hpp>                         // alternating_ones, bit_precise_sweep_types, for_each_edge_value_at, for_each_sweep_pair, for_each_sweep_value, holds_at_every_position, reference_bit_expand, shift_count_t, width
+#include <test/exact_width_types.hpp>                     // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
+#include <boost/test/unit_test.hpp>                       // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
+#include <array>                                          // array
+#include <cstdint>                                        // int32_t, uint64_t
+#include <ranges>                                         // iota
+#include <tuple>                                          // tuple_cat
+#include <utility>                                        // declval, make_integer_sequence
+
+namespace {
+
+using permutable_types = decltype(std::tuple_cat(
+        std::declval<test::std_unsigned_types>(), std::declval<test::xstd_unsigned_types>(),
+        std::declval<test::boost_unsigned_types>(), std::declval<test::absl_unsigned_types>(),
+        std::declval<test::bit_precise_sweep_types>()
+));
+
+template<class T>
+concept xstd_answers = requires (T x) { xstd::bit_expand(x, x); };
+
+template<class T>
+constexpr auto agrees_at(int k)
+        -> bool
+{
+        auto agrees = true;
+        // An array, not a braced list: MSVC 19.44 crashes constant-evaluating a loop over the latter.
+        for (auto const x : std::array{xstd::numeric_limits<T>::max(), test::alternating_ones<T>()}) {
+                test::for_each_edge_value_at<T>(k, [&](T m) -> void {
+                        agrees = agrees and xstd::bit_expand(x, m) == test::reference_bit_expand(x, m);
+                        agrees = agrees and xstd::bit_expand(m, x) == test::reference_bit_expand(m, x);
+                });
+        }
+        return agrees;
+}
+
+// [bit.permute]'s example: bit_expand(0bABCD, 0b0101) is 0b0C0D for any bits A, B, C and D.
+template<class T>
+constexpr auto expands_as_the_example()
+        -> bool
+{
+        auto agrees = true;
+        for (auto const abcd : std::views::iota(0U, 16U)) {
+                auto const x = static_cast<T>(abcd);
+                auto const c = static_cast<T>(static_cast<T>(x >> 1U) & T{1});
+                auto const d = static_cast<T>(x & T{1});
+                agrees       = agrees and xstd::bit_expand(x, static_cast<T>(0b0101U)) == static_cast<T>(static_cast<T>(c << 2U) | d);
+        }
+        return agrees;
+}
+
+} // namespace
+
+BOOST_AUTO_TEST_SUITE(Ints)
+BOOST_AUTO_TEST_SUITE(Bit)
+BOOST_AUTO_TEST_SUITE(BitExpand)
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(TheWordingsExample, T, permutable_types)
+{
+        if constexpr (test::width<T> >= 4UZ) {
+                static_assert(expands_as_the_example<T>());
+        }
+        BOOST_CHECK(true);
+}
+
+// P3104R5's equivalences: a contiguous mask is an and and a shift, and expanding into x itself picks its one-bits.
+BOOST_AUTO_TEST_CASE_TEMPLATE(ThePapersEquivalences, T, permutable_types)
+{
+        if constexpr (test::width<T> >= 8UZ) {
+                auto mismatches = 0UZ;
+                test::for_each_sweep_value<T>([&](T x) -> void {
+                        mismatches += xstd::bit_expand(x, static_cast<T>(0xfU)) == static_cast<T>(x & static_cast<T>(0xfU)) ? 0UZ : 1UZ;
+                        mismatches += xstd::bit_expand(x, static_cast<T>(0xf0U)) == static_cast<T>(static_cast<T>(x & static_cast<T>(0xfU)) << 4U) ? 0UZ : 1UZ;
+                        // x with its n lowest one-bits cleared, one more at each step, sharing nothing with bit_expand.
+                        auto cleared = x;
+                        for (auto const n : std::views::iota(test::shift_count_t<T>{0}, test::shift_count_t<T>{xstd::numeric_limits<T>::digits})) {
+                                // Bound by reference: Clang 19 crashes emitting a const local _BitInt over 128 bits.
+                                auto const& nth     = static_cast<T>(T{1} << n);
+                                auto const& lowest  = static_cast<T>(nth - T{1});
+                                auto const& next    = static_cast<T>(cleared & static_cast<T>(cleared - T{1}));
+                                auto const& nth_one = static_cast<T>(cleared ^ next);
+                                mismatches += static_cast<T>(x ^ xstd::bit_expand(nth, x)) == static_cast<T>(x ^ nth_one) ? 0UZ : 1UZ;
+                                mismatches += static_cast<T>(x ^ xstd::bit_expand(lowest, x)) == cleared ? 0UZ : 1UZ;
+                                cleared = next;
+                        }
+                });
+                BOOST_CHECK_EQUAL(mismatches, 0UZ);
+        } else {
+                BOOST_CHECK(true);
+        }
+}
+
+// An unsigned integer type and nothing else, as [bit.permute] asks, widened to the unsigned integers xstd knows.
+BOOST_AUTO_TEST_CASE(TheConstraintIsUnsignedInteger)
+{
+        static_assert(xstd_answers<unsigned char>);
+        static_assert(xstd_answers<std::uint64_t>);
+        static_assert(xstd_answers<xstd::uint128>);
+        static_assert(not xstd_answers<bool>);
+        static_assert(not xstd_answers<char8_t>);
+        static_assert(not xstd_answers<char32_t>);
+        static_assert(not xstd_answers<std::int32_t>);
+#ifdef XSTD_HAS_BIT_INT
+        static_assert(xstd_answers<xstd::bit_uint<24>>);
+        static_assert(not xstd_answers<xstd::bit_int<24>>);
+#endif
+        BOOST_CHECK(true);
+}
+
+// As conditional as the type's own operators, which makes it unconditional for every built-in type.
+BOOST_AUTO_TEST_CASE_TEMPLATE(NoexceptFollowsTheOperators, T, permutable_types)
+{
+        static_assert(noexcept(xstd::bit_expand(T{1}, T{1})) == xstd::nothrow_const_operators<T>);
+        BOOST_CHECK(true);
+}
+
+// An empty mask deposits nothing, a full one everything, and the top bit alone receives the bottom bit.
+BOOST_AUTO_TEST_CASE_TEMPLATE(TheExtremeMasks, T, permutable_types)
+{
+        constexpr auto ones = xstd::numeric_limits<T>::max();
+        constexpr auto top  = static_cast<T>(T{1} << unsigned{xstd::numeric_limits<T>::digits - 1});
+        static_assert(xstd::bit_expand(ones, T{0}) == T{0});
+        static_assert(xstd::bit_expand(ones, ones) == ones);
+        static_assert(xstd::bit_expand(T{1}, top) == top);
+        if constexpr (test::width<T> > 64UZ) {
+                constexpr auto straddle = static_cast<T>(static_cast<T>(T{1} << 63U) | static_cast<T>(T{1} << 64U));
+                static_assert(xstd::bit_expand(T{3}, straddle) == straddle);
+                static_assert(xstd::bit_expand(T{2}, straddle) == static_cast<T>(T{1} << 64U));
+        }
+        BOOST_CHECK(true);
+}
+
+// Each width against a bit-at-a-time reference: its edges at compile time, every pair or a sweep at run time.
+BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheReference, T, permutable_types)
+{
+        static_assert(test::holds_at_every_position<agrees_at<T>>(std::make_integer_sequence<int, xstd::numeric_limits<T>::digits>{}));
+        auto mismatches = 0UZ;
+        test::for_each_sweep_pair<T>([&](T x, T m) -> void { mismatches += xstd::bit_expand(x, m) == test::reference_bit_expand(x, m) ? 0UZ : 1UZ; });
+        BOOST_CHECK_EQUAL(mismatches, 0UZ);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_SUITE_END()

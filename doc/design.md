@@ -99,6 +99,24 @@ them, where `_BitInt` reached C++ in Clang 14. So the overload sits behind
 `__has_builtin` and is left undeclared on a compiler with the one and not the
 other, rather than given a fallback that no supported compiler needs.
 
+The four permutations from [P3104R6](https://wg21.link/P3104R6) — `bit_reverse`,
+`bit_repeat`, `bit_compress` and `bit_expand` — have no `<bit>` to defer to yet, so each is
+one template over `unsigned_integer` beside an overload forwarding to the standard function,
+declared once `__cpp_lib_bitops` reaches the working draft's `202607L` and constrained, like
+the counters, on the standard call being well-formed. The template works a word at a time,
+the word being `std::size_t` because [iterator.concept.winc] promises every integer-class type
+an explicit conversion to and from it. A word is mirrored by Clang's `__builtin_bitreverse64`
+or by a byte swap and three masked swaps; it is compressed or expanded by `_pext_u64` and
+`_pdep_u64` when `__BMI2__` is defined on x86-64, and otherwise by a loop over the mask's
+one-bits. The instructions are chosen at compile time and never in a constant expression,
+which takes the loop. There is no run-time CPU dispatch: `PEXT` and `PDEP` are microcoded on
+AMD processors before Zen 3, with an 18-cycle latency against 3 on Zen 3 and Intel since
+Haswell, so a build targeting those processors omits `-mbmi2` and gets the portable loop.
+Wider types compose the words: reversal sends each mirrored word to the mirror of its offset,
+compression packs each word's result above the bits the lower words selected, and expansion
+draws each word's bits from where the lower words stopped. Shift counts are `int`, the one
+amount every integer class in the test matrix takes without a narrowing conversion.
+
 ### `bit_mask`
 
 [bitmask.types] gives a bitmask type three implementations: an enumeration
@@ -623,8 +641,9 @@ was too small, never that the call was out of domain.
 | `div(numer, denom)` <br> `div_euclid(numer, denom)` <br> `div_floor(numer, denom)` <br> `div_ceil(numer, denom)` | `denom` is not zero, and `numer` is not `numeric_limits<I>::min()` with `denom` at `-1`. Both are the undefined behaviour `/` and `%` already have; the assert is reached first |
 | `to_chars(first, last, value, base)` | `2 <= base` and `base <= 36`, and `[first, last)` a valid range |
 | `align_up(value, alignment)` <br> `align_down(value, alignment)` <br> `is_aligned(value, alignment)` | `alignment` is a power of two, which is not zero; `align_up` additionally that the rounded result is representable |
+| `bit_repeat(x, l)` | `l > 0`. A call that violates it is not a constant expression even under `NDEBUG`, as [P3104R6](https://wg21.link/P3104R6) requires |
 
-`sign`, `unsigned_abs`, the three `<bit>` counterparts, and every concept and
+`sign`, `unsigned_abs`, the `<bit>` counterparts other than `bit_repeat`, and every concept and
 trait are total: every value of a type they accept is in their domain.
 
 The pointer overloads of the three alignment functions are address arithmetic and
