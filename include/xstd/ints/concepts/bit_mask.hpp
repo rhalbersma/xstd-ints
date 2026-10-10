@@ -20,7 +20,7 @@ concept bit_mask =
         // cv-transparent: every requirement is stated of the cv-stripped T, same_as guarding the defaulted parameter.
         std::same_as<T, std::remove_cv_t<T_cv>> and
 
-        // /1's integer types narrowed to the unsigned ones; a non-integer is judged by its operators alone.
+        // /1's integer types narrowed to the unsigned ones, an int's ~ being negative; others go by operators alone.
         (unsigned_integer<T> or (not signed_integer<T> and not std::integral<T>)) and
 
         // /4: Y is set in X when X & Y is nonzero, which takes equality and a zero, T{}.

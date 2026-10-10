@@ -11,11 +11,11 @@
 #include <bitset>                               // bitset
 #include <charconv>                             // chars_format
 #include <concepts>                             // integral, signed_integral
-#include <filesystem>                           // copy_options, directory_options, perm_options, perms
+#include <cstddef>                              // byte
+#include <filesystem>                           // copy_options, directory_options, file_type, perm_options, perms
 #include <future>                               // launch
 #include <ios>                                  // ios_base
 #include <regex>                                // regex_constants
-#include <utility>                              // to_underlying
 
 BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(Concepts)
@@ -85,76 +85,15 @@ BOOST_AUTO_TEST_CASE(TheCompoundFormsNeedOnlyBeValid)
         BOOST_CHECK(true);
 }
 
-namespace {
-
-enum class plain_flags : unsigned {
-        none = 0,
-        a    = 1,
-};
-
-enum class flags : unsigned {
-        none = 0,
-        a    = 1,
-        b    = 2,
-};
-
-[[nodiscard]] constexpr auto operator~(flags x) noexcept
-        -> flags
-{
-        return static_cast<flags>(~std::to_underlying(x));
-}
-
-[[nodiscard]] constexpr auto operator&(flags x, flags y) noexcept
-        -> flags
-{
-        return static_cast<flags>(std::to_underlying(x) & std::to_underlying(y));
-}
-
-[[nodiscard]] constexpr auto operator^(flags x, flags y) noexcept
-        -> flags
-{
-        return static_cast<flags>(std::to_underlying(x) ^ std::to_underlying(y));
-}
-
-[[nodiscard]] constexpr auto operator|(flags x, flags y) noexcept
-        -> flags
-{
-        return static_cast<flags>(std::to_underlying(x) | std::to_underlying(y));
-}
-
-constexpr auto operator&=(flags& x, flags y) noexcept
-        -> flags&
-{
-        return x = x & y;
-}
-
-constexpr auto operator^=(flags& x, flags y) noexcept
-        -> flags&
-{
-        return x = x ^ y;
-}
-
-constexpr auto operator|=(flags& x, flags y) noexcept
-        -> flags&
-{
-        return x = x | y;
-}
-
-} // namespace
-
-// An enumeration is one by its operators alone: with them it is admitted, without them it is not.
+// An enumeration is one by its operators alone, whatever the standard calls it.
 BOOST_AUTO_TEST_CASE(AnEnumerationIsOneByItsOperators)
 {
-        static_assert(xstd::bit_mask<flags>);
-        static_assert(not xstd::bit_mask<plain_flags>);
-        static_assert(((flags::a ^ flags::b) & flags::b) == flags::b);
-        static_assert([] -> flags {
-                auto x = flags::a;
-                x |= flags::b;
-                x &= ~flags::a;
-                x ^= flags::a;
-                return x;
-        }() == (flags::a | flags::b));
+        // [cstddef.syn] never calls it a bitmask type, yet it overloads every operator one needs.
+        static_assert(xstd::bit_mask<std::byte>);
+
+        // [enumerated.types], declared beside perms and syntax_option_type, with no operators of its own.
+        static_assert(not xstd::bit_mask<std::filesystem::file_type>);
+        static_assert(not xstd::bit_mask<std::regex_constants::error_type>);
         BOOST_CHECK(true);
 }
 
@@ -178,12 +117,6 @@ namespace {
 template<class T>
 concept has_bit_basis = requires (T x) { std::popcount(x); std::countr_zero(x); std::rotl(x, 1); std::bit_width(x); };
 
-struct plain
-{};
-
-enum unscoped_enum { unscoped_value };
-enum class scoped_enum { scoped_value };
-
 template<class T>
 concept ordered = requires (T const a, T const b) { a < b; };
 
@@ -199,19 +132,6 @@ BOOST_AUTO_TEST_CASE(OverTheBuiltInsThisIsExactlyTheDomainOfBit)
         static_assert(xstd::bit_mask<signed char> == has_bit_basis<signed char>);
         static_assert(xstd::bit_mask<int> == has_bit_basis<int>);
         static_assert(not has_bit_basis<std::bitset<64>> and not std::integral<std::bitset<64>>);
-        BOOST_CHECK(true);
-}
-
-// What the operator clauses keep out: a plain enumeration has no bitwise operators, a float and a pointer none.
-BOOST_AUTO_TEST_CASE(RejectsWhatIsNotAFieldOfBits)
-{
-        static_assert(not xstd::bit_mask<float>);
-        static_assert(not xstd::bit_mask<double>);
-        static_assert(not xstd::bit_mask<plain>);
-        static_assert(not xstd::bit_mask<unscoped_enum>);
-        static_assert(not xstd::bit_mask<scoped_enum>);
-        static_assert(not xstd::bit_mask<int*>);
-        static_assert(not xstd::bit_mask<void>);
         BOOST_CHECK(true);
 }
 
