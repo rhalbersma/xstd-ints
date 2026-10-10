@@ -76,13 +76,13 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(NoexceptFollowsTheOperators, T, permutable_types)
 BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsTrade, T, permutable_types)
 {
         constexpr auto N   = xstd::numeric_limits<T>::digits;
-        constexpr auto top = static_cast<T>(T{1} << (N - 1));
+        constexpr auto top = static_cast<T>(T{1} << unsigned{N - 1});
         static_assert(xstd::bit_reverse(T{0}) == T{0});
         static_assert(xstd::bit_reverse(T{1}) == top);
         static_assert(xstd::bit_reverse(top) == T{1});
         static_assert(xstd::bit_reverse(xstd::numeric_limits<T>::max()) == xstd::numeric_limits<T>::max());
         if constexpr (N > 64) {
-                static_assert(xstd::bit_reverse(static_cast<T>(T{1} << 64)) == static_cast<T>(T{1} << (N - 65)));
+                static_assert(xstd::bit_reverse(static_cast<T>(T{1} << 64U)) == static_cast<T>(T{1} << unsigned{N - 65}));
         }
         BOOST_CHECK(true);
 }

@@ -8,7 +8,7 @@
 
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
-#include <xstd/ints/detail/bit_permutation.hpp>           // XSTD_HAS_STD_BIT_PERMUTATIONS, bit_limb, bit_limb_width, expand_limb, std_permutes_bits
+#include <xstd/ints/detail/bit_permutation.hpp>           // XSTD_HAS_STD_BIT_PERMUTATIONS, bit_limb, bit_limb_width, expand_limb, shift_count_t, std_permutes_bits
 #include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
 #include <bit>                                            // bit_expand, popcount
 
@@ -36,16 +36,17 @@ template<unsigned_integer T>
         -> T
 {
         using ints::detail::bit_limb;
-        constexpr auto N = numeric_limits<T>::digits;
-        constexpr auto L = static_cast<int>(ints::detail::bit_limb_width);
-        auto result      = T{0};
-        auto consumed    = 0;
-        for (auto k = 0; k < N; k += L) {
+        using shift_count = ints::detail::shift_count_t<T>;
+        constexpr auto N  = shift_count{numeric_limits<T>::digits};
+        constexpr auto L  = shift_count{ints::detail::bit_limb_width};
+        auto result       = T{0};
+        auto consumed     = shift_count{0};
+        for (auto k = shift_count{0}; k < N; k += L) {
                 // Both kept bit_limbs until shifted: Clang 19 crashes emitting a const local _BitInt over 128 bits.
                 auto const mask      = static_cast<bit_limb>(m >> k);
                 auto const deposited = ints::detail::expand_limb(static_cast<bit_limb>(x >> consumed), mask);
                 result               = static_cast<T>(result | static_cast<T>(static_cast<T>(deposited) << k));
-                consumed += std::popcount(mask);
+                consumed += static_cast<shift_count>(std::popcount(mask));
         }
         return result;
 }

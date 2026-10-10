@@ -6,11 +6,12 @@
 #ifndef XSTD_INTS_DETAIL_BIT_PERMUTATION_HPP
 #define XSTD_INTS_DETAIL_BIT_PERMUTATION_HPP
 
-#include <bit>     // bit_compress, bit_expand, bit_repeat, bit_reverse, byteswap
-#include <cstddef> // size_t
-#include <cstdint> // uint32_t, uint64_t
-#include <limits>  // numeric_limits
-#include <version> // __cpp_lib_bitops
+#include <bit>         // bit_compress, bit_expand, bit_repeat, bit_reverse, byteswap
+#include <cstddef>     // size_t
+#include <cstdint>     // uint32_t, uint64_t
+#include <limits>      // numeric_limits
+#include <type_traits> // conditional_t, is_class_v
+#include <version>     // __cpp_lib_bitops
 
 // Chosen at compile time: PEXT and PDEP are microcoded on AMD before Zen 3, so builds for those omit -mbmi2.
 #if defined(__BMI2__) and defined(__x86_64__)
@@ -52,6 +53,10 @@ concept std_permutes_bits = false;
 using bit_limb = std::size_t;
 
 inline constexpr auto bit_limb_width = static_cast<std::size_t>(std::numeric_limits<bit_limb>::digits);
+
+// Unsigned for a builtin shift, so no count is signed; int for a class type's, as absl::uint128's operator<< takes.
+template<class T>
+using shift_count_t = std::conditional_t<std::is_class_v<T>, int, unsigned>;
 
 [[nodiscard]] constexpr auto reverse_limb(bit_limb x) noexcept
         -> bit_limb

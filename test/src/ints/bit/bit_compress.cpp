@@ -7,7 +7,7 @@
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/cstdint.hpp>                          // bit_int, bit_uint, uint128
 #include <xstd/ints/limits.hpp>                           // numeric_limits
-#include <test/bit_reference.hpp>                         // alternating_ones, bit_precise_sweep_types, for_each_edge_value_at, for_each_sweep_pair, for_each_sweep_value, holds_at_every_position, reference_bit_compress, width
+#include <test/bit_reference.hpp>                         // alternating_ones, bit_precise_sweep_types, for_each_edge_value_at, for_each_sweep_pair, for_each_sweep_value, holds_at_every_position, reference_bit_compress, shift_count_t, width
 #include <test/exact_width_types.hpp>                     // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>                       // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <array>                                          // array
@@ -50,9 +50,9 @@ constexpr auto compresses_as_the_example()
         auto agrees = true;
         for (auto const abcd : std::views::iota(0U, 16U)) {
                 auto const x = static_cast<T>(abcd);
-                auto const b = static_cast<T>(static_cast<T>(x >> 2) & T{1});
+                auto const b = static_cast<T>(static_cast<T>(x >> 2U) & T{1});
                 auto const d = static_cast<T>(x & T{1});
-                agrees       = agrees and xstd::bit_compress(x, static_cast<T>(0b0101U)) == static_cast<T>(static_cast<T>(b << 1) | d);
+                agrees       = agrees and xstd::bit_compress(x, static_cast<T>(0b0101U)) == static_cast<T>(static_cast<T>(b << 1U) | d);
         }
         return agrees;
 }
@@ -78,8 +78,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(ThePapersEquivalences, T, permutable_types)
                 auto mismatches = 0UZ;
                 test::for_each_sweep_value<T>([&](T x) -> void {
                         mismatches += xstd::bit_compress(x, static_cast<T>(0xfU)) == static_cast<T>(x & static_cast<T>(0xfU)) ? 0UZ : 1UZ;
-                        mismatches += xstd::bit_compress(x, static_cast<T>(0xf0U)) == static_cast<T>(static_cast<T>(x >> 4) & static_cast<T>(0xfU)) ? 0UZ : 1UZ;
-                        for (auto const n : std::views::iota(0, xstd::numeric_limits<T>::digits)) {
+                        mismatches += xstd::bit_compress(x, static_cast<T>(0xf0U)) == static_cast<T>(static_cast<T>(x >> 4U) & static_cast<T>(0xfU)) ? 0UZ : 1UZ;
+                        for (auto const n : std::views::iota(test::shift_count_t<T>{0}, test::shift_count_t<T>{xstd::numeric_limits<T>::digits})) {
                                 mismatches += xstd::bit_compress(x, static_cast<T>(T{1} << n)) == static_cast<T>(static_cast<T>(x >> n) & T{1}) ? 0UZ : 1UZ;
                         }
                 });
@@ -117,14 +117,14 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(NoexceptFollowsTheOperators, T, permutable_types)
 BOOST_AUTO_TEST_CASE_TEMPLATE(TheExtremeMasks, T, permutable_types)
 {
         constexpr auto ones = xstd::numeric_limits<T>::max();
-        constexpr auto top  = static_cast<T>(T{1} << (xstd::numeric_limits<T>::digits - 1));
+        constexpr auto top  = static_cast<T>(T{1} << unsigned{xstd::numeric_limits<T>::digits - 1});
         static_assert(xstd::bit_compress(ones, T{0}) == T{0});
         static_assert(xstd::bit_compress(ones, ones) == ones);
         static_assert(xstd::bit_compress(top, top) == T{1});
         if constexpr (test::width<T> > 64UZ) {
-                constexpr auto straddle = static_cast<T>(static_cast<T>(T{1} << 63) | static_cast<T>(T{1} << 64));
+                constexpr auto straddle = static_cast<T>(static_cast<T>(T{1} << 63U) | static_cast<T>(T{1} << 64U));
                 static_assert(xstd::bit_compress(straddle, straddle) == T{3});
-                static_assert(xstd::bit_compress(static_cast<T>(T{1} << 64), straddle) == T{2});
+                static_assert(xstd::bit_compress(static_cast<T>(T{1} << 64U), straddle) == T{2});
         }
         BOOST_CHECK(true);
 }

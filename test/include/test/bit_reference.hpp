@@ -13,7 +13,7 @@
 #include <cstdint>               // uint64_t
 #include <ranges>                // iota
 #include <tuple>                 // tuple, tuple_cat
-#include <type_traits>           // bool_constant
+#include <type_traits>           // bool_constant, conditional_t, is_class_v
 #include <utility>               // declval, integer_sequence
 
 // Every <xstd/ints/bit/> function answers unsigned _BitInt(N) where the build has the type and the three builtins.
@@ -55,6 +55,10 @@ using bit_precise_sweep_types = std::tuple<>;
 
 template<class T>
 inline constexpr auto width = static_cast<std::size_t>(xstd::numeric_limits<T>::digits);
+
+// Unsigned for a builtin shift, so no count is signed; int for a class type's, as absl::uint128's operator<< takes.
+template<class T>
+using shift_count_t = std::conditional_t<std::is_class_v<T>, int, unsigned>;
 
 // The three references walk one bit at a time, sharing nothing with any implementation under test.
 template<class T>
@@ -98,8 +102,8 @@ template<class T>
 {
         auto result = T{0};
         for ([[maybe_unused]] auto const n : std::views::iota(0, xstd::numeric_limits<T>::digits)) {
-                result = static_cast<T>(static_cast<T>(result << 1) | static_cast<T>(x & T{1}));
-                x      = static_cast<T>(x >> 1);
+                result = static_cast<T>(static_cast<T>(result << 1U) | static_cast<T>(x & T{1}));
+                x      = static_cast<T>(x >> 1U);
         }
         return result;
 }
@@ -108,9 +112,11 @@ template<class T>
 [[nodiscard]] constexpr auto reference_bit_repeat(T x, int l) noexcept
         -> T
 {
-        auto result = T{0};
-        for (auto const n : std::views::iota(0, xstd::numeric_limits<T>::digits)) {
-                if (static_cast<T>(static_cast<T>(x >> (n % l)) & T{1}) != T{0}) {
+        using shift_count = shift_count_t<T>;
+        auto const period = static_cast<shift_count>(l);
+        auto result       = T{0};
+        for (auto const n : std::views::iota(shift_count{0}, shift_count{xstd::numeric_limits<T>::digits})) {
+                if (static_cast<T>(static_cast<T>(x >> (n % period)) & T{1}) != T{0}) {
                         result = static_cast<T>(result | static_cast<T>(T{1} << n));
                 }
         }
@@ -122,9 +128,10 @@ template<class T>
 [[nodiscard]] constexpr auto reference_bit_compress(T x, T m) noexcept
         -> T
 {
-        auto result = T{0};
-        auto j      = 0;
-        for (auto const n : std::views::iota(0, xstd::numeric_limits<T>::digits)) {
+        using shift_count = shift_count_t<T>;
+        auto result       = T{0};
+        auto j            = shift_count{0};
+        for (auto const n : std::views::iota(shift_count{0}, shift_count{xstd::numeric_limits<T>::digits})) {
                 if (static_cast<T>(static_cast<T>(m >> n) & T{1}) != T{0}) {
                         result = static_cast<T>(result | static_cast<T>(static_cast<T>(static_cast<T>(x >> n) & T{1}) << j));
                         ++j;
@@ -138,9 +145,10 @@ template<class T>
 [[nodiscard]] constexpr auto reference_bit_expand(T x, T m) noexcept
         -> T
 {
-        auto result = T{0};
-        auto j      = 0;
-        for (auto const n : std::views::iota(0, xstd::numeric_limits<T>::digits)) {
+        using shift_count = shift_count_t<T>;
+        auto result       = T{0};
+        auto j            = shift_count{0};
+        for (auto const n : std::views::iota(shift_count{0}, shift_count{xstd::numeric_limits<T>::digits})) {
                 if (static_cast<T>(static_cast<T>(m >> n) & T{1}) != T{0}) {
                         result = static_cast<T>(result | static_cast<T>(static_cast<T>(static_cast<T>(x >> j) & T{1}) << n));
                         ++j;
@@ -176,7 +184,7 @@ constexpr auto for_each_edge_value_at(int k, F f)
         -> void
 {
         auto const ones  = xstd::numeric_limits<T>::max();
-        auto const bit   = static_cast<T>(T{1} << k);
+        auto const bit   = static_cast<T>(T{1} << static_cast<shift_count_t<T>>(k));
         auto const below = static_cast<T>(bit - T{1});
         f(bit);
         f(static_cast<T>(ones ^ bit));

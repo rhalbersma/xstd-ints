@@ -6,7 +6,7 @@
 #include <xstd/ints/bit.hpp>          // complete bit basis
 #include <xstd/ints/cstdint.hpp>      // uint128
 #include <xstd/ints/limits.hpp>       // numeric_limits
-#include <test/bit_reference.hpp>     // bit_precise_sweep_types, for_each_edge_value, for_each_sweep_pair
+#include <test/bit_reference.hpp>     // bit_precise_sweep_types, for_each_edge_value, for_each_sweep_pair, shift_count_t
 #include <test/constexpr_check.hpp>   // XSTD_CONSTEXPR_CHECK
 #include <test/exact_width_types.hpp> // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>   // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
@@ -31,7 +31,7 @@ template<class T>
 constexpr auto low_ones(int k)
         -> T
 {
-        return k < xstd::numeric_limits<T>::digits ? static_cast<T>(static_cast<T>(T{1} << k) - T{1}) : xstd::numeric_limits<T>::max();
+        return k < xstd::numeric_limits<T>::digits ? static_cast<T>(static_cast<T>(T{1} << static_cast<test::shift_count_t<T>>(k)) - T{1}) : xstd::numeric_limits<T>::max();
 }
 
 // P3104R5's countr_zero, its alternating masks named by bit_repeat rather than spelled as magic numbers.
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(ReversalMirrorsCompression, T, basis_unsigned_type
                 // Bound by reference: Clang 19 crashes emitting a const local _BitInt over 128 bits.
                 auto const unselected = xstd::numeric_limits<T>::digits - xstd::popcount(m);
                 auto const& from_top  = xstd::bit_reverse(xstd::bit_compress(xstd::bit_reverse(x), xstd::bit_reverse(m)));
-                auto const& expected  = unselected < xstd::numeric_limits<T>::digits ? static_cast<T>(xstd::bit_compress(x, m) << unselected) : T{0};
+                auto const& expected  = unselected < xstd::numeric_limits<T>::digits ? static_cast<T>(xstd::bit_compress(x, m) << static_cast<test::shift_count_t<T>>(unselected)) : T{0};
                 mismatches += from_top == expected ? 0UZ : 1UZ;
         });
         BOOST_CHECK_EQUAL(mismatches, 0UZ);

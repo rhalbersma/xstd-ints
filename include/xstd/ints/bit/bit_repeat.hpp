@@ -7,7 +7,7 @@
 #define XSTD_INTS_BIT_BIT_REPEAT_HPP
 
 #include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
-#include <xstd/ints/detail/bit_permutation.hpp>    // XSTD_HAS_STD_BIT_PERMUTATIONS, std_permutes_bits
+#include <xstd/ints/detail/bit_permutation.hpp>    // XSTD_HAS_STD_BIT_PERMUTATIONS, shift_count_t, std_permutes_bits
 #include <xstd/ints/limits/numeric_limits.hpp>     // numeric_limits
 #include <bit>                                     // bit_repeat
 #include <cassert>                                 // assert
@@ -41,12 +41,14 @@ template<unsigned_integer T>
                         std::unreachable();
                 }
         }
-        constexpr auto N = numeric_limits<T>::digits;
-        if (l >= N) {
+        using shift_count = ints::detail::shift_count_t<T>;
+        constexpr auto N  = shift_count{numeric_limits<T>::digits};
+        auto const period = static_cast<shift_count>(l);
+        if (period >= N) {
                 return x;
         }
-        auto result = static_cast<T>(x & static_cast<T>(numeric_limits<T>::max() >> (N - l)));
-        for (auto filled = l; filled < N; filled *= 2) {
+        auto result = static_cast<T>(x & static_cast<T>(numeric_limits<T>::max() >> (N - period)));
+        for (auto filled = period; filled < N; filled += filled) {
                 result = static_cast<T>(result | static_cast<T>(result << filled));
         }
         return result;
