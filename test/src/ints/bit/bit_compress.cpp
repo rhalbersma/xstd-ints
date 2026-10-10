@@ -11,7 +11,6 @@
 #include <test/exact_width_types.hpp>                     // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>                       // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <cstdint>                                        // int32_t, uint64_t
-#include <initializer_list>                               // initializer_list
 #include <ranges>                                         // iota
 #include <tuple>                                          // tuple_cat
 #include <utility>                                        // declval, make_integer_sequence

@@ -12,7 +12,6 @@
 #include <boost/test/unit_test.hpp>     // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <climits>                      // INT_MAX, INT_MIN
 #include <cstdint>                      // int32_t, uint32_t, uint64_t
-#include <initializer_list>             // initializer_list
 #include <ranges>                       // iota
 #include <tuple>                        // tuple_cat
 #include <type_traits>                  // integral_constant

@@ -8,7 +8,7 @@
 
 #include <bit>     // bit_compress, bit_expand, bit_repeat, bit_reverse, byteswap
 #include <cstddef> // size_t
-#include <cstdint> // uint32_t
+#include <cstdint> // uint32_t, uint64_t
 #include <limits>  // numeric_limits
 #include <version> // __cpp_lib_bitops
 
@@ -50,7 +50,7 @@ inline constexpr auto bit_limb_width = static_cast<std::size_t>(std::numeric_lim
         -> bit_limb
 {
 #if __has_builtin(__builtin_bitreverse32) and __has_builtin(__builtin_bitreverse64)
-        if constexpr (bit_limb_width == 64) {
+        if constexpr (sizeof(bit_limb) == sizeof(std::uint64_t)) {
                 return static_cast<bit_limb>(__builtin_bitreverse64(x));
         } else {
                 return static_cast<bit_limb>(__builtin_bitreverse32(static_cast<std::uint32_t>(x)));
@@ -73,13 +73,13 @@ inline constexpr auto bit_limb_width = static_cast<std::size_t>(std::numeric_lim
         -> bit_limb
 {
 #if defined(__BMI2__) and defined(__x86_64__)
-        if !consteval {
+        if not consteval {
                 return static_cast<bit_limb>(_pext_u64(x, m));
         }
 #endif
         auto result = bit_limb{0};
         for (auto next = bit_limb{1}; m != bit_limb{0}; next <<= 1U) {
-                auto const higher = static_cast<bit_limb>(m & (m - 1U));
+                auto const higher = m & (m - 1U);
                 if ((x & (m ^ higher)) != bit_limb{0}) {
                         result |= next;
                 }
@@ -93,13 +93,13 @@ inline constexpr auto bit_limb_width = static_cast<std::size_t>(std::numeric_lim
         -> bit_limb
 {
 #if defined(__BMI2__) and defined(__x86_64__)
-        if !consteval {
+        if not consteval {
                 return static_cast<bit_limb>(_pdep_u64(x, m));
         }
 #endif
         auto result = bit_limb{0};
         for (auto next = bit_limb{1}; m != bit_limb{0}; next <<= 1U) {
-                auto const higher = static_cast<bit_limb>(m & (m - 1U));
+                auto const higher = m & (m - 1U);
                 if ((x & next) != bit_limb{0}) {
                         result |= m ^ higher;
                 }

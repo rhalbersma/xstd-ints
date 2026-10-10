@@ -19,6 +19,7 @@ namespace xstd {
 
 template<class T>
         requires ints::detail::std_permutes_bits<T>
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the value and then the mask
 [[nodiscard]] constexpr auto bit_compress(T x, T m) noexcept
         -> T
 {
@@ -30,6 +31,7 @@ template<class T>
 // Each word is compressed on its own and packed directly above the bits the words below it selected.
 template<unsigned_integer T>
         requires (not ints::detail::std_permutes_bits<T>)
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the value and then the mask
 [[nodiscard]] constexpr auto bit_compress(T x, T m) noexcept(nothrow_const_operators<T>)
         -> T
 {

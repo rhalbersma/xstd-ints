@@ -118,6 +118,7 @@ template<class T>
 }
 
 template<class T>
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the value and then the mask
 [[nodiscard]] constexpr auto reference_bit_compress(T x, T m) noexcept
         -> T
 {
@@ -133,6 +134,7 @@ template<class T>
 }
 
 template<class T>
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the value and then the mask
 [[nodiscard]] constexpr auto reference_bit_expand(T x, T m) noexcept
         -> T
 {

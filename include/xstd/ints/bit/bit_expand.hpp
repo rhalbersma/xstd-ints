@@ -19,6 +19,7 @@ namespace xstd {
 
 template<class T>
         requires ints::detail::std_permutes_bits<T>
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the value and then the mask
 [[nodiscard]] constexpr auto bit_expand(T x, T m) noexcept
         -> T
 {
@@ -30,6 +31,7 @@ template<class T>
 // Each word of the mask is expanded on its own, drawing on the bits of x the words below it left unconsumed.
 template<unsigned_integer T>
         requires (not ints::detail::std_permutes_bits<T>)
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the value and then the mask
 [[nodiscard]] constexpr auto bit_expand(T x, T m) noexcept(nothrow_const_operators<T>)
         -> T
 {
