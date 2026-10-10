@@ -22,6 +22,13 @@
 #define XSTD_HAS_STD_BIT_PERMUTATIONS 1
 #endif
 
+// MSVC 2022 has no __has_builtin, so testing for the bit reversal builtins takes an #if of its own.
+#ifdef __has_builtin
+#if __has_builtin(__builtin_bitreverse32) and __has_builtin(__builtin_bitreverse64)
+#define XSTD_HAS_BUILTIN_BITREVERSE 1
+#endif
+#endif
+
 namespace xstd::ints::detail {
 
 #ifdef XSTD_HAS_STD_BIT_PERMUTATIONS
@@ -49,7 +56,7 @@ inline constexpr auto bit_limb_width = static_cast<std::size_t>(std::numeric_lim
 [[nodiscard]] constexpr auto reverse_limb(bit_limb x) noexcept
         -> bit_limb
 {
-#if __has_builtin(__builtin_bitreverse32) and __has_builtin(__builtin_bitreverse64)
+#ifdef XSTD_HAS_BUILTIN_BITREVERSE
         if constexpr (sizeof(bit_limb) == sizeof(std::uint64_t)) {
                 return static_cast<bit_limb>(__builtin_bitreverse64(x));
         } else {
