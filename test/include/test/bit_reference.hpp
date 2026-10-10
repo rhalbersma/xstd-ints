@@ -247,8 +247,8 @@ template<class T>
         -> T
 {
         auto result = T{0};
-        // Multiplying walks the bit up two places at a time and wraps it to zero past the top, at any width.
-        for (auto bit = T{1}; bit != T{0}; bit = static_cast<T>(bit * static_cast<T>(4))) {
+        // Doubling twice walks the bit up two places and to zero past the top; Abseil's fallback * is not constexpr.
+        for (auto bit = T{1}; bit != T{0}; bit = static_cast<T>((bit + bit) + (bit + bit))) {
                 result = static_cast<T>(result | bit);
         }
         return result;

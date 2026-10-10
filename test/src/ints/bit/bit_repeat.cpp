@@ -10,6 +10,7 @@
 #include <test/constexpr_check.hpp>     // XSTD_CONSTEXPR_CHECK
 #include <test/exact_width_types.hpp>   // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>     // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
+#include <array>                        // array
 #include <climits>                      // INT_MAX, INT_MIN
 #include <cstdint>                      // int32_t, uint32_t, uint64_t
 #include <ranges>                       // iota
@@ -38,7 +39,8 @@ constexpr auto agrees_at(int k)
 {
         auto agrees      = true;
         constexpr auto N = xstd::numeric_limits<T>::digits;
-        for (auto const l : {1, 3, N - 1, N}) {
+        // An array, not a braced list: MSVC 19.44 crashes constant-evaluating a loop over the latter.
+        for (auto const l : std::array{1, 3, N - 1, N}) {
                 test::for_each_edge_value_at<T>(k, [&](T x) -> void { agrees = agrees and xstd::bit_repeat(x, l) == test::reference_bit_repeat(x, l); });
         }
         return agrees;
