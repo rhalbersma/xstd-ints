@@ -8,11 +8,13 @@
 
 #include <xstd/ints/cstdint.hpp> // XSTD_HAS_BIT_INT, bit_uint
 #include <xstd/ints/limits.hpp>  // numeric_limits
+#include <array>                 // array
 #include <cstddef>               // size_t
 #include <cstdint>               // uint64_t
 #include <ranges>                // iota
 #include <tuple>                 // tuple, tuple_cat
-#include <utility>               // declval
+#include <type_traits>           // bool_constant
+#include <utility>               // declval, integer_sequence
 
 // Every <xstd/ints/bit/> function answers unsigned _BitInt(N) where the build has the type and the three builtins.
 #ifdef XSTD_HAS_BIT_INT
@@ -89,6 +91,62 @@ template<class T>
         return count;
 }
 
+// The four permutation references walk one bit at a time, as P3104R5's own illustrations do.
+template<class T>
+[[nodiscard]] constexpr auto reference_bit_reverse(T x) noexcept
+        -> T
+{
+        auto result = T{0};
+        for ([[maybe_unused]] auto const n : std::views::iota(0, xstd::numeric_limits<T>::digits)) {
+                result = static_cast<T>(static_cast<T>(result << 1) | static_cast<T>(x & T{1}));
+                x      = static_cast<T>(x >> 1);
+        }
+        return result;
+}
+
+template<class T>
+[[nodiscard]] constexpr auto reference_bit_repeat(T x, int l) noexcept
+        -> T
+{
+        auto result = T{0};
+        for (auto const n : std::views::iota(0, xstd::numeric_limits<T>::digits)) {
+                if (static_cast<T>(static_cast<T>(x >> (n % l)) & T{1}) != T{0}) {
+                        result = static_cast<T>(result | static_cast<T>(T{1} << n));
+                }
+        }
+        return result;
+}
+
+template<class T>
+[[nodiscard]] constexpr auto reference_bit_compress(T x, T m) noexcept
+        -> T
+{
+        auto result = T{0};
+        auto j      = 0;
+        for (auto const n : std::views::iota(0, xstd::numeric_limits<T>::digits)) {
+                if (static_cast<T>(static_cast<T>(m >> n) & T{1}) != T{0}) {
+                        result = static_cast<T>(result | static_cast<T>(static_cast<T>(static_cast<T>(x >> n) & T{1}) << j));
+                        ++j;
+                }
+        }
+        return result;
+}
+
+template<class T>
+[[nodiscard]] constexpr auto reference_bit_expand(T x, T m) noexcept
+        -> T
+{
+        auto result = T{0};
+        auto j      = 0;
+        for (auto const n : std::views::iota(0, xstd::numeric_limits<T>::digits)) {
+                if (static_cast<T>(static_cast<T>(m >> n) & T{1}) != T{0}) {
+                        result = static_cast<T>(result | static_cast<T>(static_cast<T>(static_cast<T>(x >> j) & T{1}) << n));
+                        ++j;
+                }
+        }
+        return result;
+}
+
 // Zero, one, all ones, and at every position the single bit, its complement, and the masks below and from it.
 template<class T, class F>
 constexpr auto for_each_edge_value(F f)
@@ -108,6 +166,28 @@ constexpr auto for_each_edge_value(F f)
                 f(static_cast<T>(ones ^ below));
                 below |= bit;
         }
+}
+
+// The edge values at one position: its single bit, the mask below it, and the complements of both.
+template<class T, class F>
+constexpr auto for_each_edge_value_at(int k, F f)
+        -> void
+{
+        auto const ones  = xstd::numeric_limits<T>::max();
+        auto const bit   = static_cast<T>(T{1} << k);
+        auto const below = static_cast<T>(bit - T{1});
+        f(bit);
+        f(static_cast<T>(ones ^ bit));
+        f(below);
+        f(static_cast<T>(ones ^ below));
+}
+
+// One constant evaluation per position, each a template argument, so that none runs into the evaluator's step limit.
+template<auto holds_at, int... K>
+[[nodiscard]] constexpr auto holds_at_every_position(std::integer_sequence<int, K...>) noexcept
+        -> bool
+{
+        return (std::bool_constant<holds_at(K)>::value and ...);
 }
 
 // SplitMix64, so a run reproduces.
@@ -138,12 +218,12 @@ template<class T>
         }
 }
 
-// Every value up to 13 bits, and past that the edge values with a reproducible pseudo-random sample.
+// Every value up to 16 bits, and past that the edge values with a reproducible pseudo-random sample.
 template<class T, class F>
 constexpr auto for_each_sweep_value(F f)
         -> void
 {
-        if constexpr (width<T> <= 13UZ) {
+        if constexpr (width<T> <= 16UZ) {
                 // Counting up wraps to zero after the maximum, which ends the walk over every value.
                 auto value = T{0};
                 do {
@@ -155,6 +235,43 @@ constexpr auto for_each_sweep_value(F f)
                 auto state = std::uint64_t{width<T>};
                 for ([[maybe_unused]] auto const sample : std::views::iota(0UZ, 256UZ)) {
                         f(next_pseudo_random<T>(state));
+                }
+        }
+}
+
+// Ones at every even position, a mask whose selected bits never neighbour each other.
+template<class T>
+[[nodiscard]] constexpr auto alternating_ones() noexcept
+        -> T
+{
+        auto result = T{0};
+        // Multiplying walks the bit up two places at a time and wraps it to zero past the top, at any width.
+        for (auto bit = T{1}; bit != T{0}; bit = static_cast<T>(bit * static_cast<T>(4))) {
+                result = static_cast<T>(result | bit);
+        }
+        return result;
+}
+
+// Every pair up to 8 bits; past that every swept value against three fixed partners on either side, and random pairs.
+template<class T, class F>
+constexpr auto for_each_sweep_pair(F f)
+        -> void
+{
+        if constexpr (width<T> <= 8UZ) {
+                for_each_sweep_value<T>([&](T m) -> void { for_each_sweep_value<T>([&](T x) -> void { f(x, m); }); });
+        } else {
+                auto state          = std::uint64_t{width<T>};
+                auto const noise    = next_pseudo_random<T>(state);
+                auto const partners = std::array{xstd::numeric_limits<T>::max(), alternating_ones<T>(), noise};
+                for_each_sweep_value<T>([&](T value) -> void {
+                        for (auto const partner : partners) {
+                                f(value, partner);
+                                f(partner, value);
+                        }
+                });
+                for ([[maybe_unused]] auto const sample : std::views::iota(0UZ, 1024UZ)) {
+                        auto const x = next_pseudo_random<T>(state);
+                        f(x, next_pseudo_random<T>(state));
                 }
         }
 }
