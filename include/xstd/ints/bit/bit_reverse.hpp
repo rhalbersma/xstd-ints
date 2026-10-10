@@ -45,8 +45,9 @@ template<unsigned_integer T>
                 result              = static_cast<T>(result | static_cast<T>(static_cast<T>(mirrored) << (N - L - k)));
         }
         if constexpr (partial != 0) {
-                auto const mirrored = ints::detail::reverse_limb(static_cast<bit_limb>(x >> (N - partial)));
-                result              = static_cast<T>(result | static_cast<T>(mirrored >> unsigned{L - partial}));
+                constexpr auto slack = unsigned{L - partial};
+                auto const mirrored  = ints::detail::reverse_limb(static_cast<bit_limb>(x >> (N - partial)));
+                result               = static_cast<T>(result | static_cast<T>(mirrored >> slack));
         }
         return result;
 }
