@@ -9,7 +9,7 @@
 #include <xstd/ints/cstdint/int128.hpp>            // int128, uint128
 #include <xstd/ints/limits/numeric_limits.hpp>     // numeric_limits
 #include <boost/test/unit_test.hpp>                // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
-#include <compare>                                 // the result of <=> over built-ins
+#include <compare>                                 // IWYU pragma: keep; the result of <=> over built-ins
 #include <concepts>                                // constructible_from
 #include <cstddef>                                 // ptrdiff_t, size_t
 #include <cstdint>                                 // exact-width integer types, uintptr_t
