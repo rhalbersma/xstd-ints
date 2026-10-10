@@ -26,7 +26,7 @@ concept alignable =
         numeric_limits<T>::is_integer and
         (numeric_limits<T>::radix == 2) and
 
-        // Modular rather than signed, so a wrapped sum is a value the precondition can ask about.
+        // Not a signed offset such as std::ptrdiff_t, whose wrapped sum is undefined rather than a value to ask about.
         not numeric_limits<T>::is_signed and
 
         // Wider than one bit, which is what bool is not: its one plus one is still one.
@@ -36,7 +36,7 @@ concept alignable =
         std::convertible_to<std::size_t, T> and
         std::constructible_from<std::size_t, T> and
 
-        // /9's ordering half in integer_class's own clause: <=> subsumes the six relations and pins the category.
+        // /9 as integer_class asks it: <=>, not only the six relations a pre-C++20 integer class declares.
         std::three_way_comparable<T, std::strong_ordering> and
 
         // The arithmetic itself: alignment is addition modulo a power of two.
