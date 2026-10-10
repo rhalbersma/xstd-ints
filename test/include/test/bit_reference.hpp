@@ -161,7 +161,7 @@ constexpr auto for_each_edge_value(F f)
 
         // Doubling walks the bit up the width and wraps it to zero past the top: no shift by a variable count.
         auto below = T{0};
-        for (auto bit = T{1}; bit != T{0}; bit += bit) {
+        for (auto bit = T{1}; bit != T{0}; bit = static_cast<T>(bit + bit)) {
                 f(bit);
                 f(static_cast<T>(ones ^ bit));
                 f(below);
@@ -230,7 +230,7 @@ constexpr auto for_each_sweep_value(F f)
                 auto value = T{0};
                 do {
                         f(value);
-                        value += T{1};
+                        value = static_cast<T>(value + T{1});
                 } while (value != T{0});
         } else {
                 for_each_edge_value<T>(f);
@@ -263,16 +263,16 @@ constexpr auto for_each_sweep_pair(F f)
                 for_each_sweep_value<T>([&](T m) -> void { for_each_sweep_value<T>([&](T x) -> void { f(x, m); }); });
         } else {
                 auto state          = std::uint64_t{width<T>};
-                auto const noise    = next_pseudo_random<T>(state);
-                auto const partners = std::array{xstd::numeric_limits<T>::max(), alternating_ones<T>(), noise};
+                auto const partners = std::array{xstd::numeric_limits<T>::max(), alternating_ones<T>(), next_pseudo_random<T>(state)};
                 for_each_sweep_value<T>([&](T value) -> void {
-                        for (auto const partner : partners) {
+                        for (auto const& partner : partners) {
                                 f(value, partner);
                                 f(partner, value);
                         }
                 });
                 for ([[maybe_unused]] auto const sample : std::views::iota(0UZ, 1024UZ)) {
-                        auto const x = next_pseudo_random<T>(state);
+                        // Bound by reference: Clang 19 crashes emitting a const local _BitInt over 128 bits.
+                        auto const& x = next_pseudo_random<T>(state);
                         f(x, next_pseudo_random<T>(state));
                 }
         }

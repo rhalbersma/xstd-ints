@@ -41,9 +41,10 @@ template<unsigned_integer T>
         auto result      = T{0};
         auto consumed    = 0;
         for (auto k = 0; k < N; k += L) {
+                // Both kept bit_limbs until shifted: Clang 19 crashes emitting a const local _BitInt over 128 bits.
                 auto const mask      = static_cast<bit_limb>(m >> k);
-                auto const deposited = static_cast<T>(ints::detail::expand_limb(static_cast<bit_limb>(x >> consumed), mask));
-                result               = static_cast<T>(result | static_cast<T>(deposited << k));
+                auto const deposited = ints::detail::expand_limb(static_cast<bit_limb>(x >> consumed), mask);
+                result               = static_cast<T>(result | static_cast<T>(static_cast<T>(deposited) << k));
                 consumed += std::popcount(mask);
         }
         return result;

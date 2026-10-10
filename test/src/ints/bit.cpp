@@ -116,9 +116,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(ReversalMirrorsCompression, T, basis_unsigned_type
 {
         auto mismatches = 0UZ;
         test::for_each_sweep_pair<T>([&](T x, T m) -> void {
+                // Bound by reference: Clang 19 crashes emitting a const local _BitInt over 128 bits.
                 auto const unselected = xstd::numeric_limits<T>::digits - xstd::popcount(m);
-                auto const from_top   = xstd::bit_reverse(xstd::bit_compress(xstd::bit_reverse(x), xstd::bit_reverse(m)));
-                auto const expected   = unselected < xstd::numeric_limits<T>::digits ? static_cast<T>(xstd::bit_compress(x, m) << unselected) : T{0};
+                auto const& from_top  = xstd::bit_reverse(xstd::bit_compress(xstd::bit_reverse(x), xstd::bit_reverse(m)));
+                auto const& expected  = unselected < xstd::numeric_limits<T>::digits ? static_cast<T>(xstd::bit_compress(x, m) << unselected) : T{0};
                 mismatches += from_top == expected ? 0UZ : 1UZ;
         });
         BOOST_CHECK_EQUAL(mismatches, 0UZ);
@@ -153,7 +154,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(InterleavingRoundTrips, T, basis_unsigned_types)
                 constexpr auto even = xstd::bit_repeat(static_cast<T>(0b01U), 2);
                 auto mismatches     = 0UZ;
                 test::for_each_sweep_pair<T>([&](T x, T y) -> void {
-                        auto const z = static_cast<T>(xstd::bit_expand(x, odd) | xstd::bit_expand(y, even));
+                        // Bound by reference: Clang 19 crashes emitting a const local _BitInt over 128 bits.
+                        auto const& z = static_cast<T>(xstd::bit_expand(x, odd) | xstd::bit_expand(y, even));
                         mismatches += xstd::bit_compress(z, odd) == static_cast<T>(x & low_ones<T>(xstd::numeric_limits<T>::digits / 2)) ? 0UZ : 1UZ;
                         mismatches += xstd::bit_compress(z, even) == static_cast<T>(y & low_ones<T>((xstd::numeric_limits<T>::digits + 1) / 2)) ? 0UZ : 1UZ;
                 });

@@ -82,10 +82,11 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(ThePapersEquivalences, T, permutable_types)
                         // x with its n lowest one-bits cleared, one more at each step, sharing nothing with bit_expand.
                         auto cleared = x;
                         for (auto const n : std::views::iota(0, xstd::numeric_limits<T>::digits)) {
-                                auto const nth     = static_cast<T>(T{1} << n);
-                                auto const lowest  = static_cast<T>(nth - T{1});
-                                auto const next    = static_cast<T>(cleared & static_cast<T>(cleared - T{1}));
-                                auto const nth_one = static_cast<T>(cleared ^ next);
+                                // Bound by reference: Clang 19 crashes emitting a const local _BitInt over 128 bits.
+                                auto const& nth     = static_cast<T>(T{1} << n);
+                                auto const& lowest  = static_cast<T>(nth - T{1});
+                                auto const& next    = static_cast<T>(cleared & static_cast<T>(cleared - T{1}));
+                                auto const& nth_one = static_cast<T>(cleared ^ next);
                                 mismatches += static_cast<T>(x ^ xstd::bit_expand(nth, x)) == static_cast<T>(x ^ nth_one) ? 0UZ : 1UZ;
                                 mismatches += static_cast<T>(x ^ xstd::bit_expand(lowest, x)) == cleared ? 0UZ : 1UZ;
                                 cleared = next;

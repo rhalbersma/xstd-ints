@@ -39,8 +39,9 @@ template<unsigned_integer T>
         constexpr auto partial = N % L;
         auto result            = T{0};
         for (auto k = 0; k < N - partial; k += L) {
-                auto const mirrored = static_cast<T>(ints::detail::reverse_limb(static_cast<bit_limb>(x >> k)));
-                result              = static_cast<T>(result | static_cast<T>(mirrored << (N - L - k)));
+                // Kept a bit_limb until shifted: Clang 19 crashes emitting a const local _BitInt over 128 bits.
+                auto const mirrored = ints::detail::reverse_limb(static_cast<bit_limb>(x >> k));
+                result              = static_cast<T>(result | static_cast<T>(static_cast<T>(mirrored) << (N - L - k)));
         }
         if constexpr (partial != 0) {
                 auto const mirrored = ints::detail::reverse_limb(static_cast<bit_limb>(x >> (N - partial)));

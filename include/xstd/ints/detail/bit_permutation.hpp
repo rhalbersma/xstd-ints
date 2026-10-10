@@ -96,6 +96,7 @@ inline constexpr auto bit_limb_width = static_cast<std::size_t>(std::numeric_lim
 }
 
 // The inverse walk: each one-bit of the mask, lowest first, receives the next bit of x.
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the value and then the mask
 [[nodiscard]] constexpr auto expand_limb(bit_limb x, bit_limb m) noexcept
         -> bit_limb
 {
