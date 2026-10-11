@@ -148,16 +148,16 @@ template<class T>
         return x;
 }
 
-// Doubling from one until x is reached; past the top bit the doubling wraps to zero, which ends it.
+// Twice the floor of the value below x; Apple Clang 17 miscompiles a doubling loop that climbs to the top bit.
 template<class T>
 [[nodiscard]] constexpr auto reference_bit_ceil(T x) noexcept
         -> T
 {
-        auto power = T{1};
-        while (power != T{0} and power < x) {
-                power = static_cast<T>(power + power);
+        if (x <= T{1}) {
+                return T{1};
         }
-        return power;
+        auto const half = reference_bit_floor(static_cast<T>(x - T{1}));
+        return static_cast<T>(half + half);
 }
 
 // One place at a time, the bit leaving the top coming back in at the bottom, as many times as the count says.
