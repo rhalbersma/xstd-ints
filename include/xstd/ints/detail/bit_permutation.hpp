@@ -6,15 +6,12 @@
 #ifndef XSTD_INTS_DETAIL_BIT_PERMUTATION_HPP
 #define XSTD_INTS_DETAIL_BIT_PERMUTATION_HPP
 
-#include <xstd/ints/detail/bit_limb.hpp> // IWYU pragma: export; bit_limb, bit_limb_width, shift_count_t
-#include <bit>                           // bit_compress, bit_expand, bit_repeat, bit_reverse, byteswap
-#include <cstdint>                       // uint32_t, uint64_t
-#include <version>                       // IWYU pragma: keep; __cpp_lib_bitops
-
-// Chosen at compile time: PEXT and PDEP are microcoded on AMD before Zen 3, so builds for those omit -mbmi2.
-#if defined(__BMI2__) and defined(__x86_64__)
-#include <immintrin.h> // _pdep_u64, _pext_u64
-#endif
+#include <xstd/ints/detail/bit_limb.hpp>  // IWYU pragma: export; bit_limb, bit_limb_width, shift_count_t
+#include <xstd/ints/detail/intrinsic.hpp> // compress, expand, XSTD_INTS_HAS_FAST_BMI2
+#include <xstd/ints/detail/portable.hpp>  // compress_by_rank, expand_by_walk
+#include <bit>                            // bit_compress, bit_expand, bit_repeat, bit_reverse, byteswap
+#include <cstdint>                        // uint32_t, uint64_t
+#include <version>                        // IWYU pragma: keep; __cpp_lib_bitops
 
 // The working draft's __cpp_lib_bitops for P3104, which puts the four permutations in <bit>.
 #if defined(__cpp_lib_bitops) and __cpp_lib_bitops >= 202607L
@@ -69,45 +66,29 @@ concept std_permutes_bits = false;
 #endif
 }
 
-// Each one-bit of the mask, lowest first, moves the bit of x beneath it to the next free position of the result.
+// The hardware instruction at run time where the target makes it fast, the portable kernel everywhere else.
 [[nodiscard]] constexpr auto compress_limb(bit_limb x, bit_limb m) noexcept
         -> bit_limb
 {
-#if defined(__BMI2__) and defined(__x86_64__)
+#ifdef XSTD_INTS_HAS_FAST_BMI2
         if not consteval {
-                return static_cast<bit_limb>(_pext_u64(x, m));
+                return intrinsic::compress(x, m);
         }
 #endif
-        auto result = bit_limb{0};
-        for (auto next = bit_limb{1}; m != bit_limb{0}; next <<= 1U) {
-                auto const higher = m & (m - 1U);
-                if ((x & (m ^ higher)) != bit_limb{0}) {
-                        result |= next;
-                }
-                m = higher;
-        }
-        return result;
+        return portable::compress_by_rank(x, m);
 }
 
-// The inverse walk: each one-bit of the mask, lowest first, receives the next bit of x.
+// The hardware instruction at run time where the target makes it fast, the portable kernel everywhere else.
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the value and then the mask
 [[nodiscard]] constexpr auto expand_limb(bit_limb x, bit_limb m) noexcept
         -> bit_limb
 {
-#if defined(__BMI2__) and defined(__x86_64__)
+#ifdef XSTD_INTS_HAS_FAST_BMI2
         if not consteval {
-                return static_cast<bit_limb>(_pdep_u64(x, m));
+                return intrinsic::expand(x, m);
         }
 #endif
-        auto result = bit_limb{0};
-        for (auto next = bit_limb{1}; m != bit_limb{0}; next <<= 1U) {
-                auto const higher = m & (m - 1U);
-                if ((x & next) != bit_limb{0}) {
-                        result |= m ^ higher;
-                }
-                m = higher;
-        }
-        return result;
+        return portable::expand_by_walk(x, m);
 }
 
 } // namespace xstd::ints::detail
