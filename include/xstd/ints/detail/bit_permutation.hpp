@@ -7,7 +7,7 @@
 #define XSTD_INTS_DETAIL_BIT_PERMUTATION_HPP
 
 #include <xstd/ints/detail/bit_limb.hpp>  // IWYU pragma: export; bit_limb, bit_limb_width, shift_count_t
-#include <xstd/ints/detail/intrinsic.hpp> // compress, expand, XSTD_INTS_HAS_FAST_BMI2
+#include <xstd/ints/detail/intrinsic.hpp> // IWYU pragma: keep; compress, expand, where the target makes PEXT and PDEP fast
 #include <xstd/ints/detail/portable.hpp>  // compress_by_rank, expand_by_walk
 #include <bit>                            // bit_compress, bit_expand, bit_repeat, bit_reverse, byteswap
 #include <cstdint>                        // uint32_t, uint64_t
