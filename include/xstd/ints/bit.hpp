@@ -22,5 +22,7 @@
 #include <xstd/ints/bit/popcount.hpp>       // IWYU pragma: export; popcount
 #include <xstd/ints/bit/rotl.hpp>           // IWYU pragma: export; rotl
 #include <xstd/ints/bit/rotr.hpp>           // IWYU pragma: export; rotr
+#include <xstd/ints/bit/shl.hpp>            // IWYU pragma: export; shl
+#include <xstd/ints/bit/shr.hpp>            // IWYU pragma: export; shr
 
 #endif // XSTD_INTS_BIT_HPP

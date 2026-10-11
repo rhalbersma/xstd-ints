@@ -8,6 +8,7 @@
 
 #include <xstd/ints/cstdint.hpp>                   // XSTD_HAS_BIT_INT, bit_uint
 #include <xstd/ints/limits.hpp>                    // numeric_limits
+#include <xstd/ints/type_traits/is_signed.hpp>     // is_signed_v
 #include <xstd/ints/type_traits/make_unsigned.hpp> // make_unsigned_t
 #include <array>                                   // array
 #include <cstddef>                                 // size_t
@@ -189,6 +190,27 @@ template<class T>
                 result           = static_cast<U>(result | static_cast<U>(byte << static_cast<shift>(8 * (bytes - 1 - n))));
         }
         return static_cast<T>(result);
+}
+
+// P3793's x times two to the count, one place at a time: doubling in the unsigned counterpart, halving by division.
+template<class T>
+[[nodiscard]] constexpr auto reference_shift(T x, long long count) noexcept
+        -> T
+{
+        using U          = xstd::make_unsigned_t<T>;
+        auto const W     = static_cast<long long>(xstd::numeric_limits<U>::digits);
+        auto const steps = count < 0 ? (-count < W ? -count : W) : (count < W ? count : W);
+        for ([[maybe_unused]] auto const n : std::views::iota(0LL, steps)) {
+                if (count >= 0) {
+                        x = static_cast<T>(static_cast<U>(static_cast<U>(x) << 1U));
+                } else if constexpr (xstd::is_signed_v<T>) {
+                        // Division truncates, so an odd negative value takes one more step down to its floor.
+                        x = static_cast<T>(static_cast<T>(x / T{2}) - (x < T{0} and x % T{2} != T{0} ? T{1} : T{0}));
+                } else {
+                        x = static_cast<T>(x / T{2});
+                }
+        }
+        return x;
 }
 
 // The four permutation references walk one bit at a time, as P3104R5's own illustrations do.

@@ -125,6 +125,16 @@ compression packs each word's result above the bits the lower words selected, an
 draws each word's bits from where the lower words stopped. Shift counts are `int`, the one
 amount every integer class in the test matrix takes without a narrowing conversion.
 
+P3793R2's `shl` and `shr` are forwarded the same way, once `__cpp_lib_bitops` reaches the
+`202606L` that libstdc++ gives them in C++29 mode, one below the value P3104 asks for. Their
+template takes any two `integer` types and reduces every count to three cases: a magnitude at
+or past the width gives zero, or minus one for a negative value shifted right; any other
+magnitude is a single shift. The magnitude is the count's `unsigned_abs`, so the most negative
+count of a signed type needs no negation, and it is compared with the width in whichever of
+the two types holds the other, so a 256-bit width is not truncated into an `unsigned char`
+count. A left shift goes through the unsigned counterpart, which keeps a signed value from
+overflowing, and the result converts back modulo the width, as C++20 defines the conversion.
+
 ### `bit_mask`
 
 [bitmask.types] gives a bitmask type three implementations: an enumeration
