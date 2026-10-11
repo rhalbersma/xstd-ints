@@ -87,25 +87,33 @@ both name `_BitInt` itself, since it is exempt from promotion. The public
 domain currently begins at two because Clang has not yet implemented N3747's
 signed `_BitInt(1)`.
 
-The three `<bit>` counterparts follow the same split. Where the standard
-library's `<bit>` takes `unsigned _BitInt(N)`, as libc++'s does, xstd forwards
-to it; where it refuses the type, as libstdc++'s does, an overload deduces `N`
-and calls the compiler's type-generic builtins, passing `N` as the count for
-zero so that the builtin is total. The overload is constrained on the
-standard call being ill-formed rather than on the library in use, so it steps
-aside on its own the day a standard library learns the type, and the two can
-never be ambiguous. The builtins are younger than the type: Clang 19 added
-them, where `_BitInt` reached C++ in Clang 14. So the overload sits behind
-`__has_builtin` and is left undeclared on a compiler with the one and not the
-other, rather than given a fallback that no supported compiler needs.
+The `<bit>` counterparts follow the same split. Where the standard library's `<bit>` takes a
+type, xstd forwards to it. Every other `unsigned_integer` — an integer class, or an
+`unsigned _BitInt(N)` that libstdc++ refuses — is answered by one template per function
+that works a `std::size_t` word at a time, the word being `std::size_t` because
+[iterator.concept.winc] promises every integer-class type an explicit conversion to and from
+it, and each word goes to the standard function, which knows its own instructions. The
+128-bit classes get no overloads of their own: the template reaches them through their
+operators, and being a template declared beside the forwarding overload, it is the same
+overload set in every translation unit whatever order the headers come in, so `bit_width`,
+written on `countl_zero`, never sees a different `countl_zero` for the same type. For
+`countl_zero`, `countr_zero` and `popcount` on `unsigned _BitInt(N)`, a more specialized
+overload deduces `N` and calls the compiler's type-generic builtin, passing `N` as the count
+for zero so that the builtin is total. It is constrained on the standard call being
+ill-formed rather than on the library in use, so it steps aside on its own the day a
+standard library learns the type. The builtins are younger than the type: Clang 19 added
+them, where `_BitInt` reached C++ in Clang 14, so that overload sits behind `__has_builtin`,
+and the word template answers where it is absent. `byteswap` alone also takes signed types,
+as `std::byteswap` does, swapping through the unsigned counterpart, and asks for a whole
+number of bytes rather than for the absence of padding bits that `std::byteswap` mandates,
+since it swaps the value and not the object representation.
 
 The four permutations from [P3104R6](https://wg21.link/P3104R6) — `bit_reverse`,
 `bit_repeat`, `bit_compress` and `bit_expand` — have no `<bit>` to defer to yet, so each is
 one template over `unsigned_integer` beside an overload forwarding to the standard function,
 declared once `__cpp_lib_bitops` reaches the working draft's `202607L` and constrained, like
-the counters, on the standard call being well-formed. The template works a word at a time,
-the word being `std::size_t` because [iterator.concept.winc] promises every integer-class type
-an explicit conversion to and from it. A word is mirrored by Clang's `__builtin_bitreverse64`
+the counters, on the standard call being well-formed. The template works a word at a time.
+A word is mirrored by Clang's `__builtin_bitreverse64`
 or by a byte swap and three masked swaps; it is compressed or expanded by `_pext_u64` and
 `_pdep_u64` when `__BMI2__` is defined on x86-64, and otherwise by a loop over the mask's
 one-bits. The instructions are chosen at compile time and never in a constant expression,

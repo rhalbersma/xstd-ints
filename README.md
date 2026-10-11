@@ -157,7 +157,7 @@ integer-class type, and [CONTRIBUTING.md](CONTRIBUTING.md) to build the library 
 | Header | Additions | Description | Reference |
 | :----- | :-------- | :---------- | :-------- |
 | `<xstd/ints/concepts/integer_class.hpp>` <br> `<xstd/ints/concepts/integer.hpp>` <br> `<xstd/ints/concepts/signed_integer.hpp>` <br> `<xstd/ints/concepts/unsigned_integer.hpp>` <br> `<xstd/ints/concepts/bit_mask.hpp>` <br> `<xstd/ints/concepts/alignable.hpp>` <br> `<xstd/ints/concepts/nothrow_const_operators.hpp>` | `integer_class` <br> `integer` <br> `signed_integer` <br> `unsigned_integer` <br> `bit_mask` <br> `alignable`, `nothrow_alignable` <br> `nothrow_const_operators` | The operations [iterator.concept.winc] states of an integer-class type <br> P3701 arithmetic domain, extended to paired integer-class types <br> Open form of `std::signed_integral` <br> Open form of `std::unsigned_integral` <br> The standard's bitmask type: an unsigned integer, `std::bitset`, or an enumeration overloading the operators <br> What the alignment functions ask of a type, and whether its operations carry `noexcept` <br> Exception specification of the integer functions | [iterator.concept.winc] (integer-class type) <br> [P3701R0](https://wg21.link/P3701R0), [iterator.concept.winc] <br> [iterator.concept.winc] (integer-class types) <br> [iterator.concept.winc] (integer-class types) <br> [bitmask.types] <br> none <br> none |
-| `<xstd/ints/bit.hpp>` | `bit_compress` <br> `bit_expand` <br> `bit_repeat` <br> `bit_reverse` <br> `countl_zero` <br> `countr_zero` <br> `popcount` | Gather the bits a mask selects into the low bits (PEXT) <br> Scatter the low bits to the positions a mask selects (PDEP) <br> Repeat the low `l` bits across the width <br> Mirror the bits, any xstd unsigned integer <br> `std::countl_zero`, widened to the 128-bit integer classes and bit-precise widths `<bit>` declines <br> `std::countr_zero`, the same <br> `std::popcount`, the same | [bit.count] <br> [bit.count] <br> [bit.pop] <br> [P3104R6](https://wg21.link/P3104R6) <br> [P3104R6](https://wg21.link/P3104R6) <br> [P3104R6](https://wg21.link/P3104R6) <br> [P3104R6](https://wg21.link/P3104R6) |
+| `<xstd/ints/bit.hpp>` | `bit_ceil` <br> `bit_compress` <br> `bit_expand` <br> `bit_floor` <br> `bit_repeat` <br> `bit_reverse` <br> `bit_width` <br> `byteswap` <br> `countl_one` <br> `countl_zero` <br> `countr_one` <br> `countr_zero` <br> `has_single_bit` <br> `popcount` <br> `rotl` <br> `rotr` | `std::bit_ceil`, widened to the 128-bit integer classes and bit-precise widths `<bit>` declines <br> Gather the bits a mask selects into the low bits (PEXT) <br> Scatter the low bits to the positions a mask selects (PDEP) <br> `std::bit_floor`, widened the same way <br> Repeat the low `l` bits across the width <br> Mirror the bits, any xstd unsigned integer <br> `std::bit_width`, widened the same way <br> `std::byteswap`, widened to every xstd integer whose width is a whole number of bytes <br> `std::countl_one`, widened the same way <br> `std::countl_zero`, widened the same way <br> `std::countr_one`, widened the same way <br> `std::countr_zero`, widened the same way <br> `std::has_single_bit`, widened the same way <br> `std::popcount`, widened the same way <br> `std::rotl`, widened the same way <br> `std::rotr`, widened the same way | [bit.pow.two] <br> [P3104R6](https://wg21.link/P3104R6) <br> [P3104R6](https://wg21.link/P3104R6) <br> [bit.pow.two] <br> [P3104R6](https://wg21.link/P3104R6) <br> [P3104R6](https://wg21.link/P3104R6) <br> [bit.pow.two] <br> [bit.byteswap] <br> [bit.count] <br> [bit.count] <br> [bit.count] <br> [bit.count] <br> [bit.pow.two] <br> [bit.count] <br> [bit.rot] <br> [bit.rot] |
 | `<xstd/ints/charconv.hpp>` | `to_chars` <br> `to_chars_max_size` | `std::to_chars`, widened to xstd integers it does not cover <br> Buffer size that holds any value of `T` at any base | [charconv.to.chars] <br> none |
 | `<xstd/ints/cstdint.hpp>` | `bit_int<N>` <br> `bit_uint<N>` <br> `bit_int_max_width` <br> `int128` <br> `uint128` | Native bit-precise signed integer (when available) <br> Native bit-precise unsigned integer (when available) <br> Maximum native bit-precise width (when available) <br> Platform 128-bit signed integer <br> Platform 128-bit unsigned integer | [P3666R0](https://wg21.link/P3666R0) <br> [P3666R0](https://wg21.link/P3666R0) <br> none <br> none <br> none |
 | `<xstd/ints/cstdlib.hpp>` | `div_result` <br> `sign` <br> `abs` <br> `unsigned_abs` <br> `div` <br> `div_euclid` <br> `div_floor` <br> `div_ceil` | Defaulted equality comparison <br> `-1`, `0`, or `1`; `0` or `1` when unsigned <br> `constexpr`, any xstd integer <br> Total `\|x\|`, returning the unsigned counterpart <br> Truncated division, any xstd integer <br> Euclidean division <br> Floored division <br> Ceiling division | none <br> [Boost.Math](https://www.boost.org/doc/libs/1_80_0/libs/math/doc/html/math_toolkit/sign_functions.html) <br> [p0533r9](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0533r9.pdf) (reviewed implementation wording) <br> [Rust `unsigned_abs`](https://doc.rust-lang.org/std/primitive.i32.html#method.unsigned_abs) (no C++ equivalent) <br> [p0533r9](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0533r9.pdf) (reviewed implementation wording) <br> [Euclidean division](https://en.wikipedia.org/wiki/Euclidean_division) <br> [Floored division](http://research.microsoft.com/pubs/151917/divmodnote-letter.pdf) <br> [P3724R4](https://wg21.link/P3724R4) (`div_rem_to_pos_inf`) |
@@ -179,26 +179,32 @@ the libraries it adapts on the include path; nothing above them exports either. 
 adapted header is exported in turn, so including one is enough: `<xstd/ints/ext/absl/int128.hpp>`
 brings `absl::int128` and `absl::uint128` with it.
 
-`std::countl_zero`, `std::countr_zero` and `std::popcount` take
-`std::unsigned_integral`, which every 128-bit integer *class* fails. Each
-`<xstd/ints/bit/>` header is one overload set: the standard function wherever it
-accepts the argument, and beside it an overload for a class this library knows.
-Where `xstd::uint128` is a class, as it is in the Microsoft STL, that overload
-lives in `<xstd/ints/cstdint/int128.hpp>`, and the two `<xstd/ext/>` adaptors
-carry one each for the type they adapt. Where it is the built-in `unsigned __int128`,
-libstdc++ and libc++ carry it into `std::unsigned_integral` only outside
-`__STRICT_ANSI__`, so a strictly conforming translation unit on GCC or Clang has
-no bit basis for that one width.
+The C++20 `<bit>` functions take `std::unsigned_integral`, and C++23's `std::byteswap`
+takes `std::integral`, which every 128-bit integer *class* fails. Each `<xstd/ints/bit/>`
+header is one overload set: the standard function wherever it accepts the argument, and
+beside it one template answering every other `unsigned_integer`, or for `byteswap` every
+`integer` whose width is a whole number of bytes. The template works through the value one
+`std::size_t` word at a time, so it covers `xstd::uint128` where it is a class, as it is in
+the Microsoft STL, and the types the two `<xstd/ext/>` adaptors adapt, with nothing in those
+adaptors beyond the `make_signed` and `make_unsigned` associations. Its exception
+specification is that of the type's operators, so it is `noexcept` for every type but
+`absl::uint128`, whose operators declare nothing. Where `xstd::uint128` is the built-in
+`unsigned __int128` and the standard library leaves it out of `std::unsigned_integral`, as
+libstdc++ does in a strictly conforming translation unit on GCC, the word template answers
+it too, so every configuration has the whole of `<bit>` at that width.
 
-The same three take `bit_uint<N>` at every width the compiler offers. libc++
-makes `unsigned _BitInt(N)` integral, and its `<bit>` answers each width
-correctly, so there the standard function is the one called. Where `<bit>`
-refuses the type, as libstdc++'s does, an overload over
-`__builtin_clzg`, `__builtin_ctzg` and `__builtin_popcountg` answers instead,
-the first two given `N` as the result for zero. That overload is constrained on
-`<bit>` refusing the width, so exactly one of the two is ever viable, and it is
-declared only where `XSTD_HAS_BIT_INT` is defined and `__has_builtin` reports
-the builtin. GCC has no `_BitInt` in C++, so there it declares nothing.
+`countl_zero`, `countr_zero` and `popcount` take `bit_uint<N>` at every width the compiler
+offers. libc++ makes `unsigned _BitInt(N)` integral, and its `<bit>` answers each width
+correctly, so there the standard function is the one called. Where `<bit>` refuses the type,
+as libstdc++'s does, an overload over `__builtin_clzg`, `__builtin_ctzg` and
+`__builtin_popcountg` answers instead, the first two given `N` as the result for zero. That
+overload is constrained on `<bit>` refusing the width and is more specialized than the word
+template, so exactly one of the three is chosen, and it is declared only where
+`XSTD_HAS_BIT_INT` is defined and `__has_builtin` reports the builtin; without it, the word
+template answers. GCC has no `_BitInt` in C++, so there it declares nothing. The other
+functions build on these three or on the word template, and take every `bit_uint<N>` width
+the same way: `byteswap` takes a width that is a whole number of bytes, so `bit_uint<24>`
+but not `bit_uint<13>`.
 
 `bit_reverse`, `bit_repeat`, `bit_compress` and `bit_expand` are P3104's bit
 permutations, which C++29's `<bit>` adds. Where the standard library declares them, as
