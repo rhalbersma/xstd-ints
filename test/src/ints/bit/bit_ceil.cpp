@@ -92,12 +92,16 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsOfEveryWidth, T, basis_unsigned_types)
         BOOST_CHECK(true);
 }
 
-// Each width against a doubling reference over the precondition's domain: edges at compile time, a sweep at run time.
+// Each width against a doubling reference within the precondition: edges at compile time, a sweep at run time.
 BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheReference, T, basis_unsigned_types)
 {
         static_assert(test::holds_at_every_position<agrees_at<T>>(std::make_integer_sequence<int, xstd::numeric_limits<T>::digits>{}));
         auto mismatches = 0UZ;
-        test::for_each_sweep_value<T>([&](T x) -> void { mismatches += not in_domain(x) or xstd::bit_ceil(x) == test::reference_bit_ceil(x) ? 0UZ : 1UZ; });
+        test::for_each_sweep_value<T>([&](T value) -> void {
+                // Halved, every value is below the top bit: no call outside the domain is left to hoist.
+                auto const& x = static_cast<T>(value >> 1U);
+                mismatches += xstd::bit_ceil(x) == test::reference_bit_ceil(x) ? 0UZ : 1UZ;
+        });
         BOOST_CHECK_EQUAL(mismatches, 0UZ);
 }
 
