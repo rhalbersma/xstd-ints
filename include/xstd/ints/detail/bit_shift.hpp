@@ -40,7 +40,7 @@ concept std_shifts = false;
 
 enum class shift_direction : bool {
         left,
-        right
+        right,
 };
 
 // Below zero only where the type has a sign, asked without comparing an unsigned value to zero.
@@ -78,9 +78,14 @@ template<integer T, integer S>
         if (reaches_width(magnitude, numeric_limits<U>::digits)) {
                 return leftward or not is_negative(x) ? T{0} : static_cast<T>(-1);
         }
-        // Left in the unsigned counterpart, where nothing overflows; right in T itself, where a signed shift floors.
-        auto const n = static_cast<shift_count_t<U>>(magnitude);
-        return leftward ? static_cast<T>(static_cast<U>(static_cast<U>(x) << n)) : static_cast<T>(x >> n);
+        // Bound by reference: Clang 19 crashes emitting a const local _BitInt over 128 bits.
+        auto const& u = static_cast<U>(x);
+        auto const n  = static_cast<shift_count_t<U>>(magnitude);
+        if (leftward) {
+                return static_cast<T>(static_cast<U>(u << n));
+        }
+        // A negative value floors by shifting its complement, whose ones are the zeros it lacks.
+        return is_negative(x) ? static_cast<T>(static_cast<U>(~static_cast<U>(static_cast<U>(~u) >> n))) : static_cast<T>(static_cast<U>(u >> n));
 }
 
 } // namespace xstd::ints::detail
