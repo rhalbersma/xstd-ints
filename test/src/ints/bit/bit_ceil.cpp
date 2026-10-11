@@ -35,7 +35,7 @@ constexpr auto in_domain(T x)
         -> bool
 {
         auto const ones = xstd::numeric_limits<T>::max();
-        return x <= static_cast<T>(ones ^ (ones >> 1U));
+        return x <= static_cast<T>(ones ^ static_cast<T>(ones >> 1U));
 }
 
 template<class T>
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsUnsignedInteger)
 BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsOfEveryWidth, T, basis_unsigned_types)
 {
         constexpr auto ones = xstd::numeric_limits<T>::max();
-        constexpr auto top  = static_cast<T>(ones ^ (ones >> 1U));
+        constexpr auto top  = static_cast<T>(ones ^ static_cast<T>(ones >> 1U));
         static_assert(xstd::bit_ceil(T{0}) == T{1});
         static_assert(xstd::bit_ceil(T{1}) == T{1});
         static_assert(xstd::bit_ceil(top) == top);

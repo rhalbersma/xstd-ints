@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(NoexceptFollowsTheOperators, T, basis_unsigned_typ
 BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsOfEveryWidth, T, basis_unsigned_types)
 {
         constexpr auto ones = xstd::numeric_limits<T>::max();
-        constexpr auto top  = static_cast<T>(ones ^ (ones >> 1U));
+        constexpr auto top  = static_cast<T>(ones ^ static_cast<T>(ones >> 1U));
         static_assert(xstd::bit_floor(T{0}) == T{0});
         static_assert(xstd::bit_floor(T{1}) == T{1});
         static_assert(xstd::bit_floor(ones) == top);

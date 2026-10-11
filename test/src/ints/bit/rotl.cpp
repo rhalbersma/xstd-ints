@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsTrade, T, basis_unsigned_types)
 {
         constexpr auto N    = xstd::numeric_limits<T>::digits;
         constexpr auto ones = xstd::numeric_limits<T>::max();
-        constexpr auto top  = static_cast<T>(ones ^ (ones >> 1U));
+        constexpr auto top  = static_cast<T>(ones ^ static_cast<T>(ones >> 1U));
         static_assert(xstd::rotl(T{1}, -1) == top);
         static_assert(xstd::rotl(top, 1) == T{1});
         static_assert(xstd::rotl(T{1}, N) == T{1});

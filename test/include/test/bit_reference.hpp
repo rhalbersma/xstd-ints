@@ -68,7 +68,7 @@ template<class T>
 {
         auto const ones = xstd::numeric_limits<T>::max();
         auto count      = 0;
-        for (auto probe = static_cast<T>(ones ^ (ones >> 1U)); probe != T{0} and (x & probe) == T{0}; probe = static_cast<T>(probe >> 1U)) {
+        for (auto probe = static_cast<T>(ones ^ static_cast<T>(ones >> 1U)); probe != T{0} and (x & probe) == T{0}; probe = static_cast<T>(probe >> 1U)) {
                 ++count;
         }
         return count;
@@ -102,7 +102,7 @@ template<class T>
 {
         auto const ones = xstd::numeric_limits<T>::max();
         auto count      = 0;
-        for (auto probe = static_cast<T>(ones ^ (ones >> 1U)); probe != T{0} and (x & probe) != T{0}; probe = static_cast<T>(probe >> 1U)) {
+        for (auto probe = static_cast<T>(ones ^ static_cast<T>(ones >> 1U)); probe != T{0} and (x & probe) != T{0}; probe = static_cast<T>(probe >> 1U)) {
                 ++count;
         }
         return count;
@@ -148,13 +148,13 @@ template<class T>
         return x;
 }
 
-// Doubling from one until x is reached, for an x at most the top bit.
+// Doubling from one until x is reached; past the top bit the doubling wraps to zero, which ends it.
 template<class T>
 [[nodiscard]] constexpr auto reference_bit_ceil(T x) noexcept
         -> T
 {
         auto power = T{1};
-        while (power < x) {
+        while (power != T{0} and power < x) {
                 power = static_cast<T>(power + power);
         }
         return power;
@@ -166,7 +166,7 @@ template<class T>
         -> T
 {
         auto const ones = xstd::numeric_limits<T>::max();
-        auto const top  = static_cast<T>(ones ^ (ones >> 1U));
+        auto const top  = static_cast<T>(ones ^ static_cast<T>(ones >> 1U));
         auto const N    = xstd::numeric_limits<T>::digits;
         for ([[maybe_unused]] auto const n : std::views::iota(0, ((s % N) + N) % N)) {
                 x = static_cast<T>(static_cast<T>(x << 1U) | ((x & top) != T{0} ? T{1} : T{0}));
