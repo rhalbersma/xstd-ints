@@ -191,6 +191,20 @@ template<class T>
         return static_cast<T>(result);
 }
 
+// P3793's x times two to the count, one place at a time: doubling in the unsigned counterpart, halving in T.
+template<class T>
+[[nodiscard]] constexpr auto reference_shift(T x, long long count) noexcept
+        -> T
+{
+        using U          = xstd::make_unsigned_t<T>;
+        auto const W     = static_cast<long long>(xstd::numeric_limits<U>::digits);
+        auto const steps = count < 0 ? (-count < W ? -count : W) : (count < W ? count : W);
+        for ([[maybe_unused]] auto const n : std::views::iota(0LL, steps)) {
+                x = count < 0 ? static_cast<T>(x >> 1U) : static_cast<T>(static_cast<U>(static_cast<U>(x) << 1U));
+        }
+        return x;
+}
+
 // The four permutation references walk one bit at a time, as P3104R5's own illustrations do.
 template<class T>
 [[nodiscard]] constexpr auto reference_bit_reverse(T x) noexcept
