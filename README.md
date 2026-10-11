@@ -221,12 +221,15 @@ permutations, which C++29's `<bit>` adds. Where the standard library declares th
 elsewhere one template answers every `unsigned_integer`, the 128-bit integer classes and
 every `bit_uint<N>` width included, by working through it one `std::size_t` word at a time.
 All four are `constexpr`, portable in a constant expression and fast at run time: Clang's
-`__builtin_bitreverse64` mirrors a word, and with `-mbmi2` on x86-64 `bit_compress` and
-`bit_expand` compile to `PEXT` and `PDEP`. That choice is made at compile time, with no run-time
-CPU dispatch, and AMD processors before Zen 3 implement both instructions in microcode at
-roughly six times the latency of Zen 3 and Intel since Haswell; a build for those processors
-should leave out `-mbmi2`, which selects the portable word loop instead. `bit_repeat` alone has
-a precondition, a length above zero, and is not `noexcept`, as the paper specifies.
+`__builtin_bitreverse64` mirrors a word, and with BMI2 on x86-64 (`-mbmi2`, or MSVC's
+`/arch:AVX2`) `bit_compress` and `bit_expand` compile to `PEXT` and `PDEP`. That choice is made
+at compile time, with no run-time CPU dispatch. AMD processors before Zen 3 implement both
+instructions in microcode at roughly six times the latency of Zen 3 and Intel since Haswell, so
+a build targeting them (`-march=bdver4`, `znver1` or `znver2`) keeps the portable kernels even
+though it enables BMI2. Those kernels are branch-free where it counts: `bit_compress` places
+each selected bit by one `popcount` of the mask below it, and `bit_expand` walks the mask's
+one-bits without branching on the value. `bit_repeat` alone has a precondition, a length above
+zero, and is not `noexcept`, as the paper specifies.
 
 If you lint with `clang-tidy` and use any Boost library, `misc-include-cleaner`
 will report that nothing provides the Boost names you write, here and anywhere

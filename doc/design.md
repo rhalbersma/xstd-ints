@@ -114,12 +114,34 @@ one template over `unsigned_integer` beside an overload forwarding to the standa
 declared once `__cpp_lib_bitops` reaches the working draft's `202607L` and constrained, like
 the counters, on the standard call being well-formed. The template works a word at a time.
 A word is mirrored by Clang's `__builtin_bitreverse64`
-or by a byte swap and three masked swaps; it is compressed or expanded by `_pext_u64` and
-`_pdep_u64` when `__BMI2__` is defined on x86-64, and otherwise by a loop over the mask's
-one-bits. The instructions are chosen at compile time and never in a constant expression,
-which takes the loop. There is no run-time CPU dispatch: `PEXT` and `PDEP` are microcoded on
-AMD processors before Zen 3, with an 18-cycle latency against 3 on Zen 3 and Intel since
-Haswell, so a build targeting those processors omits `-mbmi2` and gets the portable loop.
+or by a byte swap and three masked swaps. A word is compressed or expanded by one of two
+families of kernels on a single `std::size_t`, each family in a directory of its own under
+`detail/` with one header per kernel and an umbrella:
+
+- `detail::intrinsic` holds `compress` and `expand`, which are `_pext_u64` and `_pdep_u64`,
+  declared only where `XSTD_INTS_HAS_FAST_BMI2` says the target makes them fast: x86-64 with
+  `__BMI2__`, or MSVC with `/arch:AVX2`, which implies BMI2 but never defines the macro. A
+  target of `bdver4`, `znver1` or `znver2` is excluded even though it enables BMI2, since
+  `PEXT` and `PDEP` are microcoded there, with an 18-cycle latency against 3 on Zen 3 and Intel
+  since Haswell.
+- `detail::portable` holds the `constexpr` kernels, which a constant expression always takes
+  and a run-time call takes wherever the intrinsics are absent. `compress_by_rank` loops over
+  the selected bits, placing each at its rank among the mask's ones by one `popcount`;
+  `expand_by_walk` loops over the mask's one-bits, depositing the next bit of the value by a
+  mask rather than a branch; `expand_by_select` loops over the value's one-bits instead,
+  placing each on the mask's corresponding one by Vigna's broadword `select`, which suits a
+  sparse value over a wide mask.
+
+`compress_limb` and `expand_limb` pick between the two: the intrinsic outside a constant
+expression where it is declared, the portable kernel otherwise. Benchmarked on a Haswell-class
+Xeon, per call: `PEXT` and `PDEP` take about 0.45 ns; `compress_by_rank` about 0.4 ns per
+selected bit; `expand_by_walk` about 0.8 ns per mask bit; and `expand_by_select` about 3.6 ns
+per source bit, which beats the walk from about ten mask bits up when the value is sparse. The
+alternatives measured and left out are the bit-at-a-time mask walk with a branch, four to five
+times slower; Hacker's Delight's parallel suffix, a flat 21 to 23 ns; and Wegner's zp7, a flat
+6 to 8 ns with `PCLMULQDQ` and 17 to 20 ns without. Tests check every portable kernel against a
+bit-at-a-time reference at compile time and at run time, and the run-time limb kernels against
+the portable ones, so a build with BMI2 checks the instructions too.
 Wider types compose the words: reversal sends each mirrored word to the mirror of its offset,
 compression packs each word's result above the bits the lower words selected, and expansion
 draws each word's bits from where the lower words stopped. Shift counts are `int`, the one
