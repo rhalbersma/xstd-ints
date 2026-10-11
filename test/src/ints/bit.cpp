@@ -6,7 +6,7 @@
 #include <xstd/ints/bit.hpp>          // complete bit basis
 #include <xstd/ints/cstdint.hpp>      // uint128
 #include <xstd/ints/limits.hpp>       // numeric_limits
-#include <test/bit_reference.hpp>     // bit_precise_sweep_types, for_each_edge_value, for_each_sweep_pair, shift_count_t
+#include <test/bit_reference.hpp>     // bit_precise_sweep_types, for_each_edge_value, for_each_sweep_pair, for_each_sweep_value, shift_count_t
 #include <test/constexpr_check.hpp>   // XSTD_CONSTEXPR_CHECK
 #include <test/exact_width_types.hpp> // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>   // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
@@ -91,12 +91,29 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheThreeAgreeOnASingleBit, T, basis_unsigned_types
         BOOST_CHECK(true);
 }
 
-// The widest exact width has a basis on every configured leg, which is what CMAKE_CXX_EXTENSIONS ON buys.
+// The widest exact width has a basis on every configured leg, through <bit> or a word at a time.
 BOOST_AUTO_TEST_CASE(TheWidestExactWidthHasABasis)
 {
         static_assert(has_popcount<xstd::uint128>);
         static_assert(xstd::popcount(xstd::uint128{0}) == 0);
         BOOST_CHECK(true);
+}
+
+// The functions agree with each other: each one-count is a zero-count of the complement, and the width bounds the floor.
+BOOST_AUTO_TEST_CASE_TEMPLATE(TheFunctionsAgree, T, basis_unsigned_types)
+{
+        constexpr auto W = xstd::numeric_limits<T>::digits;
+        auto mismatches  = 0UZ;
+        test::for_each_sweep_value<T>([&](T x) -> void {
+                mismatches += xstd::bit_width(x) == W - xstd::countl_zero(x) ? 0UZ : 1UZ;
+                mismatches += xstd::countl_one(x) == xstd::countl_zero(static_cast<T>(~x)) ? 0UZ : 1UZ;
+                mismatches += xstd::countr_one(x) == xstd::countr_zero(static_cast<T>(~x)) ? 0UZ : 1UZ;
+                mismatches += xstd::has_single_bit(x) == (xstd::popcount(x) == 1) ? 0UZ : 1UZ;
+                mismatches += x == T{0} or (xstd::has_single_bit(xstd::bit_floor(x)) and xstd::bit_width(xstd::bit_floor(x)) == xstd::bit_width(x)) ? 0UZ : 1UZ;
+                mismatches += xstd::rotl(x, 1) == xstd::rotr(x, -1) and xstd::rotl(x, -W) == x ? 0UZ : 1UZ;
+                mismatches += xstd::popcount(xstd::rotl(x, 3)) == xstd::popcount(x) ? 0UZ : 1UZ;
+        });
+        BOOST_CHECK_EQUAL(mismatches, 0UZ);
 }
 
 // Compressing and expanding through one mask undo each other, as far as the mask's population lets them.

@@ -8,40 +8,17 @@
 
 #include <xstd/ints/type_traits/make_signed.hpp>   // make_signed
 #include <xstd/ints/type_traits/make_unsigned.hpp> // make_unsigned
-#include <type_traits>                             // remove_cvref_t, type_identity
+#include <type_traits>                             // type_identity
 
 // Prefer the Microsoft STL's integer classes, else the compiler's 128-bit extension.
 #ifdef _MSC_VER
 
 #include <__msvc_int128.hpp>
-#include <bit>    // countl_zero, countr_zero, popcount
-#include <limits> // numeric_limits
 
 namespace xstd {
 
 using int128  = std::_Signed128;
 using uint128 = std::_Unsigned128;
-
-// remove_cvref_t is load-bearing: _Word is an array, so decltype gives uint64_t& and numeric_limits reports 0 digits.
-[[nodiscard]] constexpr auto popcount(uint128 x) noexcept
-        -> int
-{
-        return std::popcount(x._Word[0]) + std::popcount(x._Word[1]);
-}
-
-[[nodiscard]] constexpr auto countl_zero(uint128 x) noexcept
-        -> int
-{
-        return x._Word[1] != 0 ? std::countl_zero(x._Word[1])
-                               : std::numeric_limits<std::remove_cvref_t<decltype(x._Word[0])>>::digits + std::countl_zero(x._Word[0]);
-}
-
-[[nodiscard]] constexpr auto countr_zero(uint128 x) noexcept
-        -> int
-{
-        return x._Word[0] != 0 ? std::countr_zero(x._Word[0])
-                               : std::numeric_limits<std::remove_cvref_t<decltype(x._Word[1])>>::digits + std::countr_zero(x._Word[1]);
-}
 
 } // namespace xstd
 

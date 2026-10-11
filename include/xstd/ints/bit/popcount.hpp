@@ -6,11 +6,15 @@
 #ifndef XSTD_INTS_BIT_POPCOUNT_HPP
 #define XSTD_INTS_BIT_POPCOUNT_HPP
 
-#include <xstd/ints/cstdint/bit_int.hpp> // XSTD_HAS_BIT_INT, bit_uint
-#include <bit>                           // popcount
-#include <cstddef>                       // size_t
+#include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
+#include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
+#include <xstd/ints/cstdint/bit_int.hpp>                  // XSTD_HAS_BIT_INT, bit_uint
+#include <xstd/ints/detail/bit_limb.hpp>                  // bit_limb, bit_limb_width, shift_count_t
+#include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
+#include <bit>                                            // popcount
+#include <cstddef>                                        // size_t
 
-// One overload set per function: <bit> takes std::unsigned_integral, which every 128-bit integer class fails.
+// One overload set: <bit> where it takes the type, a builtin for the bit-precise widths it refuses, words for the rest.
 namespace xstd {
 
 // Constrained on the call, so constraint and body cannot drift: std::unsigned_integral admits what <bit> refuses.
@@ -36,6 +40,23 @@ template<std::size_t N>
 
 #endif
 #endif
+
+// Each word's population, summed.
+template<unsigned_integer T>
+        requires (not requires (T x) { std::popcount(x); })
+[[nodiscard]] constexpr auto popcount(T x) noexcept(nothrow_const_operators<T>)
+        -> int
+{
+        using ints::detail::bit_limb;
+        using shift_count = ints::detail::shift_count_t<T>;
+        constexpr auto N  = static_cast<std::size_t>(numeric_limits<T>::digits);
+        constexpr auto L  = ints::detail::bit_limb_width;
+        auto count        = 0;
+        for (auto k = 0UZ; k < N; k += L) {
+                count += std::popcount(static_cast<bit_limb>(x >> static_cast<shift_count>(k)));
+        }
+        return count;
+}
 
 } // namespace xstd
 

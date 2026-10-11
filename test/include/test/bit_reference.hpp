@@ -6,15 +6,16 @@
 #ifndef TEST_BIT_REFERENCE_HPP
 #define TEST_BIT_REFERENCE_HPP
 
-#include <xstd/ints/cstdint.hpp> // XSTD_HAS_BIT_INT, bit_uint
-#include <xstd/ints/limits.hpp>  // numeric_limits
-#include <array>                 // array
-#include <cstddef>               // size_t
-#include <cstdint>               // uint64_t
-#include <ranges>                // iota
-#include <tuple>                 // tuple, tuple_cat
-#include <type_traits>           // bool_constant, conditional_t, is_class_v
-#include <utility>               // declval, integer_sequence
+#include <xstd/ints/cstdint.hpp>                   // XSTD_HAS_BIT_INT, bit_uint
+#include <xstd/ints/limits.hpp>                    // numeric_limits
+#include <xstd/ints/type_traits/make_unsigned.hpp> // make_unsigned_t
+#include <array>                                   // array
+#include <cstddef>                                 // size_t
+#include <cstdint>                                 // uint64_t
+#include <ranges>                                  // iota
+#include <tuple>                                   // tuple, tuple_cat
+#include <type_traits>                             // bool_constant, conditional_t, is_class_v
+#include <utility>                                 // declval, integer_sequence
 
 // Every <xstd/ints/bit/> function answers unsigned _BitInt(N) where the build has the type and the three builtins.
 #ifdef XSTD_HAS_BIT_INT
@@ -60,14 +61,14 @@ inline constexpr auto width = static_cast<std::size_t>(xstd::numeric_limits<T>::
 template<class T>
 using shift_count_t = std::conditional_t<std::is_class_v<T>, int, unsigned>;
 
-// The three references walk one bit at a time, sharing nothing with any implementation under test.
+// The counting references walk one bit at a time, sharing nothing with any implementation under test.
 template<class T>
 [[nodiscard]] constexpr auto reference_countl_zero(T x) noexcept
         -> int
 {
         auto const ones = xstd::numeric_limits<T>::max();
         auto count      = 0;
-        for (auto probe = static_cast<T>(ones ^ (ones >> 1U)); probe != T{0} and (x & probe) == T{0}; probe >>= 1U) {
+        for (auto probe = static_cast<T>(ones ^ (ones >> 1U)); probe != T{0} and (x & probe) == T{0}; probe = static_cast<T>(probe >> 1U)) {
                 ++count;
         }
         return count;
@@ -78,7 +79,7 @@ template<class T>
         -> int
 {
         auto count = 0;
-        for (auto probe = T{1}; probe != T{0} and (x & probe) == T{0}; probe += probe) {
+        for (auto probe = T{1}; probe != T{0} and (x & probe) == T{0}; probe = static_cast<T>(probe + probe)) {
                 ++count;
         }
         return count;
@@ -89,10 +90,105 @@ template<class T>
         -> int
 {
         auto count = 0;
-        for (; x != T{0}; x >>= 1U) {
+        for (; x != T{0}; x = static_cast<T>(x >> 1U)) {
                 count += (x & T{1}) != T{0} ? 1 : 0;
         }
         return count;
+}
+
+template<class T>
+[[nodiscard]] constexpr auto reference_countl_one(T x) noexcept
+        -> int
+{
+        auto const ones = xstd::numeric_limits<T>::max();
+        auto count      = 0;
+        for (auto probe = static_cast<T>(ones ^ (ones >> 1U)); probe != T{0} and (x & probe) != T{0}; probe = static_cast<T>(probe >> 1U)) {
+                ++count;
+        }
+        return count;
+}
+
+template<class T>
+[[nodiscard]] constexpr auto reference_countr_one(T x) noexcept
+        -> int
+{
+        auto count = 0;
+        for (auto probe = T{1}; probe != T{0} and (x & probe) != T{0}; probe = static_cast<T>(probe + probe)) {
+                ++count;
+        }
+        return count;
+}
+
+template<class T>
+[[nodiscard]] constexpr auto reference_bit_width(T x) noexcept
+        -> int
+{
+        auto width = 0;
+        for (; x != T{0}; x = static_cast<T>(x >> 1U)) {
+                ++width;
+        }
+        return width;
+}
+
+template<class T>
+[[nodiscard]] constexpr auto reference_has_single_bit(T x) noexcept
+        -> bool
+{
+        return reference_popcount(x) == 1;
+}
+
+// Clearing the lowest one until a single one is left.
+template<class T>
+[[nodiscard]] constexpr auto reference_bit_floor(T x) noexcept
+        -> T
+{
+        while (static_cast<T>(x & static_cast<T>(x - T{1})) != T{0}) {
+                x = static_cast<T>(x & static_cast<T>(x - T{1}));
+        }
+        return x;
+}
+
+// Doubling from one until x is reached, for an x at most the top bit.
+template<class T>
+[[nodiscard]] constexpr auto reference_bit_ceil(T x) noexcept
+        -> T
+{
+        auto power = T{1};
+        while (power < x) {
+                power = static_cast<T>(power + power);
+        }
+        return power;
+}
+
+// One place at a time, the bit leaving the top coming back in at the bottom, as many times as the count says.
+template<class T>
+[[nodiscard]] constexpr auto reference_rotl(T x, int s) noexcept
+        -> T
+{
+        auto const ones = xstd::numeric_limits<T>::max();
+        auto const top  = static_cast<T>(ones ^ (ones >> 1U));
+        auto const N    = xstd::numeric_limits<T>::digits;
+        for ([[maybe_unused]] auto const n : std::views::iota(0, ((s % N) + N) % N)) {
+                x = static_cast<T>(static_cast<T>(x << 1U) | ((x & top) != T{0} ? T{1} : T{0}));
+        }
+        return x;
+}
+
+// One byte at a time, through the unsigned counterpart: byte n from the bottom becomes byte n from the top.
+template<class T>
+[[nodiscard]] constexpr auto reference_byteswap(T x) noexcept
+        -> T
+{
+        using U          = xstd::make_unsigned_t<T>;
+        using shift      = shift_count_t<U>;
+        auto const bytes = xstd::numeric_limits<U>::digits / 8;
+        auto result      = U{0};
+        for (auto const n : std::views::iota(0, bytes)) {
+                // Bound by reference: Clang 19 crashes emitting a const local _BitInt over 128 bits.
+                auto const& byte = static_cast<U>(static_cast<U>(static_cast<U>(x) >> static_cast<shift>(8 * n)) & U{0xFF});
+                result           = static_cast<U>(result | static_cast<U>(byte << static_cast<shift>(8 * (bytes - 1 - n))));
+        }
+        return static_cast<T>(result);
 }
 
 // The four permutation references walk one bit at a time, as P3104R5's own illustrations do.
@@ -174,7 +270,7 @@ constexpr auto for_each_edge_value(F f)
                 f(static_cast<T>(ones ^ bit));
                 f(below);
                 f(static_cast<T>(ones ^ below));
-                below |= bit;
+                below = static_cast<T>(below | bit);
         }
 }
 
