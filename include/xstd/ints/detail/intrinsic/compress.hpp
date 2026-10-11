@@ -6,8 +6,8 @@
 #ifndef XSTD_INTS_DETAIL_INTRINSIC_COMPRESS_HPP
 #define XSTD_INTS_DETAIL_INTRINSIC_COMPRESS_HPP
 
-#include <xstd/ints/detail/bit_limb.hpp>       // bit_limb
-#include <xstd/ints/detail/intrinsic/bmi2.hpp> // XSTD_INTS_HAS_FAST_BMI2
+#include <xstd/ints/detail/bit_limb.hpp>       // IWYU pragma: keep; bit_limb, used only where BMI2 is fast
+#include <xstd/ints/detail/intrinsic/bmi2.hpp> // IWYU pragma: keep; XSTD_INTS_HAS_FAST_BMI2, read only by the preprocessor
 
 #ifdef XSTD_INTS_HAS_FAST_BMI2
 
