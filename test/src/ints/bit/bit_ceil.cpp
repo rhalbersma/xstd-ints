@@ -3,17 +3,18 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/ints/bit/bit_ceil.hpp> // bit_ceil
-#include <xstd/ints/cstdint.hpp>      // bit_int, bit_uint, int128, uint128
-#include <xstd/ints/limits.hpp>       // numeric_limits
-#include <test/bit_reference.hpp>     // bit_precise_sweep_types, for_each_edge_value_at, for_each_sweep_value, holds_at_every_position, reference_bit_ceil
-#include <test/constexpr_check.hpp>   // XSTD_CONSTEXPR_CHECK
-#include <test/exact_width_types.hpp> // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
-#include <boost/test/unit_test.hpp>   // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
-#include <bit>                        // bit_ceil
-#include <cstdint>                    // int32_t, uint64_t
-#include <tuple>                      // tuple_cat
-#include <utility>                    // declval, make_integer_sequence
+#include <xstd/ints/bit/bit_ceil.hpp>          // bit_ceil
+#include <xstd/ints/cstdint.hpp>               // bit_int, bit_uint, int128, uint128
+#include <xstd/ints/limits.hpp>                // numeric_limits
+#include <test/bit_reference.hpp>              // bit_precise_sweep_types, for_each_edge_value_at, for_each_sweep_value, holds_at_every_position, reference_bit_ceil
+#include <test/boost_test_print_log_value.hpp> // NOLINT(misc-include-cleaner): registers Boost.Test printers
+#include <test/constexpr_check.hpp>            // XSTD_CONSTEXPR_CHECK
+#include <test/exact_width_types.hpp>          // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
+#include <boost/test/unit_test.hpp>            // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
+#include <bit>                                 // bit_ceil
+#include <cstdint>                             // int32_t, uint64_t
+#include <tuple>                               // tuple_cat
+#include <utility>                             // declval, make_integer_sequence
 
 namespace {
 
@@ -100,7 +101,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheReference, T, basis_unsigned_types)
         test::for_each_sweep_value<T>([&](T value) -> void {
                 // Halved, every value is below the top bit: no call outside the domain is left to hoist.
                 auto const& x = static_cast<T>(value >> 1U);
-                mismatches += xstd::bit_ceil(x) == test::reference_bit_ceil(x) ? 0UZ : 1UZ;
+                if (xstd::bit_ceil(x) != test::reference_bit_ceil(x)) {
+                        ++mismatches;
+                        BOOST_CHECK_EQUAL(xstd::bit_ceil(x), test::reference_bit_ceil(x));
+                }
         });
         BOOST_CHECK_EQUAL(mismatches, 0UZ);
 }
