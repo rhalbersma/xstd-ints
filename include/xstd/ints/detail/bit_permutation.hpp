@@ -36,10 +36,10 @@ namespace xstd::ints::detail {
 
 template<class T>
 concept std_permutes_bits = requires (T x, int l) {
-        std::bit_reverse(x);
-        std::bit_repeat(x, l);
         std::bit_compress(x, x);
         std::bit_expand(x, x);
+        std::bit_repeat(x, l);
+        std::bit_reverse(x);
 };
 
 #else
