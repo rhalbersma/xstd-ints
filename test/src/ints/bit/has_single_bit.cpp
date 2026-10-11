@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsOfEveryWidth, T, basis_unsigned_types)
         constexpr auto ones = xstd::numeric_limits<T>::max();
         static_assert(not xstd::has_single_bit(T{0}));
         static_assert(xstd::has_single_bit(T{1}));
-        static_assert(xstd::has_single_bit(static_cast<T>(ones ^ (ones >> 1U))));
+        static_assert(xstd::has_single_bit(static_cast<T>(ones ^ static_cast<T>(ones >> 1U))));
         static_assert(xstd::numeric_limits<T>::digits == 1 or not xstd::has_single_bit(ones));
         BOOST_CHECK(true);
 }
