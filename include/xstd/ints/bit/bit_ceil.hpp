@@ -33,7 +33,8 @@ template<unsigned_integer T>
         -> T
 {
         // Zero and one share the empty width; LLVM 18 turns a select on x <= 1 into a power-of-two mask.
-        auto const below    = x == T{0} ? x : static_cast<T>(x - T{1});
+        // Bound by reference: Clang 19 crashes emitting a const local _BitInt over 128 bits.
+        auto const& below   = x == T{0} ? x : static_cast<T>(x - T{1});
         auto const exponent = xstd::bit_width(below);
         assert(exponent < numeric_limits<T>::digits);
         // [bit.pow.two]: a call violating the precondition is not a core constant expression, NDEBUG or not.
