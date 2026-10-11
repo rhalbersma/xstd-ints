@@ -19,8 +19,6 @@ namespace {
 using xstd::ints::detail::bit_limb;
 namespace portable = xstd::ints::detail::portable;
 
-constexpr auto ones = std::numeric_limits<bit_limb>::max();
-
 // The position of x's k-th one, found one bit at a time.
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters): select's signature, the word and then the rank
 constexpr auto reference_select(bit_limb x, unsigned k)
@@ -58,7 +56,8 @@ constexpr auto select_agrees(bit_limb x)
 constexpr auto agrees_at(int k)
         -> bool
 {
-        auto agrees = true;
+        constexpr auto ones = std::numeric_limits<bit_limb>::max();
+        auto agrees         = true;
         // An array, not a braced list: MSVC 19.44 crashes constant-evaluating a loop over the latter.
         for (auto const partner : std::array{ones, test::alternating_ones<bit_limb>()}) {
                 test::for_each_edge_value_at<bit_limb>(k, [&](bit_limb edge) -> void {

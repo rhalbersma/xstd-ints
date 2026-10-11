@@ -12,18 +12,23 @@
 #include <cassert>                       // assert
 #include <cstddef>                       // size_t
 #include <cstdint>                       // uint8_t
+#include <limits>                        // numeric_limits
+#include <ranges>                        // iota
 #include <utility>                       // cmp_less
 
 namespace xstd::ints::detail::portable {
 
-// The position of the k-th one of each byte value, at index byte | (k << 8).
-inline constexpr auto select_in_byte = [] -> std::array<std::uint8_t, 256UZ * 8UZ> {
-        auto table = std::array<std::uint8_t, 256UZ * 8UZ>{};
-        for (auto byte = 0UZ; byte < 256UZ; ++byte) {
+inline constexpr auto byte_digits = static_cast<unsigned>(std::numeric_limits<std::uint8_t>::digits);
+inline constexpr auto byte_values = 1UZ << byte_digits;
+
+// The position of the k-th one of each byte value, at index byte | (k << byte_digits).
+inline constexpr auto select_in_byte = [] -> std::array<std::uint8_t, byte_values * byte_digits> {
+        auto table = std::array<std::uint8_t, byte_values * byte_digits>{};
+        for (auto const byte : std::views::iota(0UZ, byte_values)) {
                 auto rank = 0UZ;
-                for (auto bit = 0UZ; bit < 8UZ; ++bit) {
+                for (auto const bit : std::views::iota(0U, byte_digits)) {
                         if (((byte >> bit) & 1UZ) != 0UZ) {
-                                table[byte | (rank << 8UZ)] = static_cast<std::uint8_t>(bit);
+                                table[byte | (rank << byte_digits)] = static_cast<std::uint8_t>(bit);
                                 ++rank;
                         }
                 }
@@ -36,15 +41,19 @@ inline constexpr auto select_in_byte = [] -> std::array<std::uint8_t, 256UZ * 8U
         -> unsigned
 {
         assert(std::cmp_less(k, std::popcount(x)));
-        constexpr auto ones_per_byte = ~bit_limb{0} / 0xFFU;
-        constexpr auto byte_tops     = ones_per_byte << 7U;
-        auto counts                  = x - ((x >> 1U) & (~bit_limb{0} / 0x03U));
-        counts                       = (counts & (~bit_limb{0} / 0x05U)) + ((counts >> 2U) & (~bit_limb{0} / 0x05U));
-        counts                       = ((counts + (counts >> 4U)) & (~bit_limb{0} / 0x11U)) * ones_per_byte;
+        constexpr auto byte_mask     = bit_limb{byte_values - 1UZ};
+        constexpr auto ones_per_byte = ~bit_limb{0} / byte_mask;
+        constexpr auto byte_tops     = ones_per_byte << (byte_digits - 1U);
+        constexpr auto pair_lows     = ~bit_limb{0} / 0x03U;
+        constexpr auto nibble_lows   = ~bit_limb{0} / 0x05U;
+        constexpr auto byte_lows     = ~bit_limb{0} / 0x11U;
+        auto counts                  = x - ((x >> 1U) & pair_lows);
+        counts                       = (counts & nibble_lows) + ((counts >> 2U) & nibble_lows);
+        counts                       = ((counts + (counts >> 4U)) & byte_lows) * ones_per_byte;
         auto const bytes_below       = static_cast<unsigned>(std::popcount((((k * ones_per_byte) | byte_tops) - counts) & byte_tops));
-        auto const offset            = 8U * bytes_below;
-        auto const rank_in_byte      = k - static_cast<unsigned>(((counts << 8U) >> offset) & 0xFFU);
-        return offset + select_in_byte[static_cast<std::size_t>(((x >> offset) & 0xFFU) | (rank_in_byte << 8U))];
+        auto const offset            = byte_digits * bytes_below;
+        auto const rank_in_byte      = k - static_cast<unsigned>(((counts << byte_digits) >> offset) & byte_mask);
+        return offset + select_in_byte[static_cast<std::size_t>(((x >> offset) & byte_mask) | (rank_in_byte << byte_digits))];
 }
 
 } // namespace xstd::ints::detail::portable
