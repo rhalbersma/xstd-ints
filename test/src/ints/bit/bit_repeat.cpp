@@ -4,7 +4,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <xstd/ints/bit/bit_repeat.hpp> // bit_repeat
-#include <xstd/ints/cstdint.hpp>        // bit_int, bit_uint, uint128
+#include <xstd/ints/cstdint.hpp>        // XSTD_HAS_INT128, bit_int, bit_uint, uint128
 #include <xstd/ints/limits.hpp>         // numeric_limits
 #include <test/bit/oracle.hpp>          // oracle_bit_repeat
 #include <test/bit/sweep.hpp>           // bit_precise_sweep_types, for_each_edge_value_at, for_each_sweep_value, holds_at_every_position
@@ -69,7 +69,9 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsUnsignedInteger)
 {
         static_assert(xstd_answers<unsigned char>);
         static_assert(xstd_answers<std::uint64_t>);
+#ifdef XSTD_HAS_INT128
         static_assert(xstd_answers<xstd::uint128>);
+#endif
         static_assert(not xstd_answers<bool>);
         static_assert(not xstd_answers<char8_t>);
         static_assert(not xstd_answers<char32_t>);

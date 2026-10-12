@@ -4,7 +4,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <xstd/ints/bit.hpp>          // complete bit basis
-#include <xstd/ints/cstdint.hpp>      // uint128
+#include <xstd/ints/cstdint.hpp>      // XSTD_HAS_INT128, uint128
 #include <xstd/ints/limits.hpp>       // numeric_limits
 #include <test/bit/shift_count.hpp>   // shift_count_t
 #include <test/bit/sweep.hpp>         // bit_precise_sweep_types, for_each_edge_value, for_each_sweep_pair, for_each_sweep_value
@@ -95,8 +95,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheThreeAgreeOnASingleBit, T, basis_unsigned_types
 // The widest exact width has a basis on every configured leg, through <bit> or a block at a time.
 BOOST_AUTO_TEST_CASE(TheWidestExactWidthHasABasis)
 {
+#ifdef XSTD_HAS_INT128
         static_assert(has_popcount<xstd::uint128>);
         static_assert(xstd::popcount(xstd::uint128{0}) == 0);
+#endif
         BOOST_CHECK(true);
 }
 

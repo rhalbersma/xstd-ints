@@ -3,12 +3,12 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/ints/cstdint.hpp>                   // XSTD_HAS_BIT_INT, bit_int, bit_uint, int128, uint128
+#include <xstd/ints/cstdint.hpp>                   // XSTD_HAS_BIT_INT, XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
 #include <xstd/ints/limits.hpp>                    // numeric_limits
 #include <xstd/ints/type_traits/is_signed.hpp>     // is_signed_v
 #include <xstd/ints/type_traits/make_unsigned.hpp> // make_unsigned_t
 #include <test/constexpr_check.hpp>                // XSTD_CONSTEXPR_CHECK, XSTD_CONSTEXPR_CHECK_EQUAL
-#include <test/exact_width_types.hpp>              // absl_signed_types, absl_unsigned_types, boost_signed_types, boost_unsigned_types, exact_width_integer_types
+#include <test/exact_width_types.hpp>              // absl_signed_types, absl_unsigned_types, boost_signed_types, boost_unsigned_types, exact_width_integer_types, xstd_signed_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>                // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK
 #include <algorithm>                               // max
 #include <array>                                   // array
@@ -183,7 +183,7 @@ using bit_precise_128_types = std::tuple<>;
 #endif
 
 using types_128 = decltype(std::tuple_cat(
-        std::declval<std::tuple<xstd::int128, xstd::uint128>>(), std::declval<test::boost_signed_types>(),
+        std::declval<test::xstd_signed_types>(), std::declval<test::xstd_unsigned_types>(), std::declval<test::boost_signed_types>(),
         std::declval<test::boost_unsigned_types>(), std::declval<test::absl_signed_types>(),
         std::declval<test::absl_unsigned_types>(), std::declval<bit_precise_128_types>()
 ));
@@ -267,10 +267,12 @@ BOOST_AUTO_TEST_CASE(BitPreciseAboveAWordHashesAsWholeWords)
         using S = xstd::bit_int<100>;
         using U = xstd::bit_uint<100>;
 
+#ifdef XSTD_HAS_INT128
         XSTD_CONSTEXPR_CHECK(message_of(S{-1}) == message_of(xstd::int128{-1}));
         XSTD_CONSTEXPR_CHECK(message_of(xstd::numeric_limits<S>::min()) == message_of(from_words<xstd::int128>(0U, 0xffff'fff8'0000'0000U)));
         XSTD_CONSTEXPR_CHECK(message_of(xstd::numeric_limits<S>::max()) == message_of(from_words<xstd::int128>(~0ULL, 0x0000'0007'ffff'ffffU)));
         XSTD_CONSTEXPR_CHECK(message_of(xstd::numeric_limits<U>::max()) == message_of(from_words<xstd::uint128>(~0ULL, 0x0000'000f'ffff'ffffU)));
+#endif
 
         // Zero-extended, the unsigned maximum is not the all-ones message -1 is.
         XSTD_CONSTEXPR_CHECK(message_of(xstd::numeric_limits<U>::max()) != message_of(S{-1}));

@@ -5,7 +5,7 @@
 
 #include <xstd/ints/bit/bit_expand.hpp>                   // bit_expand
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/cstdint.hpp>                          // bit_int, bit_uint, uint128
+#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_INT128, bit_int, bit_uint, uint128
 #include <xstd/ints/limits.hpp>                           // numeric_limits
 #include <test/bit/oracle.hpp>                            // oracle_bit_expand
 #include <test/bit/shift_count.hpp>                       // shift_count_t
@@ -105,7 +105,9 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsUnsignedInteger)
 {
         static_assert(xstd_answers<unsigned char>);
         static_assert(xstd_answers<std::uint64_t>);
+#ifdef XSTD_HAS_INT128
         static_assert(xstd_answers<xstd::uint128>);
+#endif
         static_assert(not xstd_answers<bool>);
         static_assert(not xstd_answers<char8_t>);
         static_assert(not xstd_answers<char32_t>);

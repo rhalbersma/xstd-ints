@@ -3,7 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/ints.hpp>            // the whole ints surface
+#include <xstd/ints.hpp>            // XSTD_HAS_INT128, the whole ints surface
 #include <boost/test/unit_test.hpp> // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END
 #include <array>                    // array
 #include <cstddef>                  // size_t
@@ -12,6 +12,8 @@
 #include <system_error>             // errc
 
 BOOST_AUTO_TEST_SUITE(Ints)
+
+#ifdef XSTD_HAS_INT128
 
 // int128 is not the standard library's, so every module carries it alone; arriving whole is the invariant here.
 BOOST_AUTO_TEST_CASE(TheWidestTypeReachesEveryModule)
@@ -39,16 +41,22 @@ BOOST_AUTO_TEST_CASE(TheWidestTypeReachesEveryModule)
         BOOST_CHECK_EQUAL(std::format("{}", xstd::div(T{8}, T{3})), "(2, 2)");
 }
 
+#endif
+
 // The alignment functions take the unsigned half, and the widest one is still in it.
 BOOST_AUTO_TEST_CASE(TheAlignmentFunctionsMeetTheConcepts)
 {
         static_assert(xstd::alignable<std::size_t>);
+#ifdef XSTD_HAS_INT128
         static_assert(xstd::alignable<xstd::uint128>);
         static_assert(not xstd::alignable<xstd::int128>);
+#endif
 
         BOOST_CHECK(xstd::is_aligned(xstd::align_up(9UZ, 8), 8));
         BOOST_CHECK(xstd::is_aligned(xstd::align_down(9UZ, 8), 8));
+#ifdef XSTD_HAS_INT128
         BOOST_CHECK(xstd::align_up(xstd::uint128{9}, 8) == xstd::uint128{16});
+#endif
 }
 
 BOOST_AUTO_TEST_SUITE_END()

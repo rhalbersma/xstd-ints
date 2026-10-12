@@ -10,8 +10,10 @@
 #include <xstd/ints/type_traits/make_unsigned.hpp> // make_unsigned
 #include <type_traits>                             // type_identity
 
-// Prefer the Microsoft STL's integer classes, else the compiler's 128-bit extension.
+// Prefer the Microsoft STL's integer classes, else the compiler's 128-bit extension; XSTD_HAS_INT128 marks either.
 #ifdef _MSC_VER
+
+#define XSTD_HAS_INT128 1
 
 #include <__msvc_int128.hpp>
 
@@ -23,6 +25,8 @@ using uint128 = std::_Unsigned128;
 } // namespace xstd
 
 #elifdef __SIZEOF_INT128__
+
+#define XSTD_HAS_INT128 1
 
 #ifdef __GNUC__
 #pragma GCC diagnostic push
@@ -40,11 +44,10 @@ using uint128 = unsigned __int128;
 #pragma GCC diagnostic pop
 #endif
 
-#else
-
-#error "xstd::int128 requires GCC/Clang __int128 or the Microsoft STL 128-bit integer classes"
-
 #endif
+
+// 32-bit x86 and ARM have neither, and there the pair is absent rather than an error.
+#ifdef XSTD_HAS_INT128
 
 // The pair's associations, where the pair is introduced: whoever can name it has them.
 namespace xstd {
@@ -58,5 +61,7 @@ struct make_signed<uint128> : std::type_identity<int128>
 {};
 
 } // namespace xstd
+
+#endif
 
 #endif // XSTD_INTS_CSTDINT_INT128_HPP

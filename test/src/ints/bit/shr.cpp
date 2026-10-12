@@ -6,7 +6,7 @@
 #include <xstd/ints/bit/shl.hpp>                          // shl
 #include <xstd/ints/bit/shr.hpp>                          // shr
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/cstdint.hpp>                          // bit_int, bit_uint, int128, uint128
+#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
 #include <xstd/ints/limits.hpp>                           // numeric_limits
 #include <xstd/ints/type_traits/is_signed.hpp>            // is_signed_v
 #include <xstd/ints/type_traits/make_unsigned.hpp>        // make_unsigned_t
@@ -43,8 +43,12 @@ constexpr auto holds(int c) noexcept
         return (c >= 0 or xstd::is_signed_v<S>) and static_cast<int>(static_cast<S>(c)) == c;
 }
 
-// The count types: the narrowest either way, int, the widest standard ones either way, and the 128-bit pair.
+// The count types: the narrowest either way, int, the widest standard ones either way, and the 128-bit pair if any.
+#ifdef XSTD_HAS_INT128
 using count_types = std::tuple<signed char, unsigned char, int, std::int64_t, std::uint64_t, xstd::int128, xstd::uint128>;
+#else
+using count_types = std::tuple<signed char, unsigned char, int, std::int64_t, std::uint64_t>;
+#endif
 
 } // namespace
 
@@ -82,8 +86,10 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsInteger)
 {
         static_assert(xstd_answers<int, int>);
         static_assert(xstd_answers<std::uint8_t, std::int64_t>);
+#ifdef XSTD_HAS_INT128
         static_assert(xstd_answers<xstd::int128, xstd::uint128>);
         static_assert(xstd_answers<std::uint32_t, xstd::int128>);
+#endif
         static_assert(not xstd_answers<bool, int>);
         static_assert(not xstd_answers<int, bool>);
         static_assert(not xstd_answers<char8_t, int>);

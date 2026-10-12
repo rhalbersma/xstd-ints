@@ -3,7 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/ints/cstdint.hpp>            // int128
+#include <xstd/ints/cstdint.hpp>            // XSTD_HAS_INT128, int128
 #include <xstd/ints/cstdlib/div_result.hpp> // div_result
 #include <xstd/ints/format/div_result.hpp>  // IWYU pragma: keep; formatter<div_result>
 #include <test/exact_width_types.hpp>       // exact_width_signed_integer_types
@@ -37,7 +37,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(Formatter, T, test::exact_width_signed_integer_typ
 // Rendered by xstd where the library has no 128-bit formatter, so the value must come out.
 BOOST_AUTO_TEST_CASE(Boundaries)
 {
+#ifdef XSTD_HAS_INT128
         BOOST_CHECK_EQUAL(std::format("{}", xstd::div_result<xstd::int128>{std::numeric_limits<xstd::int128>::min(), 7}), "(-170141183460469231731687303715884105728, 7)");
+#endif
 }
 
 // Fill, alignment and width stay the base's; this renders "(quotient, remainder)" and hands it over.

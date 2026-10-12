@@ -8,7 +8,7 @@
 
 #include <xstd/ints/charconv/to_chars.hpp>  // to_chars, to_chars_max_size
 #include <xstd/ints/concepts/integer.hpp>   // integer
-#include <xstd/ints/cstdint.hpp>            // int128, uint128
+#include <xstd/ints/cstdint.hpp>            // XSTD_HAS_INT128, int128, uint128
 #include <xstd/ints/cstdlib/div_result.hpp> // div_result
 #include <boost/test/unit_test.hpp>         // print_log_value
 #include <array>                            // array
@@ -34,6 +34,8 @@ auto print_integer(std::ostream& ostr, I const value)
 
 namespace boost::test_tools::tt_detail {
 
+#ifdef XSTD_HAS_INT128
+
 template<>
 struct print_log_value<xstd::int128>
 {
@@ -53,6 +55,8 @@ struct print_log_value<xstd::uint128>
                 test::print_integer(ostr, value);
         }
 };
+
+#endif
 
 #ifdef XSTD_HAS_BIT_INT
 

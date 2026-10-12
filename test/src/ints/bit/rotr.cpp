@@ -6,7 +6,7 @@
 #include <xstd/ints/bit/rotl.hpp>                         // rotl
 #include <xstd/ints/bit/rotr.hpp>                         // rotr
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/cstdint.hpp>                          // bit_int, bit_uint, int128, uint128
+#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
 #include <xstd/ints/limits.hpp>                           // numeric_limits
 #include <test/bit/oracle.hpp>                            // oracle_rotl
 #include <test/bit/sweep.hpp>                             // bit_precise_sweep_types, for_each_sweep_value
@@ -66,8 +66,10 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsUnsignedInteger)
         static_assert(xstd_answers<unsigned char> == std_answers<unsigned char>);
         static_assert(xstd_answers<std::uint64_t> == std_answers<std::uint64_t>);
         static_assert(not xstd_answers<std::int32_t>);
+#ifdef XSTD_HAS_INT128
         static_assert(xstd_answers<xstd::uint128>);
         static_assert(not xstd_answers<xstd::int128>);
+#endif
 #ifdef XSTD_HAS_BIT_INT
         static_assert(xstd_answers<xstd::bit_uint<24>>);
         static_assert(not xstd_answers<xstd::bit_int<24>>);
