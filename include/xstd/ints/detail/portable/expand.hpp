@@ -12,33 +12,33 @@
 
 namespace xstd::ints::detail::portable {
 
-// Each one-bit of the mask, lowest first, takes the next bit of x by masking rather than by a branch on that bit.
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the value and then the mask
-[[nodiscard]] constexpr auto expand_by_walk(bit_limb x, bit_limb m) noexcept
+// Each one-bit of the mask, lowest first, takes the next bit of src by masking rather than by a branch on that bit.
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the source and then the mask
+[[nodiscard]] constexpr auto expand_by_walk(bit_limb src, bit_limb mask) noexcept
         -> bit_limb
 {
-        auto result = bit_limb{0};
-        for (; m != bit_limb{0}; m &= m - 1U, x >>= 1U) {
-                auto const lowest = m & ~(m - 1U);
-                result |= lowest & (bit_limb{0} - (x & 1U));
+        auto dst = 0UZ;
+        for (; mask != 0UZ; mask &= mask - 1UZ, src >>= 1U) {
+                auto const lowest = mask & ~(mask - 1UZ);
+                dst |= lowest & (0UZ - (src & 1UZ));
         }
-        return result;
+        return dst;
 }
 
-// Each one-bit of x, at position j, lands on the mask's j-th one: one select per source bit, none per mask bit.
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the value and then the mask
-[[nodiscard]] constexpr auto expand_by_select(bit_limb x, bit_limb m) noexcept
+// Each one-bit of src, at position j, lands on the mask's j-th one: one select per source bit, none per mask bit.
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the source and then the mask
+[[nodiscard]] constexpr auto expand_by_select(bit_limb src, bit_limb mask) noexcept
         -> bit_limb
 {
-        auto const mask_ones = static_cast<unsigned>(std::popcount(m));
+        auto const mask_ones = static_cast<unsigned>(std::popcount(mask));
         if (mask_ones < bit_limb_width) {
-                x &= (bit_limb{1} << mask_ones) - 1U;
+                src &= (1UZ << mask_ones) - 1UZ;
         }
-        auto result = bit_limb{0};
-        for (; x != bit_limb{0}; x &= x - 1U) {
-                result |= bit_limb{1} << select(m, static_cast<unsigned>(std::countr_zero(x)));
+        auto dst = 0UZ;
+        for (; src != 0UZ; src &= src - 1UZ) {
+                dst |= 1UZ << select(mask, static_cast<unsigned>(std::countr_zero(src)));
         }
-        return result;
+        return dst;
 }
 
 } // namespace xstd::ints::detail::portable

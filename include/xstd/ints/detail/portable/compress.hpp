@@ -11,16 +11,16 @@
 
 namespace xstd::ints::detail::portable {
 
-// Each selected bit of x lands at its rank among the mask's ones: one popcount per selected bit, none per mask bit.
-[[nodiscard]] constexpr auto compress_by_rank(bit_limb x, bit_limb m) noexcept
+// Each selected bit of src lands at its rank among the mask's ones: one popcount per selected bit, none per mask bit.
+[[nodiscard]] constexpr auto compress_by_rank(bit_limb src, bit_limb mask) noexcept
         -> bit_limb
 {
-        auto result = bit_limb{0};
-        for (auto selected = x & m; selected != bit_limb{0}; selected &= selected - 1U) {
-                auto const below_lowest = (selected - 1U) & ~selected;
-                result |= bit_limb{1} << static_cast<unsigned>(std::popcount(below_lowest & m));
+        auto dst = 0UZ;
+        for (auto selected = src & mask; selected != 0UZ; selected &= selected - 1UZ) {
+                auto const below_lowest = (selected - 1UZ) & ~selected;
+                dst |= 1UZ << static_cast<unsigned>(std::popcount(below_lowest & mask));
         }
-        return result;
+        return dst;
 }
 
 } // namespace xstd::ints::detail::portable

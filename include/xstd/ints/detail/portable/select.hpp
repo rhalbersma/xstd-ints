@@ -41,12 +41,12 @@ inline constexpr auto select_in_byte = [] -> std::array<std::uint8_t, byte_value
         -> unsigned
 {
         assert(std::cmp_less(k, std::popcount(x)));
-        constexpr auto byte_mask     = bit_limb{byte_values - 1UZ};
-        constexpr auto ones_per_byte = ~bit_limb{0} / byte_mask;
+        constexpr auto byte_mask     = byte_values - 1UZ;
+        constexpr auto ones_per_byte = ~0UZ / byte_mask;
         constexpr auto byte_tops     = ones_per_byte << (byte_digits - 1U);
-        constexpr auto pair_lows     = ~bit_limb{0} / 0x03U;
-        constexpr auto nibble_lows   = ~bit_limb{0} / 0x05U;
-        constexpr auto byte_lows     = ~bit_limb{0} / 0x11U;
+        constexpr auto pair_lows     = ~0UZ / 0x03UZ;
+        constexpr auto nibble_lows   = ~0UZ / 0x05UZ;
+        constexpr auto byte_lows     = ~0UZ / 0x11UZ;
         auto counts                  = x - ((x >> 1U) & pair_lows);
         counts                       = (counts & nibble_lows) + ((counts >> 2U) & nibble_lows);
         counts                       = ((counts + (counts >> 4U)) & byte_lows) * ones_per_byte;
