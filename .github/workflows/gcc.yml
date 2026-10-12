@@ -40,3 +40,14 @@ jobs:
       tiers: stable
       build_types: Debug
       vcpkg_features: test
+
+  # The hardware kernels: x86-64-v3 makes PEXT and PDEP fast, which every leg
+  # above leaves to the portable kernels. One rung and one build type suffice,
+  # the instructions being the processor's rather than the compiler's.
+  gcc_bmi2:
+    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@1c32e510e25b1d41e613cddc1b169655680f9a01 # main, past v0.11.1
+    with:
+      tiers: stable
+      build_types: Release
+      cxx_flags: -march=x86-64-v3
+      vcpkg_features: test

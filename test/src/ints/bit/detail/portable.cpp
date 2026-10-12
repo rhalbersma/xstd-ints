@@ -3,17 +3,18 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/ints/bit/detail/bit_block.hpp> // bit_block, bit_block_width
-#include <xstd/ints/bit/detail/portable.hpp>  // compress_by_rank, expand_by_select, expand_by_walk, select
-#include <test/bit/oracle.hpp>                // oracle_bit_compress, oracle_bit_expand
-#include <test/bit/sweep.hpp>                 // alternating_ones, for_each_edge_value_at, for_each_sweep_pair, for_each_sweep_value, holds_at_every_position, next_pseudo_random
-#include <boost/test/unit_test.hpp>           // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
-#include <array>                              // array
-#include <bit>                                // popcount
-#include <cstdint>                            // uint64_t
-#include <limits>                             // numeric_limits
-#include <ranges>                             // iota
-#include <utility>                            // make_integer_sequence
+#include <xstd/ints/bit/detail/bit_block.hpp>  // bit_block, bit_block_width
+#include <xstd/ints/bit/detail/portable.hpp>   // compress_by_rank, expand_by_select, expand_by_walk, select
+#include <test/bit/oracle.hpp>                 // oracle_bit_compress, oracle_bit_expand
+#include <test/bit/permutation_properties.hpp> // portable_kernels_round_trip
+#include <test/bit/sweep.hpp>                  // alternating_ones, for_each_edge_value_at, for_each_sweep_pair, for_each_sweep_value, holds_at_every_position, next_pseudo_random
+#include <boost/test/unit_test.hpp>            // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
+#include <array>                               // array
+#include <bit>                                 // popcount
+#include <cstdint>                             // uint64_t
+#include <limits>                              // numeric_limits
+#include <ranges>                              // iota
+#include <utility>                             // make_integer_sequence
 
 namespace {
 
@@ -103,6 +104,15 @@ BOOST_AUTO_TEST_CASE(KernelsAgreeWithTheOracle)
         auto mismatches = 0UZ;
         test::for_each_sweep_pair<bit_block>([&](bit_block x, bit_block m) -> void { mismatches += kernels_agree(x, m) ? 0UZ : 1UZ; });
         for_each_sparse_pair([&](bit_block x, bit_block m) -> void { mismatches += kernels_agree(x, m) ? 0UZ : 1UZ; });
+        BOOST_CHECK_EQUAL(mismatches, 0UZ);
+}
+
+// Each expansion undoes the compression and the compression undoes each expansion, as far as the mask lets them.
+BOOST_AUTO_TEST_CASE(KernelsRoundTrip)
+{
+        auto mismatches = 0UZ;
+        test::for_each_sweep_pair<bit_block>([&](bit_block x, bit_block m) -> void { mismatches += test::portable_kernels_round_trip(x, m) ? 0UZ : 1UZ; });
+        for_each_sparse_pair([&](bit_block x, bit_block m) -> void { mismatches += test::portable_kernels_round_trip(x, m) ? 0UZ : 1UZ; });
         BOOST_CHECK_EQUAL(mismatches, 0UZ);
 }
 
