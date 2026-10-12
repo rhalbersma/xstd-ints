@@ -6,10 +6,10 @@
 #ifndef XSTD_INTS_BIT_BIT_FLOOR_HPP
 #define XSTD_INTS_BIT_BIT_FLOOR_HPP
 
+#include <xstd/ints/bit/bit_width.hpp>                    // bit_width
+#include <xstd/ints/bit/detail/bit_limb.hpp>              // shift_count_t
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
-#include <xstd/ints/bit/bit_width.hpp>                    // bit_width
-#include <xstd/ints/detail/bit_limb.hpp>                  // shift_count_t
 #include <bit>                                            // bit_floor
 
 // [bit.pow.two]'s bit_floor over every unsigned integer xstd knows.

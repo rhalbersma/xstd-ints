@@ -3,8 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_INTS_DETAIL_STD_PERMUTES_BITS_HPP
-#define XSTD_INTS_DETAIL_STD_PERMUTES_BITS_HPP
+#ifndef XSTD_INTS_BIT_DETAIL_STD_PERMUTES_BITS_HPP
+#define XSTD_INTS_BIT_DETAIL_STD_PERMUTES_BITS_HPP
 
 #include <bit>     // IWYU pragma: keep; bit_compress, bit_expand, bit_repeat, bit_reverse, where the standard library ships them
 #include <version> // IWYU pragma: keep; __cpp_lib_bitops
@@ -35,4 +35,4 @@ concept std_permutes_bits = false;
 
 } // namespace xstd::ints::detail
 
-#endif // XSTD_INTS_DETAIL_STD_PERMUTES_BITS_HPP
+#endif // XSTD_INTS_BIT_DETAIL_STD_PERMUTES_BITS_HPP

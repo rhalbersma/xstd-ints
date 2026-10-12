@@ -6,10 +6,10 @@
 #ifndef XSTD_INTS_BIT_POPCOUNT_HPP
 #define XSTD_INTS_BIT_POPCOUNT_HPP
 
+#include <xstd/ints/bit/detail/bit_limb.hpp>              // bit_limb, bit_limb_width, shift_count_t
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
 #include <xstd/ints/cstdint/bit_int.hpp>                  // XSTD_HAS_BIT_INT, bit_uint
-#include <xstd/ints/detail/bit_limb.hpp>                  // bit_limb, bit_limb_width, shift_count_t
 #include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
 #include <bit>                                            // popcount
 #include <cstddef>                                        // size_t

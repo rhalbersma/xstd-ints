@@ -3,16 +3,16 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/ints/detail/bit_limb.hpp> // bit_limb, bit_limb_width
-#include <xstd/ints/detail/portable.hpp> // compress_by_rank, expand_by_select, expand_by_walk, select
-#include <test/bit_reference.hpp>        // alternating_ones, for_each_edge_value_at, for_each_sweep_pair, for_each_sweep_value, holds_at_every_position, next_pseudo_random, reference_bit_compress, reference_bit_expand
-#include <boost/test/unit_test.hpp>      // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
-#include <array>                         // array
-#include <bit>                           // popcount
-#include <cstdint>                       // uint64_t
-#include <limits>                        // numeric_limits
-#include <ranges>                        // iota
-#include <utility>                       // make_integer_sequence
+#include <xstd/ints/bit/detail/bit_limb.hpp> // bit_limb, bit_limb_width
+#include <xstd/ints/bit/detail/portable.hpp> // compress_by_rank, expand_by_select, expand_by_walk, select
+#include <test/bit_reference.hpp>            // alternating_ones, for_each_edge_value_at, for_each_sweep_pair, for_each_sweep_value, holds_at_every_position, next_pseudo_random, reference_bit_compress, reference_bit_expand
+#include <boost/test/unit_test.hpp>          // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
+#include <array>                             // array
+#include <bit>                               // popcount
+#include <cstdint>                           // uint64_t
+#include <limits>                            // numeric_limits
+#include <ranges>                            // iota
+#include <utility>                           // make_integer_sequence
 
 namespace {
 

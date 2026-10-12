@@ -3,8 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_INTS_DETAIL_BYTESWAP_HPP
-#define XSTD_INTS_DETAIL_BYTESWAP_HPP
+#ifndef XSTD_INTS_BIT_DETAIL_BYTESWAP_HPP
+#define XSTD_INTS_BIT_DETAIL_BYTESWAP_HPP
 
 #include <xstd/ints/detail/delegates_to_std.hpp> // delegates_to_std
 #include <bit>                                   // byteswap
@@ -22,4 +22,4 @@ concept std_swaps_bytes =
 
 } // namespace xstd::ints::detail
 
-#endif // XSTD_INTS_DETAIL_BYTESWAP_HPP
+#endif // XSTD_INTS_BIT_DETAIL_BYTESWAP_HPP

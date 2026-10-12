@@ -78,11 +78,11 @@ target_sources(
         include/xstd/ints/cstdlib/div_result.hpp
         include/xstd/ints/cstdlib/sign.hpp
         include/xstd/ints/cstdlib/unsigned_abs.hpp
-        include/xstd/ints/detail/compress_limb.hpp
-        include/xstd/ints/detail/expand_limb.hpp
-        include/xstd/ints/detail/reverse_limb.hpp
-        include/xstd/ints/detail/std_permutes_bits.hpp
-        include/xstd/ints/detail/std_shifts.hpp
+        include/xstd/ints/bit/detail/compress_limb.hpp
+        include/xstd/ints/bit/detail/expand_limb.hpp
+        include/xstd/ints/bit/detail/reverse_limb.hpp
+        include/xstd/ints/bit/detail/std_permutes_bits.hpp
+        include/xstd/ints/bit/detail/std_shifts.hpp
         include/xstd/ints/detail/delegates_to_std.hpp
         include/xstd/ints/ext/absl.hpp
         include/xstd/ints/ext/absl/int128.hpp

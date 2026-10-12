@@ -6,9 +6,9 @@
 #ifndef XSTD_INTS_BIT_BIT_CEIL_HPP
 #define XSTD_INTS_BIT_BIT_CEIL_HPP
 
-#include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
 #include <xstd/ints/bit/bit_width.hpp>             // bit_width
-#include <xstd/ints/detail/bit_limb.hpp>           // shift_count_t
+#include <xstd/ints/bit/detail/bit_limb.hpp>       // shift_count_t
+#include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
 #include <xstd/ints/limits/numeric_limits.hpp>     // numeric_limits
 #include <bit>                                     // bit_ceil
 #include <cassert>                                 // assert

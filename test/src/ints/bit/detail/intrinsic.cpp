@@ -3,13 +3,13 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/ints/detail/bit_limb.hpp>      // bit_limb
-#include <xstd/ints/detail/compress_limb.hpp> // compress_limb
-#include <xstd/ints/detail/expand_limb.hpp>   // expand_limb
-#include <xstd/ints/detail/intrinsic.hpp>     // IWYU pragma: keep; compress, expand, XSTD_INTS_HAS_FAST_BMI2
-#include <xstd/ints/detail/portable.hpp>      // compress_by_rank, expand_by_select, expand_by_walk
-#include <test/bit_reference.hpp>             // for_each_sweep_pair
-#include <boost/test/unit_test.hpp>           // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK_EQUAL, BOOST_TEST_MESSAGE
+#include <xstd/ints/bit/detail/bit_limb.hpp>      // bit_limb
+#include <xstd/ints/bit/detail/compress_limb.hpp> // compress_limb
+#include <xstd/ints/bit/detail/expand_limb.hpp>   // expand_limb
+#include <xstd/ints/bit/detail/intrinsic.hpp>     // IWYU pragma: keep; compress, expand, XSTD_INTS_HAS_FAST_BMI2
+#include <xstd/ints/bit/detail/portable.hpp>      // compress_by_rank, expand_by_select, expand_by_walk
+#include <test/bit_reference.hpp>                 // for_each_sweep_pair
+#include <boost/test/unit_test.hpp>               // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK_EQUAL, BOOST_TEST_MESSAGE
 
 namespace {
 

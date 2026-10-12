@@ -3,13 +3,13 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_INTS_DETAIL_SHIFT_HPP
-#define XSTD_INTS_DETAIL_SHIFT_HPP
+#ifndef XSTD_INTS_BIT_DETAIL_SHIFT_HPP
+#define XSTD_INTS_BIT_DETAIL_SHIFT_HPP
 
+#include <xstd/ints/bit/detail/bit_limb.hpp>              // shift_count_t
 #include <xstd/ints/concepts/integer.hpp>                 // integer
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/cstdlib/unsigned_abs.hpp>             // unsigned_abs
-#include <xstd/ints/detail/bit_limb.hpp>                  // shift_count_t
 #include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
 #include <xstd/ints/type_traits/is_signed.hpp>            // is_signed_v
 #include <xstd/ints/type_traits/make_unsigned.hpp>        // make_unsigned_t
@@ -68,4 +68,4 @@ template<integer T, integer S>
 
 } // namespace xstd::ints::detail
 
-#endif // XSTD_INTS_DETAIL_SHIFT_HPP
+#endif // XSTD_INTS_BIT_DETAIL_SHIFT_HPP

@@ -3,8 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_INTS_DETAIL_BIT_LIMB_HPP
-#define XSTD_INTS_DETAIL_BIT_LIMB_HPP
+#ifndef XSTD_INTS_BIT_DETAIL_BIT_LIMB_HPP
+#define XSTD_INTS_BIT_DETAIL_BIT_LIMB_HPP
 
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
@@ -48,4 +48,4 @@ template<class T, class Mirror>
 
 } // namespace xstd::ints::detail
 
-#endif // XSTD_INTS_DETAIL_BIT_LIMB_HPP
+#endif // XSTD_INTS_BIT_DETAIL_BIT_LIMB_HPP

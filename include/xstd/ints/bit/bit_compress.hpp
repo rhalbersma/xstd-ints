@@ -6,11 +6,11 @@
 #ifndef XSTD_INTS_BIT_BIT_COMPRESS_HPP
 #define XSTD_INTS_BIT_BIT_COMPRESS_HPP
 
+#include <xstd/ints/bit/detail/bit_limb.hpp>              // bit_limb, bit_limb_width, shift_count_t
+#include <xstd/ints/bit/detail/compress_limb.hpp>         // compress_limb
+#include <xstd/ints/bit/detail/std_permutes_bits.hpp>     // XSTD_HAS_STD_BIT_PERMUTATIONS, std_permutes_bits
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
-#include <xstd/ints/detail/bit_limb.hpp>                  // bit_limb, bit_limb_width, shift_count_t
-#include <xstd/ints/detail/compress_limb.hpp>             // compress_limb
-#include <xstd/ints/detail/std_permutes_bits.hpp>         // XSTD_HAS_STD_BIT_PERMUTATIONS, std_permutes_bits
 #include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
 #include <bit>                                            // bit_compress, popcount
 

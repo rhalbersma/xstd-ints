@@ -6,11 +6,11 @@
 #ifndef XSTD_INTS_BIT_BIT_REVERSE_HPP
 #define XSTD_INTS_BIT_BIT_REVERSE_HPP
 
+#include <xstd/ints/bit/detail/bit_limb.hpp>              // mirror_limbs
+#include <xstd/ints/bit/detail/reverse_limb.hpp>          // reverse_limb
+#include <xstd/ints/bit/detail/std_permutes_bits.hpp>     // XSTD_HAS_STD_BIT_PERMUTATIONS, std_permutes_bits
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
-#include <xstd/ints/detail/bit_limb.hpp>                  // mirror_limbs
-#include <xstd/ints/detail/reverse_limb.hpp>              // reverse_limb
-#include <xstd/ints/detail/std_permutes_bits.hpp>         // XSTD_HAS_STD_BIT_PERMUTATIONS, std_permutes_bits
 #include <bit>                                            // IWYU pragma: keep; bit_reverse, where the standard library ships it
 
 // P3104R5's bit_reverse, over every unsigned integer xstd knows.

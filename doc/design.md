@@ -116,7 +116,7 @@ the counters, on the standard call being well-formed. The template works a word 
 A word is mirrored by Clang's `__builtin_bitreverse64`
 or by a byte swap and three masked swaps. A word is compressed or expanded by one of two
 families of kernels on a single `std::size_t`, each family in a directory of its own under
-`detail/` with one header per kernel and an umbrella:
+`bit/detail/` with one header per kernel and an umbrella:
 
 - `detail::intrinsic` holds `compress` and `expand`, which are `_pext_u64` and `_pdep_u64`,
   declared only where `XSTD_INTS_HAS_FAST_BMI2` says the target makes them fast: x86-64 with
@@ -132,7 +132,7 @@ families of kernels on a single `std::size_t`, each family in a directory of its
   placing each on the mask's corresponding one by Vigna's broadword `select`, which suits a
   sparse value over a wide mask.
 
-`compress_limb` and `expand_limb` pick between the two: the intrinsic outside a constant
+`compress_limb` and `expand_limb`, each in a header of its own, pick between the two: the intrinsic outside a constant
 expression where it is declared, the portable kernel otherwise. Benchmarked on a Haswell-class
 Xeon, per call: `PEXT` and `PDEP` take about 0.45 ns; `compress_by_rank` about 0.4 ns per
 selected bit; `expand_by_walk` about 0.8 ns per mask bit; and `expand_by_select` about 3.6 ns

@@ -3,8 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_INTS_DETAIL_STD_SHIFTS_HPP
-#define XSTD_INTS_DETAIL_STD_SHIFTS_HPP
+#ifndef XSTD_INTS_BIT_DETAIL_STD_SHIFTS_HPP
+#define XSTD_INTS_BIT_DETAIL_STD_SHIFTS_HPP
 
 #include <bit>     // IWYU pragma: keep; shl, shr, where the standard library ships them
 #include <version> // IWYU pragma: keep; __cpp_lib_bitops
@@ -33,4 +33,4 @@ concept std_shifts = false;
 
 } // namespace xstd::ints::detail
 
-#endif // XSTD_INTS_DETAIL_STD_SHIFTS_HPP
+#endif // XSTD_INTS_BIT_DETAIL_STD_SHIFTS_HPP

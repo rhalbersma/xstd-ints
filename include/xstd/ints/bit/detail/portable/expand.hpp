@@ -3,12 +3,12 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_INTS_DETAIL_PORTABLE_EXPAND_HPP
-#define XSTD_INTS_DETAIL_PORTABLE_EXPAND_HPP
+#ifndef XSTD_INTS_BIT_DETAIL_PORTABLE_EXPAND_HPP
+#define XSTD_INTS_BIT_DETAIL_PORTABLE_EXPAND_HPP
 
-#include <xstd/ints/detail/bit_limb.hpp>        // bit_limb, bit_limb_width
-#include <xstd/ints/detail/portable/select.hpp> // select
-#include <bit>                                  // countr_zero, popcount
+#include <xstd/ints/bit/detail/bit_limb.hpp>        // bit_limb, bit_limb_width
+#include <xstd/ints/bit/detail/portable/select.hpp> // select
+#include <bit>                                      // countr_zero, popcount
 
 namespace xstd::ints::detail::portable {
 
@@ -41,4 +41,4 @@ namespace xstd::ints::detail::portable {
 
 } // namespace xstd::ints::detail::portable
 
-#endif // XSTD_INTS_DETAIL_PORTABLE_EXPAND_HPP
+#endif // XSTD_INTS_BIT_DETAIL_PORTABLE_EXPAND_HPP

@@ -3,18 +3,18 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_INTS_DETAIL_PORTABLE_SELECT_HPP
-#define XSTD_INTS_DETAIL_PORTABLE_SELECT_HPP
+#ifndef XSTD_INTS_BIT_DETAIL_PORTABLE_SELECT_HPP
+#define XSTD_INTS_BIT_DETAIL_PORTABLE_SELECT_HPP
 
-#include <xstd/ints/detail/bit_limb.hpp> // bit_limb
-#include <array>                         // array
-#include <bit>                           // popcount
-#include <cassert>                       // assert
-#include <cstddef>                       // size_t
-#include <cstdint>                       // uint8_t
-#include <limits>                        // numeric_limits
-#include <ranges>                        // iota
-#include <utility>                       // cmp_less
+#include <xstd/ints/bit/detail/bit_limb.hpp> // bit_limb
+#include <array>                             // array
+#include <bit>                               // popcount
+#include <cassert>                           // assert
+#include <cstddef>                           // size_t
+#include <cstdint>                           // uint8_t
+#include <limits>                            // numeric_limits
+#include <ranges>                            // iota
+#include <utility>                           // cmp_less
 
 namespace xstd::ints::detail::portable {
 
@@ -58,4 +58,4 @@ inline constexpr auto select_in_byte = [] -> std::array<std::uint8_t, byte_value
 
 } // namespace xstd::ints::detail::portable
 
-#endif // XSTD_INTS_DETAIL_PORTABLE_SELECT_HPP
+#endif // XSTD_INTS_BIT_DETAIL_PORTABLE_SELECT_HPP
