@@ -13,29 +13,29 @@
 namespace xstd::ints::detail::intrinsic {
 
 // _pext_u32's own signature.
-[[nodiscard]] inline auto compress(unsigned int x, unsigned int m) noexcept
+[[nodiscard]] inline auto compress(unsigned int src, unsigned int mask) noexcept
         -> unsigned int
 {
-        return _pext_u32(x, m);
+        return _pext_u32(src, mask);
 }
 
 // _pext_u64's own signature.
-[[nodiscard]] inline auto compress(unsigned long long x, unsigned long long m) noexcept
+[[nodiscard]] inline auto compress(unsigned long long src, unsigned long long mask) noexcept
         -> unsigned long long
 {
-        return _pext_u64(x, m);
+        return _pext_u64(src, mask);
 }
 
 // A type of its own ([basic.fundamental]/2) as wide as one of the two above: 64 bits on LP64, 32 on LLP64.
-[[nodiscard]] inline auto compress(unsigned long x, unsigned long m) noexcept
+[[nodiscard]] inline auto compress(unsigned long src, unsigned long mask) noexcept
         -> unsigned long
 {
         // Outside a template a discarded branch is still checked, so the requirement is stated once, before either.
         static_assert(sizeof(unsigned long) == sizeof(unsigned int) or sizeof(unsigned long) == sizeof(unsigned long long));
         if constexpr (sizeof(unsigned long) == sizeof(unsigned int)) {
-                return static_cast<unsigned long>(compress(static_cast<unsigned int>(x), static_cast<unsigned int>(m)));
+                return static_cast<unsigned long>(compress(static_cast<unsigned int>(src), static_cast<unsigned int>(mask)));
         } else {
-                return static_cast<unsigned long>(compress(static_cast<unsigned long long>(x), static_cast<unsigned long long>(m)));
+                return static_cast<unsigned long>(compress(static_cast<unsigned long long>(src), static_cast<unsigned long long>(mask)));
         }
 }
 

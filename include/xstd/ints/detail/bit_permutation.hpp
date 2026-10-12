@@ -55,9 +55,9 @@ concept std_permutes_bits = false;
         }
 #else
         // Mirroring the bytes leaves each byte's own bits to mirror: its nibbles, then its pairs, then its single bits.
-        constexpr auto nibbles = static_cast<bit_limb>(~bit_limb{0} / 0x11U);
-        constexpr auto pairs   = static_cast<bit_limb>(~bit_limb{0} / 0x05U);
-        constexpr auto singles = static_cast<bit_limb>(~bit_limb{0} / 0x03U);
+        constexpr auto nibbles = ~0UZ / 0x11UZ;
+        constexpr auto pairs   = ~0UZ / 0x05UZ;
+        constexpr auto singles = ~0UZ / 0x03UZ;
         x                      = std::byteswap(x);
         x                      = ((x >> 4U) & nibbles) | ((x & nibbles) << 4U);
         x                      = ((x >> 2U) & pairs) | ((x & pairs) << 2U);
@@ -67,28 +67,28 @@ concept std_permutes_bits = false;
 }
 
 // The hardware instruction at run time where the target makes it fast, the portable kernel everywhere else.
-[[nodiscard]] constexpr auto compress_limb(bit_limb x, bit_limb m) noexcept
+[[nodiscard]] constexpr auto compress_limb(bit_limb src, bit_limb mask) noexcept
         -> bit_limb
 {
 #ifdef XSTD_INTS_HAS_FAST_BMI2
         if not consteval {
-                return intrinsic::compress(x, m);
+                return intrinsic::compress(src, mask);
         }
 #endif
-        return portable::compress_by_rank(x, m);
+        return portable::compress_by_rank(src, mask);
 }
 
 // The hardware instruction at run time where the target makes it fast, the portable kernel everywhere else.
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the value and then the mask
-[[nodiscard]] constexpr auto expand_limb(bit_limb x, bit_limb m) noexcept
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the source and then the mask
+[[nodiscard]] constexpr auto expand_limb(bit_limb src, bit_limb mask) noexcept
         -> bit_limb
 {
 #ifdef XSTD_INTS_HAS_FAST_BMI2
         if not consteval {
-                return intrinsic::expand(x, m);
+                return intrinsic::expand(src, mask);
         }
 #endif
-        return portable::expand_by_walk(x, m);
+        return portable::expand_by_walk(src, mask);
 }
 
 } // namespace xstd::ints::detail

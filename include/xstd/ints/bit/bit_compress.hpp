@@ -19,11 +19,11 @@ namespace xstd {
 
 template<class T>
         requires ints::detail::std_permutes_bits<T>
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the value and then the mask
-[[nodiscard]] constexpr auto bit_compress(T x, T m) noexcept
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the source and then the mask
+[[nodiscard]] constexpr auto bit_compress(T src, T mask) noexcept
         -> T
 {
-        return std::bit_compress(x, m);
+        return std::bit_compress(src, mask);
 }
 
 #endif
@@ -31,24 +31,24 @@ template<class T>
 // Each word is compressed on its own and packed directly above the bits the words below it selected.
 template<unsigned_integer T>
         requires (not ints::detail::std_permutes_bits<T>)
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the value and then the mask
-[[nodiscard]] constexpr auto bit_compress(T x, T m) noexcept(nothrow_const_operators<T>)
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the source and then the mask
+[[nodiscard]] constexpr auto bit_compress(T src, T mask) noexcept(nothrow_const_operators<T>)
         -> T
 {
         using ints::detail::bit_limb;
         using shift_count = ints::detail::shift_count_t<T>;
         constexpr auto N  = shift_count{numeric_limits<T>::digits};
         constexpr auto L  = shift_count{ints::detail::bit_limb_width};
-        auto result       = T{0};
+        auto dst          = T{0};
         auto selected     = shift_count{0};
         for (auto k = shift_count{0}; k < N; k += L) {
                 // Both kept bit_limbs until shifted: Clang 19 crashes emitting a const local _BitInt over 128 bits.
-                auto const mask   = static_cast<bit_limb>(m >> k);
-                auto const packed = ints::detail::compress_limb(static_cast<bit_limb>(x >> k), mask);
-                result            = static_cast<T>(result | static_cast<T>(static_cast<T>(packed) << selected));
-                selected += static_cast<shift_count>(std::popcount(mask));
+                auto const mask_limb = static_cast<bit_limb>(mask >> k);
+                auto const packed    = ints::detail::compress_limb(static_cast<bit_limb>(src >> k), mask_limb);
+                dst                  = static_cast<T>(dst | static_cast<T>(static_cast<T>(packed) << selected));
+                selected += static_cast<shift_count>(std::popcount(mask_limb));
         }
-        return result;
+        return dst;
 }
 
 } // namespace xstd
