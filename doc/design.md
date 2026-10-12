@@ -90,9 +90,9 @@ signed `_BitInt(1)`.
 The `<bit>` counterparts follow the same split. Where the standard library's `<bit>` takes a
 type, xstd forwards to it. Every other `unsigned_integer` — an integer class, or an
 `unsigned _BitInt(N)` that libstdc++ refuses — is answered by one template per function
-that works a `std::size_t` word at a time, the word being `std::size_t` because
+that works a `std::size_t` block at a time, the block being `std::size_t` because
 [iterator.concept.winc] promises every integer-class type an explicit conversion to and from
-it, and each word goes to the standard function, which knows its own instructions. The
+it, and each block goes to the standard function, which knows its own instructions. The
 128-bit classes get no overloads of their own: the template reaches them through their
 operators, and being a template declared beside the forwarding overload, it is the same
 overload set in every translation unit whatever order the headers come in, so `bit_width`,
@@ -103,7 +103,7 @@ for zero so that the builtin is total. It is constrained on the standard call be
 ill-formed rather than on the library in use, so it steps aside on its own the day a
 standard library learns the type. The builtins are younger than the type: Clang 19 added
 them, where `_BitInt` reached C++ in Clang 14, so that overload sits behind `__has_builtin`,
-and the word template answers where it is absent. `byteswap` alone also takes signed types,
+and the block template answers where it is absent. `byteswap` alone also takes signed types,
 as `std::byteswap` does, swapping through the unsigned counterpart, and asks for a whole
 number of bytes rather than for the absence of padding bits that `std::byteswap` mandates,
 since it swaps the value and not the object representation.
@@ -112,9 +112,9 @@ The four permutations from [P3104R6](https://wg21.link/P3104R6) — `bit_reverse
 `bit_repeat`, `bit_compress` and `bit_expand` — have no `<bit>` to defer to yet, so each is
 one template over `unsigned_integer` beside an overload forwarding to the standard function,
 declared once `__cpp_lib_bitops` reaches the working draft's `202607L` and constrained, like
-the counters, on the standard call being well-formed. The template works a word at a time.
-A word is mirrored by Clang's `__builtin_bitreverse64`
-or by a byte swap and three masked swaps. A word is compressed or expanded by one of two
+the counters, on the standard call being well-formed. The template works a block at a time.
+A block is mirrored by Clang's `__builtin_bitreverse64`
+or by a byte swap and three masked swaps. A block is compressed or expanded by one of two
 families of kernels on a single `std::size_t`, each family in a directory of its own under
 `bit/detail/` with one header per kernel and an umbrella:
 
@@ -132,7 +132,7 @@ families of kernels on a single `std::size_t`, each family in a directory of its
   placing each on the mask's corresponding one by Vigna's broadword `select`, which suits a
   sparse value over a wide mask.
 
-`compress_limb` and `expand_limb`, each in a header of its own, pick between the two: the intrinsic outside a constant
+`block_compress` and `block_expand`, each in a header of its own, pick between the two: the intrinsic outside a constant
 expression where it is declared, the portable kernel otherwise. Benchmarked on a Haswell-class
 Xeon, per call: `PEXT` and `PDEP` take about 0.45 ns; `compress_by_rank` about 0.4 ns per
 selected bit; `expand_by_walk` about 0.8 ns per mask bit; and `expand_by_select` about 3.6 ns
@@ -140,11 +140,11 @@ per source bit, which beats the walk from about ten mask bits up when the value 
 alternatives measured and left out are the bit-at-a-time mask walk with a branch, four to five
 times slower; Hacker's Delight's parallel suffix, a flat 21 to 23 ns; and Wegner's zp7, a flat
 6 to 8 ns with `PCLMULQDQ` and 17 to 20 ns without. Tests check every portable kernel against a
-bit-at-a-time oracle at compile time and at run time, and the run-time limb kernels against
+bit-at-a-time oracle at compile time and at run time, and the run-time block kernels against
 the portable ones, so a build with BMI2 checks the instructions too.
-Wider types compose the words: reversal sends each mirrored word to the mirror of its offset,
-compression packs each word's result above the bits the lower words selected, and expansion
-draws each word's bits from where the lower words stopped. Shift counts are `int`, the one
+Wider types compose the blocks: reversal sends each mirrored block to the mirror of its offset,
+compression packs each block's result above the bits the lower blocks selected, and expansion
+draws each block's bits from where the lower blocks stopped. Shift counts are `int`, the one
 amount every integer class in the test matrix takes without a narrowing conversion.
 
 P3793R2's `shl` and `shr` are forwarded the same way, once `__cpp_lib_bitops` reaches the

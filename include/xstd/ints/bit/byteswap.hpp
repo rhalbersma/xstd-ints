@@ -6,7 +6,7 @@
 #ifndef XSTD_INTS_BIT_BYTESWAP_HPP
 #define XSTD_INTS_BIT_BYTESWAP_HPP
 
-#include <xstd/ints/bit/detail/bit_limb.hpp>              // bit_limb, mirror_limbs
+#include <xstd/ints/bit/detail/bit_block.hpp>             // bit_block, mirror_blocks
 #include <xstd/ints/bit/detail/byteswap.hpp>              // std_swaps_bytes
 #include <xstd/ints/concepts/integer.hpp>                 // integer
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
@@ -25,14 +25,14 @@ template<class T>
         return std::byteswap(x);
 }
 
-// Through the unsigned counterpart, each word's bytes mirrored as bit_reverse mirrors its bits.
+// Through the unsigned counterpart, each block's bytes mirrored as bit_reverse mirrors its bits.
 template<integer T>
         requires (not ints::detail::std_swaps_bytes<T>) and (numeric_limits<make_unsigned_t<T>>::digits % numeric_limits<unsigned char>::digits == 0)
 [[nodiscard]] constexpr auto byteswap(T x) noexcept(nothrow_const_operators<T> and nothrow_const_operators<make_unsigned_t<T>>)
         -> T
 {
-        using ints::detail::bit_limb;
-        return static_cast<T>(ints::detail::mirror_limbs(static_cast<make_unsigned_t<T>>(x), [](bit_limb limb) noexcept -> bit_limb { return std::byteswap(limb); }));
+        using ints::detail::bit_block;
+        return static_cast<T>(ints::detail::mirror_blocks(static_cast<make_unsigned_t<T>>(x), [](bit_block block) noexcept -> bit_block { return std::byteswap(block); }));
 }
 
 } // namespace xstd

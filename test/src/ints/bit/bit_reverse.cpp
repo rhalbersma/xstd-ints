@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(NoexceptFollowsTheOperators, T, permutable_types)
         BOOST_CHECK(true);
 }
 
-// The lowest bit becomes the highest, and the bit past a 64-bit word lands that far below the top.
+// The lowest bit becomes the highest, and the bit past a 64-bit block lands that far below the top.
 BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsTrade, T, permutable_types)
 {
         constexpr auto N   = xstd::numeric_limits<T>::digits;

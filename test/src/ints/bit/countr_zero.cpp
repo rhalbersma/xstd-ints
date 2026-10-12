@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsOfEveryWidth, T, basis_unsigned_types)
         BOOST_CHECK(true);
 }
 
-// The word boundary, pinning each class's low half: read through the wrong accessor the halves come back swapped.
+// The block boundary, pinning each class's low half: read through the wrong accessor the halves come back swapped.
 BOOST_AUTO_TEST_CASE_TEMPLATE(TheWordBoundary, T, basis_unsigned_types)
 {
         constexpr auto W = xstd::numeric_limits<T>::digits;

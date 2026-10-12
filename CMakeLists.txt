@@ -61,10 +61,11 @@ target_sources(
         include/xstd/ints/bit/countl_zero.hpp
         include/xstd/ints/bit/countr_one.hpp
         include/xstd/ints/bit/countr_zero.hpp
-        include/xstd/ints/bit/detail/bit_limb.hpp
+        include/xstd/ints/bit/detail/bit_block.hpp
+        include/xstd/ints/bit/detail/block_compress.hpp
+        include/xstd/ints/bit/detail/block_expand.hpp
+        include/xstd/ints/bit/detail/block_reverse.hpp
         include/xstd/ints/bit/detail/byteswap.hpp
-        include/xstd/ints/bit/detail/compress_limb.hpp
-        include/xstd/ints/bit/detail/expand_limb.hpp
         include/xstd/ints/bit/detail/intrinsic.hpp
         include/xstd/ints/bit/detail/intrinsic/bmi2.hpp
         include/xstd/ints/bit/detail/intrinsic/compress.hpp
@@ -73,7 +74,6 @@ target_sources(
         include/xstd/ints/bit/detail/portable/compress.hpp
         include/xstd/ints/bit/detail/portable/expand.hpp
         include/xstd/ints/bit/detail/portable/select.hpp
-        include/xstd/ints/bit/detail/reverse_limb.hpp
         include/xstd/ints/bit/detail/shift.hpp
         include/xstd/ints/bit/detail/std_permutes_bits.hpp
         include/xstd/ints/bit/detail/std_shifts.hpp

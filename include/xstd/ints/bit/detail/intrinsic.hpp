@@ -6,7 +6,7 @@
 #ifndef XSTD_INTS_BIT_DETAIL_INTRINSIC_HPP
 #define XSTD_INTS_BIT_DETAIL_INTRINSIC_HPP
 
-// The hardware kernels on one bit_limb, each declared only where the target makes it fast.
+// The hardware kernels on one bit_block, each declared only where the target makes it fast.
 #include <xstd/ints/bit/detail/intrinsic/bmi2.hpp>     // IWYU pragma: export; XSTD_INTS_HAS_FAST_BMI2
 #include <xstd/ints/bit/detail/intrinsic/compress.hpp> // IWYU pragma: export; compress
 #include <xstd/ints/bit/detail/intrinsic/expand.hpp>   // IWYU pragma: export; expand

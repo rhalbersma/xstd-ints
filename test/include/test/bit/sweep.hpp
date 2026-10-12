@@ -26,7 +26,7 @@
 
 namespace test {
 
-// Widths on both sides of every word boundary, and odd ones that fill no byte, each as far as the build reaches.
+// Widths on both sides of every block boundary, and odd ones that fill no byte, each as far as the build reaches.
 #ifdef TEST_HAS_BIT_PRECISE_BIT
 using bit_precise_narrow_sweep_types = std::tuple<xstd::bit_uint<2>, xstd::bit_uint<4>, xstd::bit_uint<5>, xstd::bit_uint<13>, xstd::bit_uint<64>>;
 

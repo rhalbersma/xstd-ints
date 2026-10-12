@@ -6,7 +6,7 @@
 #ifndef XSTD_INTS_BIT_DETAIL_SHIFT_HPP
 #define XSTD_INTS_BIT_DETAIL_SHIFT_HPP
 
-#include <xstd/ints/bit/detail/bit_limb.hpp>              // shift_count_t
+#include <xstd/ints/bit/detail/bit_block.hpp>             // shift_count_t
 #include <xstd/ints/concepts/integer.hpp>                 // integer
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/cstdlib/unsigned_abs.hpp>             // unsigned_abs

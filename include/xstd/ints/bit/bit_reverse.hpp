@@ -6,8 +6,8 @@
 #ifndef XSTD_INTS_BIT_BIT_REVERSE_HPP
 #define XSTD_INTS_BIT_BIT_REVERSE_HPP
 
-#include <xstd/ints/bit/detail/bit_limb.hpp>              // mirror_limbs
-#include <xstd/ints/bit/detail/reverse_limb.hpp>          // reverse_limb
+#include <xstd/ints/bit/detail/bit_block.hpp>             // mirror_blocks
+#include <xstd/ints/bit/detail/block_reverse.hpp>         // block_reverse
 #include <xstd/ints/bit/detail/std_permutes_bits.hpp>     // XSTD_HAS_STD_BIT_PERMUTATIONS, std_permutes_bits
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
@@ -28,13 +28,13 @@ template<class T>
 
 #endif
 
-// Mirroring each word's bits, so bit k of x becomes bit N - 1 - k.
+// Mirroring each block's bits, so bit k of x becomes bit N - 1 - k.
 template<unsigned_integer T>
         requires (not ints::detail::std_permutes_bits<T>)
 [[nodiscard]] constexpr auto bit_reverse(T x) noexcept(nothrow_const_operators<T>)
         -> T
 {
-        return ints::detail::mirror_limbs(x, ints::detail::reverse_limb);
+        return ints::detail::mirror_blocks(x, ints::detail::block_reverse);
 }
 
 } // namespace xstd

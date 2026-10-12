@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheThreeAgreeOnASingleBit, T, basis_unsigned_types
         BOOST_CHECK(true);
 }
 
-// The widest exact width has a basis on every configured leg, through <bit> or a word at a time.
+// The widest exact width has a basis on every configured leg, through <bit> or a block at a time.
 BOOST_AUTO_TEST_CASE(TheWidestExactWidthHasABasis)
 {
         static_assert(has_popcount<xstd::uint128>);
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(CompressAndExpandAreInverse, T, basis_unsigned_typ
         BOOST_CHECK_EQUAL(mismatches, 0UZ);
 }
 
-// Compression from the top is reversal around compression from the bottom, which pins the words to their mirror images.
+// Compression from the top is reversal around compression from the bottom, which pins the blocks to their mirror images.
 BOOST_AUTO_TEST_CASE_TEMPLATE(ReversalMirrorsCompression, T, basis_unsigned_types)
 {
         auto mismatches = 0UZ;
