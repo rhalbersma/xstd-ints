@@ -9,7 +9,8 @@
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
 #include <xstd/ints/detail/bit_limb.hpp>                  // mirror_limbs
-#include <xstd/ints/detail/bit_permutation.hpp>           // XSTD_HAS_STD_BIT_PERMUTATIONS, reverse_limb, std_permutes_bits
+#include <xstd/ints/detail/reverse_limb.hpp>              // reverse_limb
+#include <xstd/ints/detail/std_permutes_bits.hpp>         // XSTD_HAS_STD_BIT_PERMUTATIONS, std_permutes_bits
 #include <bit>                                            // IWYU pragma: keep; bit_reverse, where the standard library ships it
 
 // P3104R5's bit_reverse, over every unsigned integer xstd knows.

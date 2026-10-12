@@ -8,7 +8,8 @@
 
 #include <xstd/ints/concepts/integer.hpp>                 // integer
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/detail/bit_shift.hpp>                 // XSTD_HAS_STD_SHIFTS, shift, shift_direction, std_shifts
+#include <xstd/ints/detail/shift.hpp>                     // shift, shift_direction
+#include <xstd/ints/detail/std_shifts.hpp>                // XSTD_HAS_STD_SHIFTS, std_shifts
 #include <bit>                                            // IWYU pragma: keep; shr, where the standard library ships it
 
 // P3793R2's shr over every pair of integers xstd knows: any count is in range, a negative one shifting the other way.

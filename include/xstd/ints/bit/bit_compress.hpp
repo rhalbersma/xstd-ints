@@ -8,7 +8,9 @@
 
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
-#include <xstd/ints/detail/bit_permutation.hpp>           // XSTD_HAS_STD_BIT_PERMUTATIONS, bit_limb, bit_limb_width, compress_limb, shift_count_t, std_permutes_bits
+#include <xstd/ints/detail/bit_limb.hpp>                  // bit_limb, bit_limb_width, shift_count_t
+#include <xstd/ints/detail/compress_limb.hpp>             // compress_limb
+#include <xstd/ints/detail/std_permutes_bits.hpp>         // XSTD_HAS_STD_BIT_PERMUTATIONS, std_permutes_bits
 #include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
 #include <bit>                                            // bit_compress, popcount
 
@@ -19,7 +21,6 @@ namespace xstd {
 
 template<class T>
         requires ints::detail::std_permutes_bits<T>
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the source and then the mask
 [[nodiscard]] constexpr auto bit_compress(T src, T mask) noexcept
         -> T
 {

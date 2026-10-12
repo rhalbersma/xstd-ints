@@ -13,7 +13,6 @@
 namespace xstd::ints::detail::portable {
 
 // Each one-bit of the mask, lowest first, takes the next bit of src by masking rather than by a branch on that bit.
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the source and then the mask
 [[nodiscard]] constexpr auto expand_by_walk(bit_limb src, bit_limb mask) noexcept
         -> bit_limb
 {
@@ -26,7 +25,6 @@ namespace xstd::ints::detail::portable {
 }
 
 // Each one-bit of src, at position j, lands on the mask's j-th one: one select per source bit, none per mask bit.
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the source and then the mask
 [[nodiscard]] constexpr auto expand_by_select(bit_limb src, bit_limb mask) noexcept
         -> bit_limb
 {
