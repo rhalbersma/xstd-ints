@@ -5,7 +5,8 @@
 
 #include <xstd/ints/bit/detail/bit_limb.hpp> // bit_limb, bit_limb_width
 #include <xstd/ints/bit/detail/portable.hpp> // compress_by_rank, expand_by_select, expand_by_walk, select
-#include <test/bit_reference.hpp>            // alternating_ones, for_each_edge_value_at, for_each_sweep_pair, for_each_sweep_value, holds_at_every_position, next_pseudo_random, reference_bit_compress, reference_bit_expand
+#include <test/bit/oracle.hpp>               // oracle_bit_compress, oracle_bit_expand
+#include <test/bit/sweep.hpp>                // alternating_ones, for_each_edge_value_at, for_each_sweep_pair, for_each_sweep_value, holds_at_every_position, next_pseudo_random
 #include <boost/test/unit_test.hpp>          // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <array>                             // array
 #include <bit>                               // popcount
@@ -21,7 +22,7 @@ namespace portable = xstd::ints::detail::portable;
 
 // The position of x's k-th one, found one bit at a time.
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters): select's signature, the word and then the rank
-constexpr auto reference_select(bit_limb x, unsigned k)
+constexpr auto oracle_select(bit_limb x, unsigned k)
         -> unsigned
 {
         for (auto const n : std::views::iota(0U, unsigned{xstd::ints::detail::bit_limb_width})) {
@@ -38,9 +39,9 @@ constexpr auto reference_select(bit_limb x, unsigned k)
 constexpr auto kernels_agree(bit_limb x, bit_limb m)
         -> bool
 {
-        return portable::compress_by_rank(x, m) == test::reference_bit_compress(x, m) and
-               portable::expand_by_walk(x, m) == test::reference_bit_expand(x, m) and
-               portable::expand_by_select(x, m) == test::reference_bit_expand(x, m);
+        return portable::compress_by_rank(x, m) == test::oracle_bit_compress(x, m) and
+               portable::expand_by_walk(x, m) == test::oracle_bit_expand(x, m) and
+               portable::expand_by_select(x, m) == test::oracle_bit_expand(x, m);
 }
 
 constexpr auto select_agrees(bit_limb x)
@@ -48,7 +49,7 @@ constexpr auto select_agrees(bit_limb x)
 {
         auto agrees = true;
         for (auto const k : std::views::iota(0U, static_cast<unsigned>(std::popcount(x)))) {
-                agrees = agrees and portable::select(x, k) == reference_select(x, k);
+                agrees = agrees and portable::select(x, k) == oracle_select(x, k);
         }
         return agrees;
 }
@@ -90,14 +91,14 @@ BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(Detail)
 BOOST_AUTO_TEST_SUITE(Portable)
 
-// Every kernel against its bit-at-a-time reference, edge values at every position, at compile time.
-BOOST_AUTO_TEST_CASE(KernelsAgreeWithTheReferenceAtCompileTime)
+// Every kernel against its bit-at-a-time oracle, edge values at every position, at compile time.
+BOOST_AUTO_TEST_CASE(KernelsAgreeWithTheOracleAtCompileTime)
 {
         static_assert(test::holds_at_every_position<agrees_at>(std::make_integer_sequence<int, std::numeric_limits<bit_limb>::digits>{}));
         BOOST_CHECK(true);
 }
 
-BOOST_AUTO_TEST_CASE(KernelsAgreeWithTheReference)
+BOOST_AUTO_TEST_CASE(KernelsAgreeWithTheOracle)
 {
         auto mismatches = 0UZ;
         test::for_each_sweep_pair<bit_limb>([&](bit_limb x, bit_limb m) -> void { mismatches += kernels_agree(x, m) ? 0UZ : 1UZ; });
@@ -105,7 +106,7 @@ BOOST_AUTO_TEST_CASE(KernelsAgreeWithTheReference)
         BOOST_CHECK_EQUAL(mismatches, 0UZ);
 }
 
-BOOST_AUTO_TEST_CASE(SelectAgreesWithTheReference)
+BOOST_AUTO_TEST_CASE(SelectAgreesWithTheOracle)
 {
         auto mismatches = 0UZ;
         test::for_each_sweep_value<bit_limb>([&](bit_limb x) -> void { mismatches += select_agrees(x) ? 0UZ : 1UZ; });

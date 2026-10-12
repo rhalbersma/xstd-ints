@@ -8,7 +8,7 @@
 #include <xstd/ints/bit/detail/expand_limb.hpp>   // expand_limb
 #include <xstd/ints/bit/detail/intrinsic.hpp>     // IWYU pragma: keep; compress, expand, XSTD_INTS_HAS_FAST_BMI2
 #include <xstd/ints/bit/detail/portable.hpp>      // compress_by_rank, expand_by_select, expand_by_walk
-#include <test/bit_reference.hpp>                 // for_each_sweep_pair
+#include <test/bit/sweep.hpp>                     // for_each_sweep_pair
 #include <boost/test/unit_test.hpp>               // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK_EQUAL, BOOST_TEST_MESSAGE
 
 namespace {

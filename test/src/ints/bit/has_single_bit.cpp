@@ -7,7 +7,8 @@
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/cstdint.hpp>                          // bit_int, bit_uint, int128, uint128
 #include <xstd/ints/limits.hpp>                           // numeric_limits
-#include <test/bit_reference.hpp>                         // bit_precise_sweep_types, for_each_edge_value_at, for_each_sweep_value, holds_at_every_position, reference_has_single_bit
+#include <test/bit/oracle.hpp>                            // oracle_has_single_bit
+#include <test/bit/sweep.hpp>                             // bit_precise_sweep_types, for_each_edge_value_at, for_each_sweep_value, holds_at_every_position
 #include <test/constexpr_check.hpp>                       // XSTD_CONSTEXPR_CHECK
 #include <test/exact_width_types.hpp>                     // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>                       // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
@@ -35,7 +36,7 @@ constexpr auto agrees_at(int k)
         -> bool
 {
         auto agrees = true;
-        test::for_each_edge_value_at<T>(k, [&](T x) -> void { agrees = agrees and xstd::has_single_bit(x) == test::reference_has_single_bit(x); });
+        test::for_each_edge_value_at<T>(k, [&](T x) -> void { agrees = agrees and xstd::has_single_bit(x) == test::oracle_has_single_bit(x); });
         return agrees;
 }
 
@@ -90,12 +91,12 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsOfEveryWidth, T, basis_unsigned_types)
         BOOST_CHECK(true);
 }
 
-// Each width against a bit-at-a-time reference: its edges at compile time, every value or a sweep at run time.
-BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheReference, T, basis_unsigned_types)
+// Each width against a bit-at-a-time oracle: its edges at compile time, every value or a sweep at run time.
+BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheOracle, T, basis_unsigned_types)
 {
         static_assert(test::holds_at_every_position<agrees_at<T>>(std::make_integer_sequence<int, xstd::numeric_limits<T>::digits>{}));
         auto mismatches = 0UZ;
-        test::for_each_sweep_value<T>([&](T x) -> void { mismatches += xstd::has_single_bit(x) == test::reference_has_single_bit(x) ? 0UZ : 1UZ; });
+        test::for_each_sweep_value<T>([&](T x) -> void { mismatches += xstd::has_single_bit(x) == test::oracle_has_single_bit(x) ? 0UZ : 1UZ; });
         BOOST_CHECK_EQUAL(mismatches, 0UZ);
 }
 

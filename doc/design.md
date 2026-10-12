@@ -66,8 +66,8 @@ yields, which is what the same requirement means once promotion is in scope.
 Asked that way every standard integer satisfies the concept except `bool`, whose
 `++` and `--` C++17 removed. `promoted_t` asks the language — `decltype(+a)` —
 rather than modelling the rules, and only where the language decides: a
-non-integral type is its own, so a user-defined `operator+` cannot define its
-own reference type into compliance.
+non-integral type is its own, so a user-defined `operator+` cannot redefine its
+promoted type into compliance.
 
 That widening moves one boundary rather than removing it. `is_signed`,
 `is_unsigned`, `make_signed` and `make_unsigned` each pair a standard-library
@@ -140,7 +140,7 @@ per source bit, which beats the walk from about ten mask bits up when the value 
 alternatives measured and left out are the bit-at-a-time mask walk with a branch, four to five
 times slower; Hacker's Delight's parallel suffix, a flat 21 to 23 ns; and Wegner's zp7, a flat
 6 to 8 ns with `PCLMULQDQ` and 17 to 20 ns without. Tests check every portable kernel against a
-bit-at-a-time reference at compile time and at run time, and the run-time limb kernels against
+bit-at-a-time oracle at compile time and at run time, and the run-time limb kernels against
 the portable ones, so a build with BMI2 checks the instructions too.
 Wider types compose the words: reversal sends each mirrored word to the mirror of its offset,
 compression packs each word's result above the bits the lower words selected, and expansion
@@ -369,7 +369,7 @@ configuration that inherits nothing from this repository.
 
 Each adapter also carries `IWYU pragma: always_keep`, both the pair headers and
 the two umbrellas, which do not inherit it. A header included for its
-specializations is used in a way no reference to a name can show, and without
+specializations is used in a way no use of a name can show, and without
 the pragma a translation unit that includes one to register the pair and then
 names nothing from it is told the include is unused.
 

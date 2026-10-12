@@ -6,7 +6,8 @@
 #include <xstd/ints/bit.hpp>          // complete bit basis
 #include <xstd/ints/cstdint.hpp>      // uint128
 #include <xstd/ints/limits.hpp>       // numeric_limits
-#include <test/bit_reference.hpp>     // bit_precise_sweep_types, for_each_edge_value, for_each_sweep_pair, for_each_sweep_value, shift_count_t
+#include <test/bit/shift_count.hpp>   // shift_count_t
+#include <test/bit/sweep.hpp>         // bit_precise_sweep_types, for_each_edge_value, for_each_sweep_pair, for_each_sweep_value
 #include <test/constexpr_check.hpp>   // XSTD_CONSTEXPR_CHECK
 #include <test/exact_width_types.hpp> // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>   // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
