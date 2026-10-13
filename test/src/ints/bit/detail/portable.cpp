@@ -3,16 +3,14 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/ints/bit/detail/block_width.hpp>             // block_width
 #include <xstd/ints/bit/detail/portable/block_compress.hpp> // block_compress_by_rank
 #include <xstd/ints/bit/detail/portable/block_expand.hpp>   // block_expand_by_select, block_expand_by_walk
-#include <xstd/ints/bit/detail/portable/block_select.hpp>   // block_select_by_broadword
 #include <test/bit/oracle.hpp>                              // oracle_bit_compress, oracle_bit_expand
 #include <test/bit/permutation_properties.hpp>              // portable_kernels_round_trip
+#include <test/bit/select_properties.hpp>                   // portable_select_holds
 #include <test/bit/sweep.hpp>                               // alternating_ones, for_each_edge_value_at, for_each_sweep_pair, for_each_sweep_value, holds_at_every_position, next_pseudo_random
 #include <boost/test/unit_test.hpp>                         // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <array>                                            // array
-#include <bit>                                              // popcount
 #include <cstddef>                                          // size_t
 #include <cstdint>                                          // uint64_t
 #include <limits>                                           // numeric_limits
@@ -23,38 +21,12 @@ namespace {
 
 namespace portable = xstd::ints::detail::portable;
 
-// The position of x's k-th one, found one bit at a time.
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): the kernel's signature, the block and then the rank
-constexpr auto oracle_select(std::size_t x, unsigned k)
-        -> unsigned
-{
-        for (auto const n : std::views::iota(0U, unsigned{xstd::ints::detail::block_width})) {
-                if (((x >> n) & 1U) != 0U) {
-                        if (k == 0U) {
-                                return n;
-                        }
-                        --k;
-                }
-        }
-        return unsigned{xstd::ints::detail::block_width};
-}
-
 constexpr auto kernels_agree(std::size_t x, std::size_t m)
         -> bool
 {
         return portable::block_compress_by_rank(x, m) == test::oracle_bit_compress(x, m) and
                portable::block_expand_by_walk(x, m) == test::oracle_bit_expand(x, m) and
                portable::block_expand_by_select(x, m) == test::oracle_bit_expand(x, m);
-}
-
-constexpr auto select_agrees(std::size_t x)
-        -> bool
-{
-        auto agrees = true;
-        for (auto const k : std::views::iota(0U, static_cast<unsigned>(std::popcount(x)))) {
-                agrees = agrees and portable::block_select_by_broadword(x, k) == oracle_select(x, k);
-        }
-        return agrees;
 }
 
 constexpr auto agrees_at(int k)
@@ -65,7 +37,7 @@ constexpr auto agrees_at(int k)
         // An array, not a braced list: MSVC 19.44 crashes constant-evaluating a loop over the latter.
         for (auto const partner : std::array{ones, test::alternating_ones<std::size_t>()}) {
                 test::for_each_edge_value_at<std::size_t>(k, [&](std::size_t edge) -> void {
-                        agrees = agrees and kernels_agree(partner, edge) and kernels_agree(edge, partner) and select_agrees(edge);
+                        agrees = agrees and kernels_agree(partner, edge) and kernels_agree(edge, partner) and test::portable_select_holds(edge);
                 });
         }
         return agrees;
@@ -121,7 +93,7 @@ BOOST_AUTO_TEST_CASE(KernelsRoundTrip)
 BOOST_AUTO_TEST_CASE(SelectAgreesWithTheOracle)
 {
         auto mismatches = 0UZ;
-        test::for_each_sweep_value<std::size_t>([&](std::size_t x) -> void { mismatches += select_agrees(x) ? 0UZ : 1UZ; });
+        test::for_each_sweep_value<std::size_t>([&](std::size_t x) -> void { mismatches += test::portable_select_holds(x) ? 0UZ : 1UZ; });
         BOOST_CHECK_EQUAL(mismatches, 0UZ);
 }
 

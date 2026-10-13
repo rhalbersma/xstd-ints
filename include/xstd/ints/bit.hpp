@@ -12,6 +12,7 @@
 #include <xstd/ints/bit/bit_floor.hpp>      // IWYU pragma: export; bit_floor
 #include <xstd/ints/bit/bit_repeat.hpp>     // IWYU pragma: export; bit_repeat
 #include <xstd/ints/bit/bit_reverse.hpp>    // IWYU pragma: export; bit_reverse
+#include <xstd/ints/bit/bit_select.hpp>     // IWYU pragma: export; bit_select
 #include <xstd/ints/bit/bit_width.hpp>      // IWYU pragma: export; bit_width
 #include <xstd/ints/bit/byteswap.hpp>       // IWYU pragma: export; byteswap
 #include <xstd/ints/bit/countl_one.hpp>     // IWYU pragma: export; countl_one

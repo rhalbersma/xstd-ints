@@ -4,9 +4,11 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <xstd/ints/bit/detail/intrinsic/bmi2.hpp> // IWYU pragma: keep; XSTD_INTS_HAS_FAST_BMI2, read only by the preprocessor
+#include <xstd/ints/bit/popcount.hpp>              // popcount
 #include <xstd/ints/cstdint.hpp>                   // uint128
 #include <xstd/ints/limits.hpp>                    // numeric_limits
 #include <test/bit/permutation_properties.hpp>     // intrinsics_agree, permutations_hold, portable_kernels_round_trip
+#include <test/bit/select_properties.hpp>          // intrinsic_select_agrees, portable_select_holds, selection_holds
 #include <test/bit/shift_count.hpp>                // shift_count_t
 #include <test/bit/sweep.hpp>                      // bit_precise_sweep_types
 #include <cstddef>                                 // size_t
@@ -40,13 +42,25 @@ template<class T>
         return value;
 }
 
+// The source's lowest and highest ones, and the one whose rank is the mask's population reduced modulo the source's.
+template<class T>
+[[nodiscard]] auto selections_hold(T src, T mask)
+        -> bool
+{
+        auto const ones = xstd::popcount(src);
+        return ones == 0 or (test::selection_holds(src, 0) and test::selection_holds(src, xstd::popcount(mask) % ones) and test::selection_holds(src, ones - 1));
+}
+
 // The source from the input's first bytes and the mask from those after it, so every width reads the same prefix.
 template<class T>
 [[nodiscard]] auto holds_at(std::span<std::uint8_t const> input)
         -> bool
 {
         constexpr auto bytes = (static_cast<std::size_t>(xstd::numeric_limits<T>::digits) + 7UZ) / 8UZ;
-        return test::permutations_hold(read_at<T>(input, 0UZ), read_at<T>(input, bytes));
+        // Bound by reference: Clang 19 crashes emitting a const local _BitInt over 128 bits.
+        auto const& src  = read_at<T>(input, 0UZ);
+        auto const& mask = read_at<T>(input, bytes);
+        return test::permutations_hold(src, mask) and selections_hold(src, mask);
 }
 
 auto check(bool holds)
@@ -66,8 +80,10 @@ extern "C" auto LLVMFuzzerTestOneInput(std::uint8_t const* data, std::size_t siz
         auto const src   = read_at<std::size_t>(input, 0UZ);
         auto const mask  = read_at<std::size_t>(input, sizeof(std::size_t));
         check(test::portable_kernels_round_trip(src, mask));
+        check(test::portable_select_holds(src));
 #ifdef XSTD_INTS_HAS_FAST_BMI2
         check(test::intrinsics_agree(src, mask));
+        check(test::intrinsic_select_agrees(src));
 #endif
         std::apply([&]<class... T>(T...) -> void { (check(holds_at<T>(input)), ...); }, fuzzed_types{});
         return 0;
