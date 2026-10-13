@@ -136,6 +136,24 @@ cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 run-clang-tidy -quiet -p build "$PWD/build/test/header_self_sufficiency/.*"
 ```
 
+## Fuzzing
+
+The tests sweep fixed values and a seeded random sample; the libFuzzer target under [`fuzz/`](fuzz) searches for the inputs they miss. `fuzz_bit_permutation` reads a source and a mask from its input bytes and checks, at one `bit_block`, that both portable expansions agree and each round-trips with the portable compression, and that every overload of PEXT and PDEP agrees with those kernels and round-trips on its own. It then reads the same bytes at every width from 8 bits up, through `unsigned _BitInt(147)` where the compiler has it, and checks that `bit_compress` and `bit_expand` agree with their oracles and undo each other. The checks live in [`test/include/test/bit/permutation_properties.hpp`](test/include/test/bit/permutation_properties.hpp), which the unit tests run as well; a failing one aborts.
+
+It needs clang, which is what ships libFuzzer. `XSTD_INTS_BUILD_FUZZERS` is off by default and independent of `BUILD_TESTING`. On x86-64, `XSTD_INTS_FUZZ_BMI2` is on by default and builds the target with `-mbmi2`, so it runs only on a processor with BMI2:
+
+```sh
+cmake -S . -B build-fuzz -DCMAKE_CXX_COMPILER=clang++-22 -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_FUZZERS=ON
+cmake --build build-fuzz --parallel 2
+mkdir -p corpus && build-fuzz/fuzz/fuzz_bit_permutation -max_total_time=120 corpus fuzz/corpus/fuzz_bit_permutation
+```
+
+The target is built with ASan and UBSan, and `XSTD_INTS_FUZZ_COMPILE_OPTIONS` and `XSTD_INTS_FUZZ_LINK_OPTIONS` replace those flags. The first directory on the command line receives what the run discovers; the checked-in seeds under `fuzz/corpus/<target>/` are read but left alone. A crash is written as `crash-<sha1>` in the working directory, and reproduces by passing that file to the target binary. With `BUILD_TESTING` on as well, CTest replays each seed corpus once as `fuzz.<target>`. A seed named `regression-...` is a minimized input that once found a bug, and stays to keep it found.
+
+[ClusterFuzzLite](https://google.github.io/clusterfuzzlite/) runs the same target in CI, built by [`.clusterfuzzlite/build.sh`](.clusterfuzzlite/build.sh) in the OSS-Fuzz builder image: [`cflite_pr.yml`](.github/workflows/cflite_pr.yml) for five minutes on every pull request, under ASan and UBSan, and [`cflite_batch.yml`](.github/workflows/cflite_batch.yml) nightly for half an hour, keeping the corpus it grows. A crash fails the job and is uploaded as an artifact.
+
+The unit tests reach PEXT and PDEP only where the build targets BMI2, so [`gcc.yml`](.github/workflows/gcc.yml) and [`clang.yml`](.github/workflows/clang.yml) each add a leg at `-march=x86-64-v3` on the stable rung; every other leg runs the portable kernels.
+
 ## Standards-paper tracking
 
 Implementation-relevant proposals must record the paper number, the revision-pinned wording reviewed by xstd, the corresponding live `cplusplus/papers` tracking issue, the last-reviewed date, and a short statement saying whether xstd implements, partially follows, extends, or merely references the paper. Unversioned `wg21.link/P####` links are reserved for links explicitly described as the latest revision; implementation and conformance claims use pinned `P####R#` links. Durable prose does not copy volatile WG21 status labels.

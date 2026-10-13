@@ -170,6 +170,16 @@ if(PROJECT_IS_TOP_LEVEL)
 
         add_subdirectory(test)
     endif()
+
+    # Off by default, and outside BUILD_TESTING: ClusterFuzzLite builds the fuzz targets
+    # alone, without the test tree's Boost.Test. Clang only, libFuzzer being clang's.
+    string(MAKE_C_IDENTIFIER ${PROJECT_NAME} project_id)
+    string(TOUPPER ${project_id} project_option_prefix)
+    option(${project_option_prefix}_BUILD_FUZZERS "Build the libFuzzer targets under fuzz/" OFF)
+
+    if(${project_option_prefix}_BUILD_FUZZERS)
+        add_subdirectory(fuzz)
+    endif()
 endif()
 
 install(
