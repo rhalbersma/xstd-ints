@@ -764,10 +764,11 @@ was too small, never that the call was out of domain.
 | `div(numer, denom)` <br> `div_euclid(numer, denom)` <br> `div_floor(numer, denom)` <br> `div_ceil(numer, denom)` | `denom` is not zero, and `numer` is not `numeric_limits<I>::min()` with `denom` at `-1`. Both are the undefined behaviour `/` and `%` already have; the assert is reached first |
 | `to_chars(first, last, value, base)` | `2 <= base` and `base <= 36`, and `[first, last)` a valid range |
 | `align_up(value, alignment)` <br> `align_down(value, alignment)` <br> `is_aligned(value, alignment)` | `alignment` is a power of two, which is not zero; `align_up` additionally that the rounded result is representable |
+| `bit_ceil(x)` | The result is representable: `x` is at most the highest power of two of its type. A call that violates it is not a constant expression even under `NDEBUG`, as `[bit.pow.two]` requires |
 | `bit_repeat(x, l)` | `l > 0`. A call that violates it is not a constant expression even under `NDEBUG`, as [P3104R6](https://wg21.link/P3104R6) requires |
 | `bit_select(x, k)` | `0 <= k` and `k < popcount(x)`, so `x` has a `k`-th one. A call that violates it is not a constant expression even under `NDEBUG`, as for `bit_repeat` |
 
-`sign`, `unsigned_abs`, the `<bit>` counterparts other than `bit_repeat`, and every concept and
+`sign`, `unsigned_abs`, the `<bit>` counterparts other than `bit_ceil` and `bit_repeat`, and every concept and
 trait are total: every value of a type they accept is in their domain.
 
 The pointer overloads of the three alignment functions are address arithmetic and

@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(TheWidestExactWidthHasABasis)
         BOOST_CHECK(true);
 }
 
-// The functions agree with each other: each one-count is a zero-count of the complement, and the width bounds the floor.
+// The functions agree: each one-count is a zero-count of the complement, and the width bounds the floor.
 BOOST_AUTO_TEST_CASE_TEMPLATE(TheFunctionsAgree, T, basis_unsigned_types)
 {
         constexpr auto W = xstd::numeric_limits<T>::digits;
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(CompressAndExpandAreInverse, T, basis_unsigned_typ
         BOOST_CHECK_EQUAL(mismatches, 0UZ);
 }
 
-// Compression from the top is reversal around compression from the bottom, which pins the blocks to their mirror images.
+// Compression from the top is reversal around compression from the bottom, pinning the blocks to their mirror images.
 BOOST_AUTO_TEST_CASE_TEMPLATE(ReversalMirrorsCompression, T, basis_unsigned_types)
 {
         auto mismatches = 0UZ;

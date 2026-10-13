@@ -14,7 +14,7 @@
 
 namespace xstd::ints::detail {
 
-// Each block is mirrored on its own and lands at the mirror of its offset, so a block's lowest unit becomes the highest.
+// Each block is mirrored on its own and lands at the mirror of its offset: a block's lowest unit becomes the highest.
 template<class T, class Mirror>
 [[nodiscard]] constexpr auto mirror_blocks(T x, Mirror mirror) noexcept(nothrow_const_operators<T>)
         -> T

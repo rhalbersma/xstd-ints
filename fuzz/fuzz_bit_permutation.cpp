@@ -21,7 +21,7 @@
 
 namespace {
 
-// Every width the public functions take: one block, a part of one, two, and the bit-precise ones across block boundaries.
+// Every width the public functions take: one block, part of one, two, and the bit-precise ones across block boundaries.
 using fuzzed_types = decltype(std::tuple_cat(
         std::declval<std::tuple<std::uint8_t, std::uint16_t, std::uint32_t, std::uint64_t, xstd::uint128>>(),
         std::declval<test::bit_precise_sweep_types>()
