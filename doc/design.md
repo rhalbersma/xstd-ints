@@ -677,6 +677,45 @@ sources for a `find_package` consumer is the least settled part, and fmt is the
 worked example to follow. xstd-misc and xstd-bits have the same shape, and this
 library, the smallest surface, is where to answer it first.
 
+### Choosing the bit-permutation kernel
+
+The kernel `block_compress` and `block_expand` run follows the target macros and
+nothing else, at the costs measured above. Four refinements are recorded, the
+first concrete and the other three waiting on a measurement:
+
+1. **The consumer states the path.** A CMake cache variable
+   `XSTD_INTS_BIT_PERMUTATION` becomes an `INTERFACE` compile definition on
+   `xstd::ints`, and a non-CMake user defines the same macro. `auto`, the default,
+   is today's behaviour; `portable` always takes the `constexpr` kernels; `bmi2`
+   takes `PEXT` and `PDEP` and is an `#error` on a target without fast BMI2, so a
+   build whose flags drift fails rather than quietly changing kernels. Constant
+   evaluation stays portable under every value, and every translation unit must see
+   the same value, since the kernels are inline. There is no run-time dispatch: a
+   library of headers has no binary to dispatch from, and a consumer shipping one
+   artifact for many CPUs builds one copy per target, as Stockfish's universal
+   build does. CI would add a `-march=x86-64-v3 -DXSTD_INTS_BIT_PERMUTATION=bmi2`
+   leg for GCC and for Clang, and a compile-time test that each value reaches its
+   kernel.
+2. **Dense masks without fast BMI2.** Compressing 64 selected bits by rank costs
+   about 25 ns, where zp7 is a flat 6 to 8 ns with `PCLMULQDQ`, which Zen 1 and 2
+   have though their `PEXT` is microcoded. Choosing by `popcount(mask)` needs the
+   crossover measured with and without `PCLMULQDQ`; the earlier numbers put it at
+   15 to 20 selected bits.
+3. **Expand by select.** The one-block expand always walks the mask, though
+   `block_expand_by_select` wins on a sparse value. Choosing by `popcount(src)`
+   against `popcount(mask)`, in the portable path only, needs its break-even
+   measured, so that the check pays for itself on dense values.
+4. **SVE2 BITPERM.** AArch64's optional `BEXT` and `BDEP`, under
+   `__ARM_FEATURE_SVE2_BITPERM`, are the counterparts of `PEXT` and `PDEP`, and need
+   their latency measured on a core that implements them.
+
+Each new kernel joins the agreement checks against the portable kernels and the
+oracle, fuzzing included. One mask applied to many values, where Hacker's
+Delight's precomputed compress costs about six operations per value, needs a batch
+interface that the per-call signature cannot amortize, and belongs in xstd-bits.
+wasm32 has no bit-permute instruction, so the portable kernels are already its
+answer.
+
 ## CI policy
 
 The matrix follows the channel model used by
