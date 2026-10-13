@@ -6,10 +6,10 @@
 #ifndef XSTD_INTS_BIT_DETAIL_PORTABLE_BLOCK_EXPAND_HPP
 #define XSTD_INTS_BIT_DETAIL_PORTABLE_BLOCK_EXPAND_HPP
 
-#include <xstd/ints/bit/detail/block_width.hpp>     // block_width
-#include <xstd/ints/bit/detail/portable/select.hpp> // select
-#include <bit>                                      // countr_zero, popcount
-#include <cstddef>                                  // size_t
+#include <xstd/ints/bit/detail/block_width.hpp>           // block_width
+#include <xstd/ints/bit/detail/portable/block_select.hpp> // block_select_by_broadword
+#include <bit>                                            // countr_zero, popcount
+#include <cstddef>                                        // size_t
 
 namespace xstd::ints::detail::portable {
 
@@ -35,7 +35,7 @@ namespace xstd::ints::detail::portable {
         }
         auto dst = 0UZ;
         for (; src != 0UZ; src &= src - 1UZ) {
-                dst |= 1UZ << select(mask, static_cast<unsigned>(std::countr_zero(src)));
+                dst |= 1UZ << block_select_by_broadword(mask, static_cast<unsigned>(std::countr_zero(src)));
         }
         return dst;
 }

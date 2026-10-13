@@ -7,12 +7,14 @@
 #include <xstd/ints/cstdint.hpp>               // XSTD_HAS_INT128, uint128
 #include <xstd/ints/limits.hpp>                // numeric_limits
 #include <test/bit/permutation_properties.hpp> // low_ones, round_trips
+#include <test/bit/select_properties.hpp>      // selection_inverts_rank
 #include <test/bit/shift_count.hpp>            // shift_count_t
 #include <test/bit/sweep.hpp>                  // bit_precise_sweep_types, for_each_edge_value, for_each_sweep_pair, for_each_sweep_value
 #include <test/constexpr_check.hpp>            // XSTD_CONSTEXPR_CHECK
 #include <test/exact_width_types.hpp>          // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>            // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <cstdint>                             // uint32_t
+#include <ranges>                              // iota
 #include <tuple>                               // tuple_cat
 #include <utility>                             // declval
 
@@ -95,7 +97,7 @@ BOOST_AUTO_TEST_CASE(TheWidestExactWidthHasABasis)
         BOOST_CHECK(true);
 }
 
-// The functions agree with each other: each one-count is a zero-count of the complement, and the width bounds the floor.
+// The functions agree: each one-count is a zero-count of the complement, and the width bounds the floor.
 BOOST_AUTO_TEST_CASE_TEMPLATE(TheFunctionsAgree, T, basis_unsigned_types)
 {
         constexpr auto W = xstd::numeric_limits<T>::digits;
@@ -122,7 +124,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(CompressAndExpandAreInverse, T, basis_unsigned_typ
         BOOST_CHECK_EQUAL(mismatches, 0UZ);
 }
 
-// Compression from the top is reversal around compression from the bottom, which pins the blocks to their mirror images.
+// Compression from the top is reversal around compression from the bottom, pinning the blocks to their mirror images.
 BOOST_AUTO_TEST_CASE_TEMPLATE(ReversalMirrorsCompression, T, basis_unsigned_types)
 {
         auto mismatches = 0UZ;
@@ -132,6 +134,23 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(ReversalMirrorsCompression, T, basis_unsigned_type
                 auto const& from_top  = xstd::bit_reverse(xstd::bit_compress(xstd::bit_reverse(x), xstd::bit_reverse(m)));
                 auto const& expected  = unselected < xstd::numeric_limits<T>::digits ? static_cast<T>(xstd::bit_compress(x, m) << static_cast<test::shift_count_t<T>>(unselected)) : T{0};
                 mismatches += from_top == expected ? 0UZ : 1UZ;
+        });
+        BOOST_CHECK_EQUAL(mismatches, 0UZ);
+}
+
+// Selection inverts rank, finds the lowest one where countr_zero does and the highest where bit_width does.
+BOOST_AUTO_TEST_CASE_TEMPLATE(SelectionInvertsRank, T, basis_unsigned_types)
+{
+        auto mismatches = 0UZ;
+        test::for_each_sweep_value<T>([&](T x) -> void {
+                auto const population = xstd::popcount(x);
+                for (auto const k : std::views::iota(0, population)) {
+                        mismatches += test::selection_inverts_rank(x, k) ? 0UZ : 1UZ;
+                }
+                if (population != 0) {
+                        mismatches += xstd::bit_select(x, 0) == xstd::countr_zero(x) ? 0UZ : 1UZ;
+                        mismatches += xstd::bit_select(x, population - 1) == xstd::bit_width(x) - 1 ? 0UZ : 1UZ;
+                }
         });
         BOOST_CHECK_EQUAL(mismatches, 0UZ);
 }

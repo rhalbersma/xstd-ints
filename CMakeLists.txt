@@ -55,6 +55,7 @@ target_sources(
         include/xstd/ints/bit/bit_floor.hpp
         include/xstd/ints/bit/bit_repeat.hpp
         include/xstd/ints/bit/bit_reverse.hpp
+        include/xstd/ints/bit/bit_select.hpp
         include/xstd/ints/bit/bit_width.hpp
         include/xstd/ints/bit/byteswap.hpp
         include/xstd/ints/bit/countl_one.hpp
@@ -64,14 +65,16 @@ target_sources(
         include/xstd/ints/bit/detail/block_compress.hpp
         include/xstd/ints/bit/detail/block_expand.hpp
         include/xstd/ints/bit/detail/block_reverse.hpp
+        include/xstd/ints/bit/detail/block_select.hpp
         include/xstd/ints/bit/detail/block_width.hpp
         include/xstd/ints/bit/detail/intrinsic/block_compress.hpp
         include/xstd/ints/bit/detail/intrinsic/block_expand.hpp
+        include/xstd/ints/bit/detail/intrinsic/block_select.hpp
         include/xstd/ints/bit/detail/intrinsic/bmi2.hpp
         include/xstd/ints/bit/detail/mirror_blocks.hpp
         include/xstd/ints/bit/detail/portable/block_compress.hpp
         include/xstd/ints/bit/detail/portable/block_expand.hpp
-        include/xstd/ints/bit/detail/portable/select.hpp
+        include/xstd/ints/bit/detail/portable/block_select.hpp
         include/xstd/ints/bit/detail/shift.hpp
         include/xstd/ints/bit/detail/shift_count.hpp
         include/xstd/ints/bit/detail/std_permutes_bits.hpp

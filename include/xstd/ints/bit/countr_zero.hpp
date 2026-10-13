@@ -15,7 +15,7 @@
 #include <bit>                                            // countr_zero
 #include <cstddef>                                        // size_t
 
-// One overload set: <bit> where it takes the type, a builtin for the bit-precise widths it refuses, blocks for the rest.
+// One overload set: <bit> where it takes the type, a builtin for bit-precise widths it refuses, blocks for the rest.
 namespace xstd {
 
 // Constrained on the call, so constraint and body cannot drift: std::unsigned_integral admits what <bit> refuses.

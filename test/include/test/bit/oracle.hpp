@@ -227,6 +227,23 @@ template<class T>
         return result;
 }
 
+// The position of x's k-th one, counted off one bit at a time; the width where x has no k-th one.
+template<class T>
+[[nodiscard]] constexpr auto oracle_bit_select(T x, int k) noexcept
+        -> int
+{
+        for (auto const n : std::views::iota(0, xstd::numeric_limits<T>::digits)) {
+                if (static_cast<T>(x & T{1}) != T{0}) {
+                        if (k == 0) {
+                                return n;
+                        }
+                        --k;
+                }
+                x = static_cast<T>(x >> 1U);
+        }
+        return xstd::numeric_limits<T>::digits;
+}
+
 } // namespace test
 
 #endif // TEST_BIT_ORACLE_HPP

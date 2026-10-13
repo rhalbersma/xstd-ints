@@ -119,20 +119,25 @@ families of kernels on a single `std::size_t`, each family in a directory of its
 `bit/detail/` with one header per kernel:
 
 - `detail::intrinsic` holds `block_compress` and `block_expand`, which are `_pext_u64` and `_pdep_u64`,
-  declared only where `XSTD_INTS_HAS_FAST_BMI2` says the target makes them fast: x86-64 with
-  `__BMI2__`, or MSVC with `/arch:AVX2`, which implies BMI2 but never defines the macro. A
-  target of `bdver4`, `znver1` or `znver2` is excluded even though it enables BMI2, since
-  `PEXT` and `PDEP` are microcoded there, with an 18-cycle latency against 3 on Zen 3 and Intel
-  since Haswell.
+  and `block_select`, which is `std::countr_zero(_pdep_u64(1 << k, x))`, all three declared only
+  where `XSTD_INTS_HAS_FAST_BMI2` says the target makes them fast: x86-64 with `__BMI2__`, or
+  MSVC with `/arch:AVX2`, which implies BMI2 but never defines the macro. A target of `bdver4`,
+  `znver1` or `znver2` is excluded even though it enables BMI2, since `PEXT` and `PDEP` are
+  microcoded there, with an 18-cycle latency against 3 on Zen 3 and Intel since Haswell.
 - `detail::portable` holds the `constexpr` kernels, which a constant expression always takes
   and a run-time call takes wherever the intrinsics are absent. `block_compress_by_rank` loops over
   the selected bits, placing each at its rank among the mask's ones by one `popcount`;
   `block_expand_by_walk` loops over the mask's one-bits, depositing the next bit of the value by a
   mask rather than a branch; `block_expand_by_select` loops over the value's one-bits instead,
-  placing each on the mask's corresponding one by Vigna's broadword `select`, which suits a
-  sparse value over a wide mask.
+  placing each on the mask's corresponding one by `block_select_by_broadword`, which suits a
+  sparse value over a wide mask. `block_select_by_broadword` is Vigna's broadword select, from
+  "Broadword Implementation of Rank/Select Queries" (WEA 2008): three shift-and-mask steps count
+  the ones of every byte, one multiply sums those counts into a prefix count per byte, one
+  parallel compare against `k` copied into every byte, counted by a `popcount`, finds the byte
+  holding the `k`-th one, and a 2 KiB table indexed by that byte and the rank left over gives
+  the bit within it. It never loops and never branches on the value.
 
-`block_compress` and `block_expand`, each in a header of its own, pick between the two: the intrinsic outside a constant
+`block_compress`, `block_expand` and `block_select`, each in a header of its own, pick between the two: the intrinsic outside a constant
 expression where it is declared, the portable kernel otherwise. Benchmarked on a Haswell-class
 Xeon, per call: `PEXT` and `PDEP` take about 0.45 ns; `block_compress_by_rank` about 0.4 ns per
 selected bit; `block_expand_by_walk` about 0.8 ns per mask bit; and `block_expand_by_select` about 3.6 ns
@@ -143,8 +148,10 @@ times slower; Hacker's Delight's parallel suffix, a flat 21 to 23 ns; and Wegner
 bit-at-a-time oracle at compile time and at run time, and the run-time block kernels against
 the portable ones, so a build with BMI2 checks the instructions too.
 Wider types compose the blocks: reversal sends each mirrored block to the mirror of its offset,
-compression packs each block's result above the bits the lower blocks selected, and expansion
-draws each block's bits from where the lower blocks stopped. Shift counts are `int`, the one
+compression packs each block's result above the bits the lower blocks selected, expansion
+draws each block's bits from where the lower blocks stopped, and selection skips whole blocks,
+subtracting each one's population from `k`, until the `k`-th one lies in the current block,
+where the block kernel finds it and the block's offset is added. Shift counts are `int`, the one
 amount every integer class in the test matrix takes without a narrowing conversion.
 
 P3793R2's `shl` and `shr` are forwarded the same way, once `__cpp_lib_bitops` reaches the
@@ -156,6 +163,18 @@ count of a signed type needs no negation, and it is compared with the width in w
 the two types holds the other, so a 256-bit width is not truncated into an `unsigned char`
 count. A left shift goes through the unsigned counterpart, which keeps a signed value from
 overflowing, and the result converts back modulo the width, as C++20 defines the conversion.
+
+`bit_select(x, k)` is xstd's own, beside the four: it is not a standard function and no part of
+P3104, so it has no `<bit>` overload to forward to and is one template over `unsigned_integer`.
+It answers the position of the `k`-th one bit of `x`, counting from zero at the least
+significant end, which makes it the inverse of rank: `popcount(x & ((T{1} << bit_select(x, k)) - 1)) == k`
+for every `k` below `popcount(x)`. Its signature reads as `<bit>`'s do: `x` taken as the other
+functions take it, `k` an `int` as `bit_repeat`'s length and `rotl`'s count are, and an `int`
+result as `countr_zero` returns. Its one-block kernel under BMI2 rests on a property of `PDEP`:
+it deposits the `k`-th bit of its source on the `k`-th one of its mask, so expanding the lone bit
+`1 << k` through `x` leaves exactly that one, whose position `TZCNT` reads off, two
+instructions with no loop and no table. A type no wider than a block calls the block kernel
+directly. Its contract is narrow, as `bit_repeat`'s is, so it is not `noexcept`.
 
 ### `bit_mask`
 
@@ -679,7 +698,7 @@ library, the smallest surface, is where to answer it first.
 
 ### Choosing the bit-permutation kernel
 
-The kernel `block_compress` and `block_expand` run follows the target macros and
+The kernel `block_compress`, `block_expand` and `block_select` run follows the target macros and
 nothing else, at the costs measured above. Four refinements are recorded, the
 first concrete and the other three waiting on a measurement:
 
@@ -745,9 +764,11 @@ was too small, never that the call was out of domain.
 | `div(numer, denom)` <br> `div_euclid(numer, denom)` <br> `div_floor(numer, denom)` <br> `div_ceil(numer, denom)` | `denom` is not zero, and `numer` is not `numeric_limits<I>::min()` with `denom` at `-1`. Both are the undefined behaviour `/` and `%` already have; the assert is reached first |
 | `to_chars(first, last, value, base)` | `2 <= base` and `base <= 36`, and `[first, last)` a valid range |
 | `align_up(value, alignment)` <br> `align_down(value, alignment)` <br> `is_aligned(value, alignment)` | `alignment` is a power of two, which is not zero; `align_up` additionally that the rounded result is representable |
+| `bit_ceil(x)` | The result is representable: `x` is at most the highest power of two of its type. A call that violates it is not a constant expression even under `NDEBUG`, as `[bit.pow.two]` requires |
 | `bit_repeat(x, l)` | `l > 0`. A call that violates it is not a constant expression even under `NDEBUG`, as [P3104R6](https://wg21.link/P3104R6) requires |
+| `bit_select(x, k)` | `0 <= k` and `k < popcount(x)`, so `x` has a `k`-th one. A call that violates it is not a constant expression even under `NDEBUG`, as for `bit_repeat` |
 
-`sign`, `unsigned_abs`, the `<bit>` counterparts other than `bit_repeat`, and every concept and
+`sign`, `unsigned_abs`, the `<bit>` counterparts other than `bit_ceil` and `bit_repeat`, and every concept and
 trait are total: every value of a type they accept is in their domain.
 
 The pointer overloads of the three alignment functions are address arithmetic and
