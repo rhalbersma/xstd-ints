@@ -6,13 +6,14 @@
 #ifndef XSTD_INTS_BIT_BYTESWAP_HPP
 #define XSTD_INTS_BIT_BYTESWAP_HPP
 
-#include <xstd/ints/bit/detail/bit_block.hpp>             // bit_block, mirror_blocks
-#include <xstd/ints/bit/detail/byteswap.hpp>              // std_swaps_bytes
+#include <xstd/ints/bit/detail/mirror_blocks.hpp>         // mirror_blocks
+#include <xstd/ints/bit/detail/std_swaps_bytes.hpp>       // std_swaps_bytes
 #include <xstd/ints/concepts/integer.hpp>                 // integer
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
 #include <xstd/ints/type_traits/make_unsigned.hpp>        // make_unsigned_t
 #include <bit>                                            // byteswap
+#include <cstddef>                                        // size_t
 
 // [bit.byteswap] over every integer xstd knows whose width is a whole number of bytes.
 namespace xstd {
@@ -31,8 +32,7 @@ template<integer T>
 [[nodiscard]] constexpr auto byteswap(T x) noexcept(nothrow_const_operators<T> and nothrow_const_operators<make_unsigned_t<T>>)
         -> T
 {
-        using ints::detail::bit_block;
-        return static_cast<T>(ints::detail::mirror_blocks(static_cast<make_unsigned_t<T>>(x), [](bit_block block) noexcept -> bit_block { return std::byteswap(block); }));
+        return static_cast<T>(ints::detail::mirror_blocks(static_cast<make_unsigned_t<T>>(x), [](std::size_t block) noexcept -> std::size_t { return std::byteswap(block); }));
 }
 
 } // namespace xstd

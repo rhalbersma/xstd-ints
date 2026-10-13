@@ -3,20 +3,19 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/ints/bit/detail/bit_block.hpp>  // bit_block
-#include <xstd/ints/bit/detail/intrinsic.hpp>  // IWYU pragma: keep; XSTD_INTS_HAS_FAST_BMI2, read only by the preprocessor
-#include <xstd/ints/cstdint.hpp>               // uint128
-#include <xstd/ints/limits.hpp>                // numeric_limits
-#include <test/bit/permutation_properties.hpp> // intrinsics_agree, permutations_hold, portable_kernels_round_trip
-#include <test/bit/shift_count.hpp>            // shift_count_t
-#include <test/bit/sweep.hpp>                  // bit_precise_sweep_types
-#include <cstddef>                             // size_t
-#include <cstdint>                             // uint8_t, uint16_t, uint32_t, uint64_t
-#include <cstdlib>                             // abort
-#include <ranges>                              // iota
-#include <span>                                // span
-#include <tuple>                               // apply, tuple, tuple_cat
-#include <utility>                             // declval
+#include <xstd/ints/bit/detail/intrinsic/bmi2.hpp> // IWYU pragma: keep; XSTD_INTS_HAS_FAST_BMI2, read only by the preprocessor
+#include <xstd/ints/cstdint.hpp>                   // uint128
+#include <xstd/ints/limits.hpp>                    // numeric_limits
+#include <test/bit/permutation_properties.hpp>     // intrinsics_agree, permutations_hold, portable_kernels_round_trip
+#include <test/bit/shift_count.hpp>                // shift_count_t
+#include <test/bit/sweep.hpp>                      // bit_precise_sweep_types
+#include <cstddef>                                 // size_t
+#include <cstdint>                                 // uint8_t, uint16_t, uint32_t, uint64_t
+#include <cstdlib>                                 // abort
+#include <ranges>                                  // iota
+#include <span>                                    // span
+#include <tuple>                                   // apply, tuple, tuple_cat
+#include <utility>                                 // declval
 
 namespace {
 
@@ -63,10 +62,9 @@ auto check(bool holds)
 extern "C" auto LLVMFuzzerTestOneInput(std::uint8_t const* data, std::size_t size)
         -> int
 {
-        using xstd::ints::detail::bit_block;
         auto const input = std::span(data, size);
-        auto const src   = read_at<bit_block>(input, 0UZ);
-        auto const mask  = read_at<bit_block>(input, sizeof(bit_block));
+        auto const src   = read_at<std::size_t>(input, 0UZ);
+        auto const mask  = read_at<std::size_t>(input, sizeof(std::size_t));
         check(test::portable_kernels_round_trip(src, mask));
 #ifdef XSTD_INTS_HAS_FAST_BMI2
         check(test::intrinsics_agree(src, mask));

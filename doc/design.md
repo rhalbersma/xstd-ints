@@ -116,26 +116,26 @@ the counters, on the standard call being well-formed. The template works a block
 A block is mirrored by Clang's `__builtin_bitreverse64`
 or by a byte swap and three masked swaps. A block is compressed or expanded by one of two
 families of kernels on a single `std::size_t`, each family in a directory of its own under
-`bit/detail/` with one header per kernel and an umbrella:
+`bit/detail/` with one header per kernel:
 
-- `detail::intrinsic` holds `compress` and `expand`, which are `_pext_u64` and `_pdep_u64`,
+- `detail::intrinsic` holds `block_compress` and `block_expand`, which are `_pext_u64` and `_pdep_u64`,
   declared only where `XSTD_INTS_HAS_FAST_BMI2` says the target makes them fast: x86-64 with
   `__BMI2__`, or MSVC with `/arch:AVX2`, which implies BMI2 but never defines the macro. A
   target of `bdver4`, `znver1` or `znver2` is excluded even though it enables BMI2, since
   `PEXT` and `PDEP` are microcoded there, with an 18-cycle latency against 3 on Zen 3 and Intel
   since Haswell.
 - `detail::portable` holds the `constexpr` kernels, which a constant expression always takes
-  and a run-time call takes wherever the intrinsics are absent. `compress_by_rank` loops over
+  and a run-time call takes wherever the intrinsics are absent. `block_compress_by_rank` loops over
   the selected bits, placing each at its rank among the mask's ones by one `popcount`;
-  `expand_by_walk` loops over the mask's one-bits, depositing the next bit of the value by a
-  mask rather than a branch; `expand_by_select` loops over the value's one-bits instead,
+  `block_expand_by_walk` loops over the mask's one-bits, depositing the next bit of the value by a
+  mask rather than a branch; `block_expand_by_select` loops over the value's one-bits instead,
   placing each on the mask's corresponding one by Vigna's broadword `select`, which suits a
   sparse value over a wide mask.
 
 `block_compress` and `block_expand`, each in a header of its own, pick between the two: the intrinsic outside a constant
 expression where it is declared, the portable kernel otherwise. Benchmarked on a Haswell-class
-Xeon, per call: `PEXT` and `PDEP` take about 0.45 ns; `compress_by_rank` about 0.4 ns per
-selected bit; `expand_by_walk` about 0.8 ns per mask bit; and `expand_by_select` about 3.6 ns
+Xeon, per call: `PEXT` and `PDEP` take about 0.45 ns; `block_compress_by_rank` about 0.4 ns per
+selected bit; `block_expand_by_walk` about 0.8 ns per mask bit; and `block_expand_by_select` about 3.6 ns
 per source bit, which beats the walk from about ten mask bits up when the value is sparse. The
 alternatives measured and left out are the bit-at-a-time mask walk with a branch, four to five
 times slower; Hacker's Delight's parallel suffix, a flat 21 to 23 ns; and Wegner's zp7, a flat
@@ -651,6 +651,70 @@ later, exporting the header-only `xstd::ints` target. Consumers build neither th
 tests nor their dependencies. New facilities should stay small, portable and
 motivated by current practice; one that enters the standard library can be
 retired, and the baseline can advance to C++26 once that is a practical default.
+
+## Future directions
+
+Directions considered and deliberately not taken yet. Each records what it would
+take, so the question can be picked up without rediscovering the answer.
+
+### A module interface
+
+`import xstd.ints;` beside the headers, never instead of them, the way
+[fmt](https://github.com/fmtlib/fmt) ships one: a second, optional target
+(`XSTD_INTS_MODULE`) whose interface unit includes today's headers in its global
+module fragment and exports the public names, with a `FILE_SET CXX_MODULES` over
+CMake 3.28 or later. The `INTERFACE` target, its headers and its install rules stay
+as they are. A compiled mode, fmt's third, has no counterpart here: there is no
+non-template code to move into a translation unit.
+
+Two costs decide when. The interface unit must enumerate the public API, a list to
+keep current, though it would also make "public" a statement rather than whatever
+sits under `include/xstd/`. And Apple Clang's version numbers do not map onto
+upstream Clang's, so whether Xcode 16.4 and 26.6 can build it needs checking. CI
+needs nothing new: a module leg is a stub passing `-DXSTD_INTS_MODULE=ON`, since
+every leg's generator can scan module dependencies. Installing module interface
+sources for a `find_package` consumer is the least settled part, and fmt is the
+worked example to follow. xstd-misc and xstd-bits have the same shape, and this
+library, the smallest surface, is where to answer it first.
+
+### Choosing the bit-permutation kernel
+
+The kernel `block_compress` and `block_expand` run follows the target macros and
+nothing else, at the costs measured above. Four refinements are recorded, the
+first concrete and the other three waiting on a measurement:
+
+1. **The consumer states the path.** A CMake cache variable
+   `XSTD_INTS_BIT_PERMUTATION` becomes an `INTERFACE` compile definition on
+   `xstd::ints`, and a non-CMake user defines the same macro. `auto`, the default,
+   is today's behaviour; `portable` always takes the `constexpr` kernels; `bmi2`
+   takes `PEXT` and `PDEP` and is an `#error` on a target without fast BMI2, so a
+   build whose flags drift fails rather than quietly changing kernels. Constant
+   evaluation stays portable under every value, and every translation unit must see
+   the same value, since the kernels are inline. There is no run-time dispatch: a
+   library of headers has no binary to dispatch from, and a consumer shipping one
+   artifact for many CPUs builds one copy per target, as Stockfish's universal
+   build does. CI would add a `-march=x86-64-v3 -DXSTD_INTS_BIT_PERMUTATION=bmi2`
+   leg for GCC and for Clang, and a compile-time test that each value reaches its
+   kernel.
+2. **Dense masks without fast BMI2.** Compressing 64 selected bits by rank costs
+   about 25 ns, where zp7 is a flat 6 to 8 ns with `PCLMULQDQ`, which Zen 1 and 2
+   have though their `PEXT` is microcoded. Choosing by `popcount(mask)` needs the
+   crossover measured with and without `PCLMULQDQ`; the earlier numbers put it at
+   15 to 20 selected bits.
+3. **Expand by select.** The one-block expand always walks the mask, though
+   `block_expand_by_select` wins on a sparse value. Choosing by `popcount(src)`
+   against `popcount(mask)`, in the portable path only, needs its break-even
+   measured, so that the check pays for itself on dense values.
+4. **SVE2 BITPERM.** AArch64's optional `BEXT` and `BDEP`, under
+   `__ARM_FEATURE_SVE2_BITPERM`, are the counterparts of `PEXT` and `PDEP`, and need
+   their latency measured on a core that implements them.
+
+Each new kernel joins the agreement checks against the portable kernels and the
+oracle, fuzzing included. One mask applied to many values, where Hacker's
+Delight's precomputed compress costs about six operations per value, needs a batch
+interface that the per-call signature cannot amortize, and belongs in xstd-bits.
+wasm32 has no bit-permute instruction, so the portable kernels are already its
+answer.
 
 ## CI policy
 

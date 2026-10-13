@@ -6,13 +6,15 @@
 #ifndef XSTD_INTS_BIT_BIT_EXPAND_HPP
 #define XSTD_INTS_BIT_BIT_EXPAND_HPP
 
-#include <xstd/ints/bit/detail/bit_block.hpp>             // bit_block, bit_block_width, shift_count_t
 #include <xstd/ints/bit/detail/block_expand.hpp>          // block_expand
+#include <xstd/ints/bit/detail/block_width.hpp>           // block_width
+#include <xstd/ints/bit/detail/shift_count.hpp>           // shift_count_t
 #include <xstd/ints/bit/detail/std_permutes_bits.hpp>     // XSTD_HAS_STD_BIT_PERMUTATIONS, std_permutes_bits
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
 #include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
 #include <bit>                                            // bit_expand, popcount
+#include <cstddef>                                        // size_t
 
 // P3104R5's bit_expand, over every unsigned integer xstd knows.
 namespace xstd {
@@ -36,16 +38,15 @@ template<unsigned_integer T>
 [[nodiscard]] constexpr auto bit_expand(T src, T mask) noexcept(nothrow_const_operators<T>)
         -> T
 {
-        using ints::detail::bit_block;
         using shift_count = ints::detail::shift_count_t<T>;
         constexpr auto N  = shift_count{numeric_limits<T>::digits};
-        constexpr auto L  = shift_count{ints::detail::bit_block_width};
+        constexpr auto L  = shift_count{ints::detail::block_width};
         auto dst          = T{0};
         auto consumed     = shift_count{0};
         for (auto k = shift_count{0}; k < N; k += L) {
-                // Both kept bit_blocks until shifted: Clang 19 crashes emitting a const local _BitInt over 128 bits.
-                auto const mask_block = static_cast<bit_block>(mask >> k);
-                auto const deposited  = ints::detail::block_expand(static_cast<bit_block>(src >> consumed), mask_block);
+                // Both kept std::size_t until shifted: Clang 19 crashes emitting a const local _BitInt over 128 bits.
+                auto const mask_block = static_cast<std::size_t>(mask >> k);
+                auto const deposited  = ints::detail::block_expand(static_cast<std::size_t>(src >> consumed), mask_block);
                 dst                   = static_cast<T>(dst | static_cast<T>(static_cast<T>(deposited) << k));
                 consumed += static_cast<shift_count>(std::popcount(mask_block));
         }
