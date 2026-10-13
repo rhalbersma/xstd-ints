@@ -71,7 +71,7 @@ target_sources(
         include/xstd/ints/bit/detail/mirror_blocks.hpp
         include/xstd/ints/bit/detail/portable/block_compress.hpp
         include/xstd/ints/bit/detail/portable/block_expand.hpp
-        include/xstd/ints/bit/detail/portable/select.hpp
+        include/xstd/ints/bit/detail/portable/block_select.hpp
         include/xstd/ints/bit/detail/shift.hpp
         include/xstd/ints/bit/detail/shift_count.hpp
         include/xstd/ints/bit/detail/std_permutes_bits.hpp

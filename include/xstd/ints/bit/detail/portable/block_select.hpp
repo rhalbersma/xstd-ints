@@ -3,8 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_INTS_BIT_DETAIL_PORTABLE_SELECT_HPP
-#define XSTD_INTS_BIT_DETAIL_PORTABLE_SELECT_HPP
+#ifndef XSTD_INTS_BIT_DETAIL_PORTABLE_BLOCK_SELECT_HPP
+#define XSTD_INTS_BIT_DETAIL_PORTABLE_BLOCK_SELECT_HPP
 
 #include <array>   // array
 #include <bit>     // popcount
@@ -36,7 +36,7 @@ inline constexpr auto select_in_byte = [] -> std::array<std::uint8_t, byte_value
 }();
 
 // Vigna's broadword select: byte counts prefix-summed by one multiply, the byte found by one compare, then the table.
-[[nodiscard]] constexpr auto select(std::size_t x, unsigned k) noexcept
+[[nodiscard]] constexpr auto block_select_by_broadword(std::size_t x, unsigned k) noexcept
         -> unsigned
 {
         assert(std::cmp_less(k, std::popcount(x)));
@@ -57,4 +57,4 @@ inline constexpr auto select_in_byte = [] -> std::array<std::uint8_t, byte_value
 
 } // namespace xstd::ints::detail::portable
 
-#endif // XSTD_INTS_BIT_DETAIL_PORTABLE_SELECT_HPP
+#endif // XSTD_INTS_BIT_DETAIL_PORTABLE_BLOCK_SELECT_HPP

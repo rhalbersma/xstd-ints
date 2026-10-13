@@ -1,8 +1,12 @@
+//          Copyright Rein Halbersma 2014-2026.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <xstd/ints/bit/detail/block_width.hpp>             // block_width
 #include <xstd/ints/bit/detail/portable/block_compress.hpp> // block_compress_by_rank
 #include <xstd/ints/bit/detail/portable/block_expand.hpp>   // block_expand_by_select, block_expand_by_walk
-#include <xstd/ints/bit/detail/portable/select.hpp>         // select
+#include <xstd/ints/bit/detail/portable/block_select.hpp>   // block_select_by_broadword
 #include <test/bit/oracle.hpp>                              // oracle_bit_compress, oracle_bit_expand
 #include <test/bit/permutation_properties.hpp>              // portable_kernels_round_trip
 #include <test/bit/sweep.hpp>                               // alternating_ones, for_each_edge_value_at, for_each_sweep_pair, for_each_sweep_value, holds_at_every_position, next_pseudo_random
@@ -15,17 +19,12 @@
 #include <ranges>                                           // iota
 #include <utility>                                          // make_integer_sequence
 
-//          Copyright Rein Halbersma 2014-2026.
-// Distributed under the Boost Software License, Version 1.0.
-//    (See accompanying file LICENSE_1_0.txt or copy at
-//          http://www.boost.org/LICENSE_1_0.txt)
-
 namespace {
 
 namespace portable = xstd::ints::detail::portable;
 
 // The position of x's k-th one, found one bit at a time.
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): select's signature, the block and then the rank
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): the kernel's signature, the block and then the rank
 constexpr auto oracle_select(std::size_t x, unsigned k)
         -> unsigned
 {
@@ -53,7 +52,7 @@ constexpr auto select_agrees(std::size_t x)
 {
         auto agrees = true;
         for (auto const k : std::views::iota(0U, static_cast<unsigned>(std::popcount(x)))) {
-                agrees = agrees and portable::select(x, k) == oracle_select(x, k);
+                agrees = agrees and portable::block_select_by_broadword(x, k) == oracle_select(x, k);
         }
         return agrees;
 }
