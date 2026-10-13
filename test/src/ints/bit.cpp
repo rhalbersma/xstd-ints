@@ -6,7 +6,8 @@
 #include <xstd/ints/bit.hpp>          // complete bit basis
 #include <xstd/ints/cstdint.hpp>      // uint128
 #include <xstd/ints/limits.hpp>       // numeric_limits
-#include <test/bit_reference.hpp>     // bit_precise_sweep_types, for_each_edge_value, for_each_sweep_pair, for_each_sweep_value, shift_count_t
+#include <test/bit/shift_count.hpp>   // shift_count_t
+#include <test/bit/sweep.hpp>         // bit_precise_sweep_types, for_each_edge_value, for_each_sweep_pair, for_each_sweep_value
 #include <test/constexpr_check.hpp>   // XSTD_CONSTEXPR_CHECK
 #include <test/exact_width_types.hpp> // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>   // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
@@ -91,7 +92,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheThreeAgreeOnASingleBit, T, basis_unsigned_types
         BOOST_CHECK(true);
 }
 
-// The widest exact width has a basis on every configured leg, through <bit> or a word at a time.
+// The widest exact width has a basis on every configured leg, through <bit> or a block at a time.
 BOOST_AUTO_TEST_CASE(TheWidestExactWidthHasABasis)
 {
         static_assert(has_popcount<xstd::uint128>);
@@ -128,7 +129,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(CompressAndExpandAreInverse, T, basis_unsigned_typ
         BOOST_CHECK_EQUAL(mismatches, 0UZ);
 }
 
-// Compression from the top is reversal around compression from the bottom, which pins the words to their mirror images.
+// Compression from the top is reversal around compression from the bottom, which pins the blocks to their mirror images.
 BOOST_AUTO_TEST_CASE_TEMPLATE(ReversalMirrorsCompression, T, basis_unsigned_types)
 {
         auto mismatches = 0UZ;

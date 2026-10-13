@@ -3,8 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_INTS_DETAIL_INTRINSIC_BMI2_HPP
-#define XSTD_INTS_DETAIL_INTRINSIC_BMI2_HPP
+#ifndef XSTD_INTS_BIT_DETAIL_INTRINSIC_BMI2_HPP
+#define XSTD_INTS_BIT_DETAIL_INTRINSIC_BMI2_HPP
 
 // PEXT and PDEP are microcoded on AMD before Zen 3, so a build for one of those keeps the portable kernels.
 #if (defined(__x86_64__) or defined(_M_X64)) and not defined(__bdver4__) and not defined(__znver1__) and not defined(__znver2__)
@@ -18,4 +18,4 @@
 #include <immintrin.h> // _pdep_u64, _pext_u64
 #endif
 
-#endif // XSTD_INTS_DETAIL_INTRINSIC_BMI2_HPP
+#endif // XSTD_INTS_BIT_DETAIL_INTRINSIC_BMI2_HPP

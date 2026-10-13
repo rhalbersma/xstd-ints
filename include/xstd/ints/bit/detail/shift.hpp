@@ -3,40 +3,18 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_INTS_DETAIL_BIT_SHIFT_HPP
-#define XSTD_INTS_DETAIL_BIT_SHIFT_HPP
+#ifndef XSTD_INTS_BIT_DETAIL_SHIFT_HPP
+#define XSTD_INTS_BIT_DETAIL_SHIFT_HPP
 
+#include <xstd/ints/bit/detail/bit_block.hpp>             // shift_count_t
 #include <xstd/ints/concepts/integer.hpp>                 // integer
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/cstdlib/unsigned_abs.hpp>             // unsigned_abs
-#include <xstd/ints/detail/bit_limb.hpp>                  // shift_count_t
 #include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
 #include <xstd/ints/type_traits/is_signed.hpp>            // is_signed_v
 #include <xstd/ints/type_traits/make_unsigned.hpp>        // make_unsigned_t
-#include <bit>                                            // IWYU pragma: keep; shl, shr, where the standard library ships them
-#include <version>                                        // IWYU pragma: keep; __cpp_lib_bitops
-
-// The working draft's __cpp_lib_bitops for P3793, which puts shl and shr in <bit>.
-#if defined(__cpp_lib_bitops) and __cpp_lib_bitops >= 202606L
-#define XSTD_HAS_STD_SHIFTS 1
-#endif
 
 namespace xstd::ints::detail {
-
-#ifdef XSTD_HAS_STD_SHIFTS
-
-template<class T, class S>
-concept std_shifts = requires (T x, S s) {
-        std::shl(x, s);
-        std::shr(x, s);
-};
-
-#else
-
-template<class T, class S>
-concept std_shifts = false;
-
-#endif
 
 enum class shift_direction : bool {
         left,
@@ -90,4 +68,4 @@ template<integer T, integer S>
 
 } // namespace xstd::ints::detail
 
-#endif // XSTD_INTS_DETAIL_BIT_SHIFT_HPP
+#endif // XSTD_INTS_BIT_DETAIL_SHIFT_HPP

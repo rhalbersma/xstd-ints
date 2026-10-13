@@ -6,9 +6,11 @@
 #ifndef XSTD_INTS_BIT_BIT_COMPRESS_HPP
 #define XSTD_INTS_BIT_BIT_COMPRESS_HPP
 
+#include <xstd/ints/bit/detail/bit_block.hpp>             // bit_block, bit_block_width, shift_count_t
+#include <xstd/ints/bit/detail/block_compress.hpp>        // block_compress
+#include <xstd/ints/bit/detail/std_permutes_bits.hpp>     // XSTD_HAS_STD_BIT_PERMUTATIONS, std_permutes_bits
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
-#include <xstd/ints/detail/bit_permutation.hpp>           // XSTD_HAS_STD_BIT_PERMUTATIONS, bit_limb, bit_limb_width, compress_limb, shift_count_t, std_permutes_bits
 #include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
 #include <bit>                                            // bit_compress, popcount
 
@@ -19,7 +21,6 @@ namespace xstd {
 
 template<class T>
         requires ints::detail::std_permutes_bits<T>
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the source and then the mask
 [[nodiscard]] constexpr auto bit_compress(T src, T mask) noexcept
         -> T
 {
@@ -28,25 +29,25 @@ template<class T>
 
 #endif
 
-// Each word is compressed on its own and packed directly above the bits the words below it selected.
+// Each block is compressed on its own and packed directly above the bits the blocks below it selected.
 template<unsigned_integer T>
         requires (not ints::detail::std_permutes_bits<T>)
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the source and then the mask
 [[nodiscard]] constexpr auto bit_compress(T src, T mask) noexcept(nothrow_const_operators<T>)
         -> T
 {
-        using ints::detail::bit_limb;
+        using ints::detail::bit_block;
         using shift_count = ints::detail::shift_count_t<T>;
         constexpr auto N  = shift_count{numeric_limits<T>::digits};
-        constexpr auto L  = shift_count{ints::detail::bit_limb_width};
+        constexpr auto L  = shift_count{ints::detail::bit_block_width};
         auto dst          = T{0};
         auto selected     = shift_count{0};
         for (auto k = shift_count{0}; k < N; k += L) {
-                // Both kept bit_limbs until shifted: Clang 19 crashes emitting a const local _BitInt over 128 bits.
-                auto const mask_limb = static_cast<bit_limb>(mask >> k);
-                auto const packed    = ints::detail::compress_limb(static_cast<bit_limb>(src >> k), mask_limb);
-                dst                  = static_cast<T>(dst | static_cast<T>(static_cast<T>(packed) << selected));
-                selected += static_cast<shift_count>(std::popcount(mask_limb));
+                // Both kept bit_blocks until shifted: Clang 19 crashes emitting a const local _BitInt over 128 bits.
+                auto const mask_block = static_cast<bit_block>(mask >> k);
+                auto const packed     = ints::detail::block_compress(static_cast<bit_block>(src >> k), mask_block);
+                dst                   = static_cast<T>(dst | static_cast<T>(static_cast<T>(packed) << selected));
+                selected += static_cast<shift_count>(std::popcount(mask_block));
         }
         return dst;
 }

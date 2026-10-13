@@ -6,7 +6,8 @@
 #include <xstd/ints/bit/bit_repeat.hpp> // bit_repeat
 #include <xstd/ints/cstdint.hpp>        // bit_int, bit_uint, uint128
 #include <xstd/ints/limits.hpp>         // numeric_limits
-#include <test/bit_reference.hpp>       // bit_precise_sweep_types, for_each_edge_value_at, for_each_sweep_value, holds_at_every_position, reference_bit_repeat
+#include <test/bit/oracle.hpp>          // oracle_bit_repeat
+#include <test/bit/sweep.hpp>           // bit_precise_sweep_types, for_each_edge_value_at, for_each_sweep_value, holds_at_every_position
 #include <test/constexpr_check.hpp>     // XSTD_CONSTEXPR_CHECK
 #include <test/exact_width_types.hpp>   // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>     // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
@@ -41,7 +42,7 @@ constexpr auto agrees_at(int k)
         constexpr auto N = xstd::numeric_limits<T>::digits;
         // An array, not a braced list: MSVC 19.44 crashes constant-evaluating a loop over the latter.
         for (auto const l : std::array{1, 3, N - 1, N}) {
-                test::for_each_edge_value_at<T>(k, [&](T x) -> void { agrees = agrees and xstd::bit_repeat(x, l) == test::reference_bit_repeat(x, l); });
+                test::for_each_edge_value_at<T>(k, [&](T x) -> void { agrees = agrees and xstd::bit_repeat(x, l) == test::oracle_bit_repeat(x, l); });
         }
         return agrees;
 }
@@ -112,13 +113,13 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheExtremePeriods, T, permutable_types)
         BOOST_CHECK(true);
 }
 
-// Each width against a bit-at-a-time reference: its edges at compile time, every period over a sweep at run time.
-BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheReference, T, permutable_types)
+// Each width against a bit-at-a-time oracle: its edges at compile time, every period over a sweep at run time.
+BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheOracle, T, permutable_types)
 {
         static_assert(test::holds_at_every_position<agrees_at<T>>(std::make_integer_sequence<int, xstd::numeric_limits<T>::digits>{}));
         auto mismatches = 0UZ;
         for (auto const l : std::views::iota(1, xstd::numeric_limits<T>::digits + 2)) {
-                test::for_each_sweep_value<T>([&](T x) -> void { mismatches += xstd::bit_repeat(x, l) == test::reference_bit_repeat(x, l) ? 0UZ : 1UZ; });
+                test::for_each_sweep_value<T>([&](T x) -> void { mismatches += xstd::bit_repeat(x, l) == test::oracle_bit_repeat(x, l) ? 0UZ : 1UZ; });
         }
         BOOST_CHECK_EQUAL(mismatches, 0UZ);
 }

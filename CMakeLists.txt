@@ -49,13 +49,40 @@ target_sources(
     FILES
         include/xstd/ints.hpp
         include/xstd/ints/bit.hpp
+        include/xstd/ints/bit/bit_ceil.hpp
         include/xstd/ints/bit/bit_compress.hpp
         include/xstd/ints/bit/bit_expand.hpp
+        include/xstd/ints/bit/bit_floor.hpp
         include/xstd/ints/bit/bit_repeat.hpp
         include/xstd/ints/bit/bit_reverse.hpp
+        include/xstd/ints/bit/bit_width.hpp
+        include/xstd/ints/bit/byteswap.hpp
+        include/xstd/ints/bit/countl_one.hpp
         include/xstd/ints/bit/countl_zero.hpp
+        include/xstd/ints/bit/countr_one.hpp
         include/xstd/ints/bit/countr_zero.hpp
+        include/xstd/ints/bit/detail/bit_block.hpp
+        include/xstd/ints/bit/detail/block_compress.hpp
+        include/xstd/ints/bit/detail/block_expand.hpp
+        include/xstd/ints/bit/detail/block_reverse.hpp
+        include/xstd/ints/bit/detail/byteswap.hpp
+        include/xstd/ints/bit/detail/intrinsic.hpp
+        include/xstd/ints/bit/detail/intrinsic/bmi2.hpp
+        include/xstd/ints/bit/detail/intrinsic/compress.hpp
+        include/xstd/ints/bit/detail/intrinsic/expand.hpp
+        include/xstd/ints/bit/detail/portable.hpp
+        include/xstd/ints/bit/detail/portable/compress.hpp
+        include/xstd/ints/bit/detail/portable/expand.hpp
+        include/xstd/ints/bit/detail/portable/select.hpp
+        include/xstd/ints/bit/detail/shift.hpp
+        include/xstd/ints/bit/detail/std_permutes_bits.hpp
+        include/xstd/ints/bit/detail/std_shifts.hpp
+        include/xstd/ints/bit/has_single_bit.hpp
         include/xstd/ints/bit/popcount.hpp
+        include/xstd/ints/bit/rotl.hpp
+        include/xstd/ints/bit/rotr.hpp
+        include/xstd/ints/bit/shl.hpp
+        include/xstd/ints/bit/shr.hpp
         include/xstd/ints/charconv.hpp
         include/xstd/ints/charconv/to_chars.hpp
         include/xstd/ints/concepts.hpp
@@ -72,13 +99,12 @@ target_sources(
         include/xstd/ints/cstdlib.hpp
         include/xstd/ints/cstdlib/abs.hpp
         include/xstd/ints/cstdlib/div.hpp
+        include/xstd/ints/cstdlib/div_ceil.hpp
         include/xstd/ints/cstdlib/div_euclid.hpp
         include/xstd/ints/cstdlib/div_floor.hpp
-        include/xstd/ints/cstdlib/div_ceil.hpp
         include/xstd/ints/cstdlib/div_result.hpp
         include/xstd/ints/cstdlib/sign.hpp
         include/xstd/ints/cstdlib/unsigned_abs.hpp
-        include/xstd/ints/detail/bit_permutation.hpp
         include/xstd/ints/detail/delegates_to_std.hpp
         include/xstd/ints/ext/absl.hpp
         include/xstd/ints/ext/absl/int128.hpp
@@ -100,6 +126,32 @@ target_sources(
         include/xstd/ints/type_traits/make_unsigned.hpp
         include/xstd/ints/type_traits/promoted.hpp
 )
+
+# Every header under include/ must be in the file set above, which is all an install copies: a header left out is
+# one an installed consumer's #include cannot find, while every leg building from the source tree still finds it.
+get_target_property(declared_headers ${PROJECT_NAME} HEADER_SET)
+file(
+    GLOB_RECURSE headers_on_disk
+    CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp
+)
+
+set(undeclared_headers)
+foreach(h ${headers_on_disk})
+    if(NOT h IN_LIST declared_headers)
+        file(RELATIVE_PATH undeclared ${CMAKE_CURRENT_SOURCE_DIR} ${h})
+        list(APPEND undeclared_headers ${undeclared})
+    endif()
+endforeach()
+
+if(undeclared_headers)
+    list(SORT undeclared_headers)
+    string(REPLACE ";" "\n  " undeclared_header_lines "${undeclared_headers}")
+    message(FATAL_ERROR
+        "These headers exist under include/ but are not in the HEADERS file set above, so they would not "
+        "be installed:\n  ${undeclared_header_lines}\nAdd them there, or delete them."
+    )
+endif()
 
 # Tests and their Boost.Test dependency only exist when xstd-ints is being
 # developed; a consumer vendoring this directory gets the header-only target.

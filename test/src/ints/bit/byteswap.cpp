@@ -8,7 +8,8 @@
 #include <xstd/ints/cstdint.hpp>                          // bit_int, bit_uint, int128, uint128
 #include <xstd/ints/limits.hpp>                           // numeric_limits
 #include <xstd/ints/type_traits/make_unsigned.hpp>        // make_unsigned_t
-#include <test/bit_reference.hpp>                         // for_each_edge_value_at, for_each_sweep_value, holds_at_every_position, reference_byteswap
+#include <test/bit/oracle.hpp>                            // oracle_byteswap
+#include <test/bit/sweep.hpp>                             // for_each_edge_value_at, for_each_sweep_value, holds_at_every_position
 #include <test/constexpr_check.hpp>                       // XSTD_CONSTEXPR_CHECK
 #include <test/exact_width_types.hpp>                     // exact_width_integer_types
 #include <boost/test/unit_test.hpp>                       // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
@@ -33,7 +34,7 @@ constexpr auto agrees_at(int k)
         test::for_each_edge_value_at<xstd::make_unsigned_t<T>>(k, [&](xstd::make_unsigned_t<T> u) -> void {
                 // Bound by reference: Clang 19 crashes emitting a const local _BitInt over 128 bits.
                 auto const& x = static_cast<T>(u);
-                agrees        = agrees and xstd::byteswap(x) == test::reference_byteswap(x);
+                agrees        = agrees and xstd::byteswap(x) == test::oracle_byteswap(x);
         });
         return agrees;
 }
@@ -91,8 +92,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsTrade, T, test::exact_width_integer_types)
         BOOST_CHECK(true);
 }
 
-// Each width against a byte-at-a-time reference, and swapping twice is the identity.
-BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheReference, T, test::exact_width_integer_types)
+// Each width against a byte-at-a-time oracle, and swapping twice is the identity.
+BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheOracle, T, test::exact_width_integer_types)
 {
         using U = xstd::make_unsigned_t<T>;
         static_assert(test::holds_at_every_position<agrees_at<T>>(std::make_integer_sequence<int, xstd::numeric_limits<U>::digits>{}));
@@ -100,7 +101,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheReference, T, test::exact_width_integ
         test::for_each_sweep_value<U>([&](U u) -> void {
                 // Bound by reference: Clang 19 crashes emitting a const local _BitInt over 128 bits.
                 auto const& x = static_cast<T>(u);
-                mismatches += xstd::byteswap(x) == test::reference_byteswap(x) ? 0UZ : 1UZ;
+                mismatches += xstd::byteswap(x) == test::oracle_byteswap(x) ? 0UZ : 1UZ;
                 mismatches += xstd::byteswap(xstd::byteswap(x)) == x ? 0UZ : 1UZ;
         });
         BOOST_CHECK_EQUAL(mismatches, 0UZ);

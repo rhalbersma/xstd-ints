@@ -6,7 +6,8 @@
 #include <xstd/ints/bit/popcount.hpp> // popcount
 #include <xstd/ints/cstdint.hpp>      // bit_int, bit_uint, uint128
 #include <xstd/ints/limits.hpp>       // numeric_limits
-#include <test/bit_reference.hpp>     // TEST_HAS_BIT_PRECISE_BIT, bit_precise_sweep_types, for_each_edge_value, for_each_sweep_value, reference_popcount
+#include <test/bit/oracle.hpp>        // oracle_popcount
+#include <test/bit/sweep.hpp>         // TEST_HAS_BIT_PRECISE_BIT, bit_precise_sweep_types, for_each_edge_value, for_each_sweep_value
 #include <test/constexpr_check.hpp>   // XSTD_CONSTEXPR_CHECK
 #include <test/exact_width_types.hpp> // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>   // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK
@@ -54,7 +55,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsOfEveryWidth, T, basis_unsigned_types)
         BOOST_CHECK(true);
 }
 
-// The word boundary, pinning each class's low half: read through the wrong accessor the halves come back swapped.
+// The block boundary, pinning each class's low half: read through the wrong accessor the halves come back swapped.
 BOOST_AUTO_TEST_CASE_TEMPLATE(TheWordBoundary, T, basis_unsigned_types)
 {
         constexpr auto W = xstd::numeric_limits<T>::digits;
@@ -114,21 +115,21 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsTheBodys)
 namespace {
 
 template<class T>
-constexpr auto agrees_with_the_reference()
+constexpr auto agrees_with_the_oracle()
         -> bool
 {
         auto agrees = true;
-        test::for_each_edge_value<T>([&](T x) -> void { agrees = agrees and xstd::popcount(x) == test::reference_popcount(x); });
+        test::for_each_edge_value<T>([&](T x) -> void { agrees = agrees and xstd::popcount(x) == test::oracle_popcount(x); });
         return agrees;
 }
 
 } // namespace
 
-// Each bit-precise width against a bit-at-a-time reference: its edges at compile time, its full sweep at run time.
-BOOST_AUTO_TEST_CASE_TEMPLATE(BitPreciseAgreesWithTheReference, T, test::bit_precise_sweep_types)
+// Each bit-precise width against a bit-at-a-time oracle: its edges at compile time, its full sweep at run time.
+BOOST_AUTO_TEST_CASE_TEMPLATE(BitPreciseAgreesWithTheOracle, T, test::bit_precise_sweep_types)
 {
-        static_assert(agrees_with_the_reference<T>());
-        test::for_each_sweep_value<T>([](T x) -> void { BOOST_CHECK_EQUAL(xstd::popcount(x), test::reference_popcount(x)); });
+        static_assert(agrees_with_the_oracle<T>());
+        test::for_each_sweep_value<T>([](T x) -> void { BOOST_CHECK_EQUAL(xstd::popcount(x), test::oracle_popcount(x)); });
 }
 
 #endif

@@ -7,7 +7,9 @@
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/cstdint.hpp>                          // bit_int, bit_uint, uint128
 #include <xstd/ints/limits.hpp>                           // numeric_limits
-#include <test/bit_reference.hpp>                         // alternating_ones, bit_precise_sweep_types, for_each_edge_value_at, for_each_sweep_pair, for_each_sweep_value, holds_at_every_position, reference_bit_expand, shift_count_t, width
+#include <test/bit/oracle.hpp>                            // oracle_bit_expand
+#include <test/bit/shift_count.hpp>                       // shift_count_t
+#include <test/bit/sweep.hpp>                             // alternating_ones, bit_precise_sweep_types, for_each_edge_value_at, for_each_sweep_pair, for_each_sweep_value, holds_at_every_position, width
 #include <test/exact_width_types.hpp>                     // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>                       // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <array>                                          // array
@@ -35,8 +37,8 @@ constexpr auto agrees_at(int k)
         // An array, not a braced list: MSVC 19.44 crashes constant-evaluating a loop over the latter.
         for (auto const x : std::array{xstd::numeric_limits<T>::max(), test::alternating_ones<T>()}) {
                 test::for_each_edge_value_at<T>(k, [&](T m) -> void {
-                        agrees = agrees and xstd::bit_expand(x, m) == test::reference_bit_expand(x, m);
-                        agrees = agrees and xstd::bit_expand(m, x) == test::reference_bit_expand(m, x);
+                        agrees = agrees and xstd::bit_expand(x, m) == test::oracle_bit_expand(x, m);
+                        agrees = agrees and xstd::bit_expand(m, x) == test::oracle_bit_expand(m, x);
                 });
         }
         return agrees;
@@ -138,12 +140,12 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheExtremeMasks, T, permutable_types)
         BOOST_CHECK(true);
 }
 
-// Each width against a bit-at-a-time reference: its edges at compile time, every pair or a sweep at run time.
-BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheReference, T, permutable_types)
+// Each width against a bit-at-a-time oracle: its edges at compile time, every pair or a sweep at run time.
+BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheOracle, T, permutable_types)
 {
         static_assert(test::holds_at_every_position<agrees_at<T>>(std::make_integer_sequence<int, xstd::numeric_limits<T>::digits>{}));
         auto mismatches = 0UZ;
-        test::for_each_sweep_pair<T>([&](T x, T m) -> void { mismatches += xstd::bit_expand(x, m) == test::reference_bit_expand(x, m) ? 0UZ : 1UZ; });
+        test::for_each_sweep_pair<T>([&](T x, T m) -> void { mismatches += xstd::bit_expand(x, m) == test::oracle_bit_expand(x, m) ? 0UZ : 1UZ; });
         BOOST_CHECK_EQUAL(mismatches, 0UZ);
 }
 

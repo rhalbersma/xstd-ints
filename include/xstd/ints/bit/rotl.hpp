@@ -6,9 +6,9 @@
 #ifndef XSTD_INTS_BIT_ROTL_HPP
 #define XSTD_INTS_BIT_ROTL_HPP
 
+#include <xstd/ints/bit/detail/bit_block.hpp>             // shift_count_t
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
-#include <xstd/ints/detail/bit_limb.hpp>                  // shift_count_t
 #include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
 #include <bit>                                            // rotl
 

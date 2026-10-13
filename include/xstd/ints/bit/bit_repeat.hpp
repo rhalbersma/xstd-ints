@@ -6,12 +6,13 @@
 #ifndef XSTD_INTS_BIT_BIT_REPEAT_HPP
 #define XSTD_INTS_BIT_BIT_REPEAT_HPP
 
-#include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
-#include <xstd/ints/detail/bit_permutation.hpp>    // XSTD_HAS_STD_BIT_PERMUTATIONS, shift_count_t, std_permutes_bits
-#include <xstd/ints/limits/numeric_limits.hpp>     // numeric_limits
-#include <bit>                                     // IWYU pragma: keep; bit_repeat, where the standard library ships it
-#include <cassert>                                 // assert
-#include <utility>                                 // unreachable
+#include <xstd/ints/bit/detail/bit_block.hpp>         // shift_count_t
+#include <xstd/ints/bit/detail/std_permutes_bits.hpp> // XSTD_HAS_STD_BIT_PERMUTATIONS, std_permutes_bits
+#include <xstd/ints/concepts/unsigned_integer.hpp>    // unsigned_integer
+#include <xstd/ints/limits/numeric_limits.hpp>        // numeric_limits
+#include <bit>                                        // IWYU pragma: keep; bit_repeat, where the standard library ships it
+#include <cassert>                                    // assert
+#include <utility>                                    // unreachable
 
 // P3104R5's bit_repeat, over every unsigned integer xstd knows: a narrow contract, so not noexcept.
 namespace xstd {

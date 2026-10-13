@@ -3,10 +3,10 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_INTS_DETAIL_INTRINSIC_EXPAND_HPP
-#define XSTD_INTS_DETAIL_INTRINSIC_EXPAND_HPP
+#ifndef XSTD_INTS_BIT_DETAIL_INTRINSIC_EXPAND_HPP
+#define XSTD_INTS_BIT_DETAIL_INTRINSIC_EXPAND_HPP
 
-#include <xstd/ints/detail/intrinsic/bmi2.hpp> // IWYU pragma: keep; XSTD_INTS_HAS_FAST_BMI2, read only by the preprocessor
+#include <xstd/ints/bit/detail/intrinsic/bmi2.hpp> // IWYU pragma: keep; XSTD_INTS_HAS_FAST_BMI2, read only by the preprocessor
 
 #ifdef XSTD_INTS_HAS_FAST_BMI2
 
@@ -43,4 +43,4 @@ namespace xstd::ints::detail::intrinsic {
 
 #endif
 
-#endif // XSTD_INTS_DETAIL_INTRINSIC_EXPAND_HPP
+#endif // XSTD_INTS_BIT_DETAIL_INTRINSIC_EXPAND_HPP

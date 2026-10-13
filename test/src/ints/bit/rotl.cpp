@@ -8,7 +8,8 @@
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/cstdint.hpp>                          // bit_int, bit_uint, int128, uint128
 #include <xstd/ints/limits.hpp>                           // numeric_limits
-#include <test/bit_reference.hpp>                         // bit_precise_sweep_types, for_each_sweep_value, reference_rotl
+#include <test/bit/oracle.hpp>                            // oracle_rotl
+#include <test/bit/sweep.hpp>                             // bit_precise_sweep_types, for_each_sweep_value
 #include <test/constexpr_check.hpp>                       // XSTD_CONSTEXPR_CHECK
 #include <test/exact_width_types.hpp>                     // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>                       // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
@@ -107,13 +108,13 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(RotlUndoesRotr, T, basis_unsigned_types)
         BOOST_CHECK_EQUAL(mismatches, 0UZ);
 }
 
-// Each width against a reference turning one place at a time, at every count that reduces differently.
-BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheReference, T, basis_unsigned_types)
+// Each width against a oracle turning one place at a time, at every count that reduces differently.
+BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheOracle, T, basis_unsigned_types)
 {
         auto mismatches = 0UZ;
         test::for_each_sweep_value<T>([&](T x) -> void {
                 for (auto const s : counts<T>()) {
-                        mismatches += xstd::rotl(x, s) == test::reference_rotl(x, s) ? 0UZ : 1UZ;
+                        mismatches += xstd::rotl(x, s) == test::oracle_rotl(x, s) ? 0UZ : 1UZ;
                 }
         });
         BOOST_CHECK_EQUAL(mismatches, 0UZ);

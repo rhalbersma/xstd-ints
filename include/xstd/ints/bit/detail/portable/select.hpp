@@ -3,18 +3,18 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_INTS_DETAIL_PORTABLE_SELECT_HPP
-#define XSTD_INTS_DETAIL_PORTABLE_SELECT_HPP
+#ifndef XSTD_INTS_BIT_DETAIL_PORTABLE_SELECT_HPP
+#define XSTD_INTS_BIT_DETAIL_PORTABLE_SELECT_HPP
 
-#include <xstd/ints/detail/bit_limb.hpp> // bit_limb
-#include <array>                         // array
-#include <bit>                           // popcount
-#include <cassert>                       // assert
-#include <cstddef>                       // size_t
-#include <cstdint>                       // uint8_t
-#include <limits>                        // numeric_limits
-#include <ranges>                        // iota
-#include <utility>                       // cmp_less
+#include <xstd/ints/bit/detail/bit_block.hpp> // bit_block
+#include <array>                              // array
+#include <bit>                                // popcount
+#include <cassert>                            // assert
+#include <cstddef>                            // size_t
+#include <cstdint>                            // uint8_t
+#include <limits>                             // numeric_limits
+#include <ranges>                             // iota
+#include <utility>                            // cmp_less
 
 namespace xstd::ints::detail::portable {
 
@@ -37,7 +37,7 @@ inline constexpr auto select_in_byte = [] -> std::array<std::uint8_t, byte_value
 }();
 
 // Vigna's broadword select: byte counts prefix-summed by one multiply, the byte found by one compare, then the table.
-[[nodiscard]] constexpr auto select(bit_limb x, unsigned k) noexcept
+[[nodiscard]] constexpr auto select(bit_block x, unsigned k) noexcept
         -> unsigned
 {
         assert(std::cmp_less(k, std::popcount(x)));
@@ -58,4 +58,4 @@ inline constexpr auto select_in_byte = [] -> std::array<std::uint8_t, byte_value
 
 } // namespace xstd::ints::detail::portable
 
-#endif // XSTD_INTS_DETAIL_PORTABLE_SELECT_HPP
+#endif // XSTD_INTS_BIT_DETAIL_PORTABLE_SELECT_HPP
