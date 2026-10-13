@@ -7,7 +7,7 @@
 #define XSTD_INTS_BIT_DETAIL_BLOCK_REVERSE_HPP
 
 #include <xstd/ints/bit/detail/bit_block.hpp> // bit_block
-#include <bit>                                // byteswap
+#include <bit>                                // IWYU pragma: keep; byteswap, where no bit reversal builtin exists
 #include <cstdint>                            // uint32_t, uint64_t
 
 // MSVC 2022 has no __has_builtin, so testing for the bit reversal builtins takes an #if of its own.
