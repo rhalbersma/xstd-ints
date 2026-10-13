@@ -45,12 +45,13 @@ template<unsigned_integer T>
         using shift_count = ints::detail::shift_count_t<T>;
         constexpr auto N  = shift_count{numeric_limits<T>::digits};
         auto const period = static_cast<shift_count>(l);
-        if (period >= N) {
-                return x;
-        }
-        auto result = static_cast<T>(x & static_cast<T>(numeric_limits<T>::max() >> (N - period)));
-        for (auto filled = period; filled < N; filled += filled) {
-                result = static_cast<T>(result | static_cast<T>(result << filled));
+        // One named result on every path, so a class-type T returned in memory, as on i686, is never copied out.
+        auto result = x;
+        if (period < N) {
+                result = static_cast<T>(x & static_cast<T>(numeric_limits<T>::max() >> (N - period)));
+                for (auto filled = period; filled < N; filled += filled) {
+                        result = static_cast<T>(result | static_cast<T>(result << filled));
+                }
         }
         return result;
 }
