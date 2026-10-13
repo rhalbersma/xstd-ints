@@ -652,6 +652,31 @@ tests nor their dependencies. New facilities should stay small, portable and
 motivated by current practice; one that enters the standard library can be
 retired, and the baseline can advance to C++26 once that is a practical default.
 
+## Future directions
+
+Directions considered and deliberately not taken yet. Each records what it would
+take, so the question can be picked up without rediscovering the answer.
+
+### A module interface
+
+`import xstd.ints;` beside the headers, never instead of them, the way
+[fmt](https://github.com/fmtlib/fmt) ships one: a second, optional target
+(`XSTD_INTS_MODULE`) whose interface unit includes today's headers in its global
+module fragment and exports the public names, with a `FILE_SET CXX_MODULES` over
+CMake 3.28 or later. The `INTERFACE` target, its headers and its install rules stay
+as they are. A compiled mode, fmt's third, has no counterpart here: there is no
+non-template code to move into a translation unit.
+
+Two costs decide when. The interface unit must enumerate the public API, a list to
+keep current, though it would also make "public" a statement rather than whatever
+sits under `include/xstd/`. And Apple Clang's version numbers do not map onto
+upstream Clang's, so whether Xcode 16.4 and 26.6 can build it needs checking. CI
+needs nothing new: a module leg is a stub passing `-DXSTD_INTS_MODULE=ON`, since
+every leg's generator can scan module dependencies. Installing module interface
+sources for a `find_package` consumer is the least settled part, and fmt is the
+worked example to follow. xstd-misc and xstd-bits have the same shape, and this
+library, the smallest surface, is where to answer it first.
+
 ## CI policy
 
 The matrix follows the channel model used by
