@@ -45,8 +45,8 @@ template<unsigned_integer T>
         for (auto k = shift_count{0}; k < N; k += L) {
                 // Both kept bit_blocks until shifted: Clang 19 crashes emitting a const local _BitInt over 128 bits.
                 auto const mask_block = static_cast<bit_block>(mask >> k);
-                auto const deposited = ints::detail::block_expand(static_cast<bit_block>(src >> consumed), mask_block);
-                dst                  = static_cast<T>(dst | static_cast<T>(static_cast<T>(deposited) << k));
+                auto const deposited  = ints::detail::block_expand(static_cast<bit_block>(src >> consumed), mask_block);
+                dst                   = static_cast<T>(dst | static_cast<T>(static_cast<T>(deposited) << k));
                 consumed += static_cast<shift_count>(std::popcount(mask_block));
         }
         return dst;
