@@ -7,7 +7,7 @@
 #define XSTD_INTS_BIT_BIT_CEIL_HPP
 
 #include <xstd/ints/bit/bit_width.hpp>             // bit_width
-#include <xstd/ints/bit/detail/bit_block.hpp>      // shift_count_t
+#include <xstd/ints/bit/detail/shift_count.hpp>    // shift_count_t
 #include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
 #include <xstd/ints/limits/numeric_limits.hpp>     // numeric_limits
 #include <bit>                                     // bit_ceil

@@ -6,7 +6,8 @@
 #ifndef XSTD_INTS_BIT_COUNTR_ZERO_HPP
 #define XSTD_INTS_BIT_COUNTR_ZERO_HPP
 
-#include <xstd/ints/bit/detail/bit_block.hpp>             // bit_block, bit_block_width, shift_count_t
+#include <xstd/ints/bit/detail/block_width.hpp>           // block_width
+#include <xstd/ints/bit/detail/shift_count.hpp>           // shift_count_t
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
 #include <xstd/ints/cstdint/bit_int.hpp>                  // XSTD_HAS_BIT_INT, bit_uint
@@ -47,13 +48,12 @@ template<unsigned_integer T>
 [[nodiscard]] constexpr auto countr_zero(T x) noexcept(nothrow_const_operators<T>)
         -> int
 {
-        using ints::detail::bit_block;
         using shift_count = ints::detail::shift_count_t<T>;
         constexpr auto N  = static_cast<std::size_t>(numeric_limits<T>::digits);
-        constexpr auto L  = ints::detail::bit_block_width;
+        constexpr auto L  = ints::detail::block_width;
         for (auto k = 0UZ; k < N; k += L) {
-                auto const block = static_cast<bit_block>(x >> static_cast<shift_count>(k));
-                if (block != bit_block{0}) {
+                auto const block = static_cast<std::size_t>(x >> static_cast<shift_count>(k));
+                if (block != std::size_t{0}) {
                         return static_cast<int>(k) + std::countr_zero(block);
                 }
         }

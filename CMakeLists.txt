@@ -61,22 +61,22 @@ target_sources(
         include/xstd/ints/bit/countl_zero.hpp
         include/xstd/ints/bit/countr_one.hpp
         include/xstd/ints/bit/countr_zero.hpp
-        include/xstd/ints/bit/detail/bit_block.hpp
         include/xstd/ints/bit/detail/block_compress.hpp
         include/xstd/ints/bit/detail/block_expand.hpp
         include/xstd/ints/bit/detail/block_reverse.hpp
-        include/xstd/ints/bit/detail/byteswap.hpp
-        include/xstd/ints/bit/detail/intrinsic.hpp
+        include/xstd/ints/bit/detail/block_width.hpp
+        include/xstd/ints/bit/detail/intrinsic/block_compress.hpp
+        include/xstd/ints/bit/detail/intrinsic/block_expand.hpp
         include/xstd/ints/bit/detail/intrinsic/bmi2.hpp
-        include/xstd/ints/bit/detail/intrinsic/compress.hpp
-        include/xstd/ints/bit/detail/intrinsic/expand.hpp
-        include/xstd/ints/bit/detail/portable.hpp
-        include/xstd/ints/bit/detail/portable/compress.hpp
-        include/xstd/ints/bit/detail/portable/expand.hpp
+        include/xstd/ints/bit/detail/mirror_blocks.hpp
+        include/xstd/ints/bit/detail/portable/block_compress.hpp
+        include/xstd/ints/bit/detail/portable/block_expand.hpp
         include/xstd/ints/bit/detail/portable/select.hpp
         include/xstd/ints/bit/detail/shift.hpp
+        include/xstd/ints/bit/detail/shift_count.hpp
         include/xstd/ints/bit/detail/std_permutes_bits.hpp
         include/xstd/ints/bit/detail/std_shifts.hpp
+        include/xstd/ints/bit/detail/std_swaps_bytes.hpp
         include/xstd/ints/bit/has_single_bit.hpp
         include/xstd/ints/bit/popcount.hpp
         include/xstd/ints/bit/rotl.hpp
