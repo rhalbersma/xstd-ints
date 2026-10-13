@@ -26,7 +26,7 @@ jobs:
   # since v0.6.0. The C++ Core Guidelines checkers stay off until there is a
   # reason to turn them on.
   msvc_analyze:
-    uses: rhalbersma/cpp-ci/.github/workflows/msvc-analyze.yml@1c32e510e25b1d41e613cddc1b169655680f9a01 # main, past v0.11.1
+    uses: rhalbersma/cpp-ci/.github/workflows/msvc-analyze.yml@1c32e510e25b1d41e613cddc1b169655680f9a01 # v0.12.0
     with:
       # Boost.Test, which vcpkg.json keeps out of its default features so that
       # consuming this library resolves no Boost at all.

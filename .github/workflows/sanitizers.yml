@@ -25,7 +25,7 @@ jobs:
   # needing a newer compiler names the rung instead of the version, and this one
   # may yet.
   sanitizers:
-    uses: rhalbersma/cpp-ci/.github/workflows/sanitizers.yml@1c32e510e25b1d41e613cddc1b169655680f9a01 # main, past v0.11.1
+    uses: rhalbersma/cpp-ci/.github/workflows/sanitizers.yml@1c32e510e25b1d41e613cddc1b169655680f9a01 # v0.12.0
     with:
       # Boost.Test, which vcpkg.json keeps out of its default features so that
       # consuming this library resolves no Boost at all.
