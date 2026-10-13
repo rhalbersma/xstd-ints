@@ -5,7 +5,7 @@
 
 #include <xstd/ints/charconv/to_chars.hpp> // to_chars, to_chars_max_size
 #include <xstd/ints/concepts/integer.hpp>  // integer
-#include <xstd/ints/cstdint.hpp>           // int128, uint128
+#include <xstd/ints/cstdint.hpp>           // XSTD_HAS_INT128, int128, uint128
 #include <test/exact_width_types.hpp>      // std_signed_types, exact_width_signed_integer_types, exact_width_unsigned_integer_types
 #include <xstd/ints/limits.hpp>            // numeric_limits
 #include <boost/test/unit_test.hpp>        // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
@@ -71,8 +71,10 @@ BOOST_AUTO_TEST_CASE(DelegatesWhereTheStandardLibraryCovers)
 
         static_assert(not has_std_to_chars<not_an_integer>);
 
+#ifdef XSTD_HAS_INT128
         static_assert(has_xstd_to_chars<xstd::int128>);
         static_assert(has_xstd_to_chars<xstd::uint128>);
+#endif
 }
 
 BOOST_AUTO_TEST_CASE(StandardIntegralTypesDelegate)
@@ -89,6 +91,8 @@ BOOST_AUTO_TEST_CASE(StandardIntegralTypesDelegate)
         static_assert(has_xstd_to_chars<char16_t>);
         static_assert(has_xstd_to_chars<char32_t>);
 }
+
+#ifdef XSTD_HAS_INT128
 
 // The load-bearing property: the two paths render byte-identically, at every base.
 BOOST_AUTO_TEST_CASE_TEMPLATE(DigitsPathMatchesTheStandard, T, test::std_signed_types)
@@ -107,6 +111,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(DigitsPathMatchesTheStandard, T, test::std_signed_
                 }
         }
 }
+
+#endif
 
 // The worst case is min() in base 2, where a signed type needs two more characters.
 BOOST_AUTO_TEST_CASE_TEMPLATE(MaxSizeHoldsTheWorstCase, T, test::exact_width_signed_integer_types)
@@ -176,6 +182,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(HexBoundariesMatchGroundTruthUnsigned, T, test::ex
 
 BOOST_AUTO_TEST_CASE(Int128Boundaries)
 {
+#ifdef XSTD_HAS_INT128
         BOOST_CHECK_EQUAL(rendered(xstd::numeric_limits<xstd::int128>::min(), 10), "-170141183460469231731687303715884105728");
         BOOST_CHECK_EQUAL(rendered(xstd::numeric_limits<xstd::int128>::max(), 10), "170141183460469231731687303715884105727");
         BOOST_CHECK_EQUAL(rendered(xstd::numeric_limits<xstd::uint128>::max(), 10), "340282366920938463463374607431768211455");
@@ -184,20 +191,27 @@ BOOST_AUTO_TEST_CASE(Int128Boundaries)
         BOOST_CHECK_EQUAL(rendered(xstd::int128{0}, 10), "0");
         BOOST_CHECK_EQUAL(rendered(xstd::int128{-1}, 10), "-1");
         BOOST_CHECK_EQUAL(rendered(xstd::int128{35}, 36), "z");
+#endif
 
         // The default base, which every call above passes explicitly.
+#ifdef XSTD_HAS_INT128
         auto decimal    = std::array<char, xstd::to_chars_max_size<xstd::int128>>{};
         auto const wide = xstd::to_chars(decimal.data(), decimal.data() + decimal.size(), xstd::int128{-42});
         BOOST_CHECK_EQUAL(std::string(decimal.data(), wide.ptr), "-42");
+#else
+        auto decimal = std::array<char, xstd::to_chars_max_size<long long>>{};
+#endif
         auto const narrow = xstd::to_chars(decimal.data(), decimal.data() + decimal.size(), 42);
         BOOST_CHECK_EQUAL(std::string(decimal.data(), narrow.ptr), "42");
 
+#ifdef XSTD_HAS_INT128
         // The short-buffer return in the unsigned instantiation, counted separately.
         auto buffer          = std::array<char, xstd::to_chars_max_size<xstd::uint128>>{};
         auto const truncated = xstd::to_chars(
                 buffer.data(), buffer.data(), xstd::numeric_limits<xstd::uint128>::max(), 2
         );
         BOOST_CHECK(truncated.ec == std::errc::value_too_large);
+#endif
 }
 
 // A constant expression, which is what std::formatter<div_result<I>>::format needs for P3391.
@@ -214,8 +228,10 @@ BOOST_AUTO_TEST_CASE(UsableInAConstantExpression)
 {
         static_assert(rendered_at_compile_time(255, 16, "ff"));
         static_assert(rendered_at_compile_time(-42, 10, "-42"));
+#ifdef XSTD_HAS_INT128
         static_assert(rendered_at_compile_time(xstd::numeric_limits<xstd::int128>::min(), 10, "-170141183460469231731687303715884105728"));
         static_assert(rendered_at_compile_time(xstd::numeric_limits<xstd::uint128>::max(), 16, "ffffffffffffffffffffffffffffffff"));
+#endif
 }
 
 // Asked of every type in the lists: a third party is constexpr only where it says so.
@@ -249,10 +265,12 @@ BOOST_AUTO_TEST_CASE(ShortBuffer)
         BOOST_CHECK(result.ec == std::errc::value_too_large);
         BOOST_CHECK(result.ptr == buffer.data() + buffer.size());
 
+#ifdef XSTD_HAS_INT128
         // The same in the signed digits instantiation: ptr at last, not into a partial answer.
         auto const wide = xstd::to_chars(buffer.data(), buffer.data() + buffer.size(), xstd::numeric_limits<xstd::int128>::min(), 10);
         BOOST_CHECK(wide.ec == std::errc::value_too_large);
         BOOST_CHECK(wide.ptr == buffer.data() + buffer.size());
+#endif
 }
 
 BOOST_AUTO_TEST_SUITE_END()

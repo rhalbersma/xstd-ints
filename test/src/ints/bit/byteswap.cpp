@@ -5,7 +5,7 @@
 
 #include <xstd/ints/bit/byteswap.hpp>                     // byteswap
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/cstdint.hpp>                          // bit_int, bit_uint, int128, uint128
+#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
 #include <xstd/ints/limits.hpp>                           // numeric_limits
 #include <xstd/ints/type_traits/make_unsigned.hpp>        // make_unsigned_t
 #include <test/bit/oracle.hpp>                            // oracle_byteswap
@@ -61,8 +61,10 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsAWholeNumberOfBytes)
         static_assert(xstd_answers<char8_t> == std_answers<char8_t>);
         static_assert(xstd_answers<std::int32_t> == std_answers<std::int32_t>);
         static_assert(xstd_answers<std::uint64_t> == std_answers<std::uint64_t>);
+#ifdef XSTD_HAS_INT128
         static_assert(xstd_answers<xstd::int128>);
         static_assert(xstd_answers<xstd::uint128>);
+#endif
 #ifdef XSTD_HAS_BIT_INT
         // A width of 24 bits fills no whole object, which <bit> rejects; xstd swaps its three bytes.
         static_assert(xstd_answers<xstd::bit_int<24>>);

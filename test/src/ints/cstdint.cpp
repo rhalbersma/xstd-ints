@@ -3,7 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/ints/cstdint.hpp>                   // XSTD_HAS_BIT_INT, bit_int, bit_uint, int128, uint128
+#include <xstd/ints/cstdint.hpp>                   // XSTD_HAS_BIT_INT, XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
 #include <xstd/ints/limits/numeric_limits.hpp>     // numeric_limits
 #include <xstd/ints/type_traits/make_signed.hpp>   // make_signed_t
 #include <xstd/ints/type_traits/make_unsigned.hpp> // make_unsigned_t
@@ -27,7 +27,9 @@ concept pair =
 
 BOOST_AUTO_TEST_CASE(EveryTypeNamedHereIsHalfOfAPair)
 {
+#ifdef XSTD_HAS_INT128
         static_assert(pair<xstd::int128, xstd::uint128>);
+#endif
 #ifdef XSTD_HAS_BIT_INT
         static_assert(pair<xstd::bit_int<2>, xstd::bit_uint<2>>);
         static_assert(pair<xstd::bit_int<17>, xstd::bit_uint<17>>);
@@ -39,8 +41,10 @@ BOOST_AUTO_TEST_CASE(EveryTypeNamedHereIsHalfOfAPair)
 // And the pairing is cv-transparent across both, the qualifier riding through.
 BOOST_AUTO_TEST_CASE(ThePairingCarriesCvQualification)
 {
+#ifdef XSTD_HAS_INT128
         static_assert(pair<xstd::int128 const, xstd::uint128 const>);
         static_assert(pair<xstd::int128 volatile, xstd::uint128 volatile>);
+#endif
 #ifdef XSTD_HAS_BIT_INT
         static_assert(pair<xstd::bit_int<17> const, xstd::bit_uint<17> const>);
 #endif

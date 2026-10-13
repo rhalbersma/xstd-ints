@@ -5,7 +5,7 @@
 
 #include <xstd/ints/bit/countr_zero.hpp> // countr_zero
 #include <xstd/ints/bit/popcount.hpp>    // popcount
-#include <xstd/ints/cstdint.hpp>         // bit_int, bit_uint, uint128
+#include <xstd/ints/cstdint.hpp>         // XSTD_HAS_INT128, bit_int, bit_uint, uint128
 #include <xstd/ints/limits.hpp>          // numeric_limits
 #include <test/bit/oracle.hpp>           // oracle_countr_zero
 #include <test/bit/sweep.hpp>            // TEST_HAS_BIT_PRECISE_BIT, bit_precise_sweep_types, for_each_edge_value, for_each_sweep_value
@@ -92,8 +92,10 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsTheBodys)
         static_assert(xstd_answers<unsigned char> == std_answers<unsigned char>);
         static_assert(xstd_answers<std::uint64_t> == std_answers<std::uint64_t>);
 
+#ifdef XSTD_HAS_INT128
         // Not an equality at the widest width: xstd::uint128 is a class, so this asserts a basis exists, not std's.
         static_assert(xstd_answers<xstd::uint128>);
+#endif
 
 #ifdef TEST_HAS_BIT_PRECISE_BIT
         // Nor here: unsigned bit-precise widths have a basis whether or not <bit> takes them, and signed ones none.

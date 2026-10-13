@@ -3,7 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/ints/cstdint/int128.hpp>            // int128, uint128
+#include <xstd/ints/cstdint/int128.hpp>            // XSTD_HAS_INT128, int128, uint128
 #include <xstd/ints/concepts/signed_integer.hpp>   // signed_integer
 #include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
 #include <xstd/ints/type_traits/is_signed.hpp>     // is_signed_v
@@ -18,6 +18,8 @@
 BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(CStdInt)
 BOOST_AUTO_TEST_SUITE(Int128)
+
+#ifdef XSTD_HAS_INT128
 
 BOOST_AUTO_TEST_CASE(AssociatesSignedAndUnsignedPair)
 {
@@ -61,6 +63,19 @@ BOOST_AUTO_TEST_CASE(Ordering)
         XSTD_CONSTEXPR_CHECK(xstd::int128{-1} < xstd::int128{0});
         XSTD_CONSTEXPR_CHECK((xstd::uint128{1} << 127U) > xstd::uint128{0});
 }
+
+#else
+
+// Absent only where the target has no 128-bit integer of its own to alias, as on 32-bit x86 and ARM.
+BOOST_AUTO_TEST_CASE(AbsentOnlyWhereTheTargetHasNone)
+{
+#if defined(__SIZEOF_INT128__) or defined(_MSC_VER)
+        static_assert(false, "the target has a 128-bit integer, so XSTD_HAS_INT128 should be defined");
+#endif
+        BOOST_CHECK(true);
+}
+
+#endif
 
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()

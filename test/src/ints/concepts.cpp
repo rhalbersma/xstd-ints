@@ -4,7 +4,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <xstd/ints/concepts.hpp>   // the integer concepts
-#include <xstd/ints/cstdint.hpp>    // int128, uint128
+#include <xstd/ints/cstdint.hpp>    // XSTD_HAS_INT128, int128, uint128
 #include <boost/test/unit_test.hpp> // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END
 #include <complex>                  // complex
 #include <cstddef>                  // size_t
@@ -42,8 +42,10 @@ BOOST_AUTO_TEST_CASE(TheRefinementsHoldOverTheWholeDomain)
         static_assert(lattice<std::size_t>);
         static_assert(lattice<std::int8_t>);
         static_assert(lattice<std::uint64_t>);
+#ifdef XSTD_HAS_INT128
         static_assert(lattice<xstd::int128>);
         static_assert(lattice<xstd::uint128>);
+#endif
 
         // The types each clause turns away, so no clause is vacuous over this list.
         static_assert(lattice<bool>);
@@ -67,12 +69,16 @@ BOOST_AUTO_TEST_CASE(TheRefinementsSurviveCvQualification)
         static_assert(lattice<unsigned volatile>);
         static_assert(lattice<unsigned const volatile>);
         static_assert(lattice<std::size_t const volatile>);
+#ifdef XSTD_HAS_INT128
         static_assert(lattice<xstd::uint128 const volatile>);
         static_assert(lattice<xstd::int128 const volatile>);
+#endif
 
         static_assert(xstd::integer<int const> == xstd::integer<int>);
         static_assert(xstd::alignable<unsigned const volatile> == xstd::alignable<unsigned>);
+#ifdef XSTD_HAS_INT128
         static_assert(xstd::alignable<xstd::uint128 const volatile> == xstd::alignable<xstd::uint128>);
+#endif
         BOOST_CHECK(true);
 }
 

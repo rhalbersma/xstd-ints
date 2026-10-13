@@ -5,7 +5,7 @@
 
 #include <xstd/ints/concepts/integer.hpp>                 // NOLINT(misc-include-cleaner): used with optional Abseil fixtures
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/cstdint.hpp>                          // int128, uint128
+#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_INT128, int128, uint128
 #include <xstd/ints/cstdlib/abs.hpp>                      // abs
 #include <xstd/ints/cstdlib/div.hpp>                      // div
 #include <test/constexpr_check.hpp>                       // XSTD_CONSTEXPR_CHECK
@@ -31,7 +31,9 @@ BOOST_AUTO_TEST_CASE(HoldsForTheTypesThatDeclareIt)
 
         // Its first conjunct is integer, which cv bool is not, so the operators go unasked.
         XSTD_CONSTEXPR_CHECK(not xstd::nothrow_const_operators<bool>);
+#ifdef XSTD_HAS_INT128
         XSTD_CONSTEXPR_CHECK(xstd::nothrow_const_operators<xstd::int128> and xstd::nothrow_const_operators<xstd::uint128>);
+#endif
 
 #ifdef XSTD_HAS_BIT_INT
         XSTD_CONSTEXPR_CHECK(xstd::nothrow_const_operators<xstd::bit_int<17>>);
@@ -50,8 +52,10 @@ BOOST_AUTO_TEST_CASE(HoldsForTheTypesThatDeclareIt)
 BOOST_AUTO_TEST_CASE(IncludesWhatPassingAndReturningCosts)
 {
         XSTD_CONSTEXPR_CHECK(std::is_nothrow_destructible_v<int>);
+#ifdef XSTD_HAS_INT128
         XSTD_CONSTEXPR_CHECK(std::is_nothrow_move_constructible_v<xstd::int128>);
         XSTD_CONSTEXPR_CHECK(std::is_nothrow_copy_constructible_v<xstd::uint128>);
+#endif
 
         // Which the concept now answers for, over the types this file already names.
         XSTD_CONSTEXPR_CHECK(not xstd::nothrow_const_operators<int> or std::is_nothrow_copy_constructible_v<int>);
@@ -68,9 +72,11 @@ BOOST_AUTO_TEST_CASE(IsCvTransparentOnBothBranches)
         XSTD_CONSTEXPR_CHECK(xstd::nothrow_const_operators<int volatile>);
         XSTD_CONSTEXPR_CHECK(xstd::nothrow_const_operators<int const volatile>);
 
+#ifdef XSTD_HAS_INT128
         XSTD_CONSTEXPR_CHECK(xstd::nothrow_const_operators<xstd::int128 const>);
         XSTD_CONSTEXPR_CHECK(xstd::nothrow_const_operators<xstd::int128 volatile>);
         XSTD_CONSTEXPR_CHECK(xstd::nothrow_const_operators<xstd::int128 const volatile>);
+#endif
 
         // Nor does a qualifier turn a no into a yes.
 #ifdef TEST_HAS_ABSL_INT128

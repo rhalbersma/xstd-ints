@@ -6,7 +6,7 @@
 #ifndef TEST_EXACT_WIDTH_TYPES_HPP
 #define TEST_EXACT_WIDTH_TYPES_HPP
 
-#include <xstd/ints/cstdint.hpp> // XSTD_HAS_BIT_INT, bit_int, bit_uint, int128, uint128
+#include <xstd/ints/cstdint.hpp> // XSTD_HAS_BIT_INT, XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
 #include <cstdint>               // exact-width integer types
 #include <tuple>                 // tuple, tuple_cat
 #include <utility>               // declval
@@ -29,9 +29,14 @@ namespace test {
 using std_signed_types   = std::tuple<std::int8_t, std::int16_t, std::int32_t, std::int64_t>;
 using std_unsigned_types = std::tuple<std::uint8_t, std::uint16_t, std::uint32_t, std::uint64_t>;
 
-// And the width xstd names on top of those.
+// And the width xstd names on top of those, where the target has it.
+#ifdef XSTD_HAS_INT128
 using xstd_signed_types   = std::tuple<xstd::int128>;
 using xstd_unsigned_types = std::tuple<xstd::uint128>;
+#else
+using xstd_signed_types   = std::tuple<>;
+using xstd_unsigned_types = std::tuple<>;
+#endif
 
 // And a 128-bit type from outside the library, when the build has one.
 #ifdef TEST_HAS_BOOST_INT128

@@ -5,7 +5,7 @@
 
 #include <xstd/ints/concepts/signed_integer.hpp>   // signed_integer
 #include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
-#include <xstd/ints/cstdint.hpp>                   // int128, uint128
+#include <xstd/ints/cstdint.hpp>                   // XSTD_HAS_INT128, int128, uint128
 #include <xstd/ints/limits.hpp>                    // numeric_limits
 #include <xstd/ints/type_traits/make_signed.hpp>   // make_signed_t
 #include <xstd/ints/type_traits/make_unsigned.hpp> // make_unsigned_t
@@ -58,7 +58,7 @@ template<class T>
 // What spans the two: the pair makes Boost's types integers, and so hashable, as the library's own of their width.
 BOOST_AUTO_TEST_CASE(TheirPairHashesAsTheLibrarysOwn)
 {
-#ifdef TEST_HAS_BOOST_INT128_AND_HASH2
+#if defined(TEST_HAS_BOOST_INT128_AND_HASH2) and defined(XSTD_HAS_INT128)
         using S = boost::int128::int128;
         using U = boost::int128::uint128;
 

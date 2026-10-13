@@ -9,6 +9,7 @@
 [![Standard](https://img.shields.io/badge/c%2B%2B-23-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
 [![License](https://img.shields.io/badge/license-Boost-blue.svg)](https://opensource.org/licenses/BSL-1.0)
 [![GCC](https://github.com/rhalbersma/xstd-ints/actions/workflows/gcc.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/gcc.yml)
+[![Emscripten](https://github.com/rhalbersma/xstd-ints/actions/workflows/emscripten.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/emscripten.yml)
 [![MinGW](https://github.com/rhalbersma/xstd-ints/actions/workflows/mingw.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/mingw.yml)
 [![Clang](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang.yml)
 [![Clang-libc++](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang-libc%2B%2B.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang-libc%2B%2B.yml)
@@ -58,8 +59,10 @@ integer-class types, including native bit-precise integers and the portable
 #include <xstd/ints/cstdint.hpp>
 #include <xstd/ints/limits.hpp>
 
+#ifdef XSTD_HAS_INT128
 static_assert(xstd::signed_integer<xstd::int128>);
 static_assert(xstd::unsigned_integer<xstd::uint128>);
+#endif
 
 #ifdef XSTD_HAS_BIT_INT
 static_assert(xstd::signed_integer<xstd::bit_int<24>>);
@@ -159,7 +162,7 @@ integer-class type, and [CONTRIBUTING.md](CONTRIBUTING.md) to build the library 
 | `<xstd/ints/concepts/integer_class.hpp>` <br> `<xstd/ints/concepts/integer.hpp>` <br> `<xstd/ints/concepts/signed_integer.hpp>` <br> `<xstd/ints/concepts/unsigned_integer.hpp>` <br> `<xstd/ints/concepts/bit_mask.hpp>` <br> `<xstd/ints/concepts/alignable.hpp>` <br> `<xstd/ints/concepts/nothrow_const_operators.hpp>` | `integer_class` <br> `integer` <br> `signed_integer` <br> `unsigned_integer` <br> `bit_mask` <br> `alignable`, `nothrow_alignable` <br> `nothrow_const_operators` | The operations [iterator.concept.winc] states of an integer-class type <br> P3701 arithmetic domain, extended to paired integer-class types <br> Open form of `std::signed_integral` <br> Open form of `std::unsigned_integral` <br> The standard's bitmask type: an unsigned integer, `std::bitset`, or an enumeration overloading the operators <br> What the alignment functions ask of a type, and whether its operations carry `noexcept` <br> Exception specification of the integer functions | [iterator.concept.winc] (integer-class type) <br> [P3701R0](https://wg21.link/P3701R0), [iterator.concept.winc] <br> [iterator.concept.winc] (integer-class types) <br> [iterator.concept.winc] (integer-class types) <br> [bitmask.types] <br> none <br> none |
 | `<xstd/ints/bit.hpp>` | `bit_ceil` <br> `bit_compress` <br> `bit_expand` <br> `bit_floor` <br> `bit_repeat` <br> `bit_reverse` <br> `bit_width` <br> `byteswap` <br> `countl_one` <br> `countl_zero` <br> `countr_one` <br> `countr_zero` <br> `has_single_bit` <br> `popcount` <br> `rotl` <br> `rotr` <br> `shl` <br> `shr` | `std::bit_ceil`, widened to the 128-bit integer classes and bit-precise widths `<bit>` declines <br> Gather the bits a mask selects into the low bits (PEXT) <br> Scatter the low bits to the positions a mask selects (PDEP) <br> `std::bit_floor`, widened the same way <br> Repeat the low `l` bits across the width <br> Mirror the bits, any xstd unsigned integer <br> `std::bit_width`, widened the same way <br> `std::byteswap`, widened to every xstd integer whose width is a whole number of bytes <br> `std::countl_one`, widened the same way <br> `std::countl_zero`, widened the same way <br> `std::countr_one`, widened the same way <br> `std::countr_zero`, widened the same way <br> `std::has_single_bit`, widened the same way <br> `std::popcount`, widened the same way <br> `std::rotl`, widened the same way <br> `std::rotr`, widened the same way <br> Shift left by any count of any integer type, a negative count shifting right; never undefined <br> Shift right the same way, rounding towards negative infinity | [bit.pow.two] <br> [P3104R6](https://wg21.link/P3104R6) <br> [P3104R6](https://wg21.link/P3104R6) <br> [bit.pow.two] <br> [P3104R6](https://wg21.link/P3104R6) <br> [P3104R6](https://wg21.link/P3104R6) <br> [bit.pow.two] <br> [bit.byteswap] <br> [bit.count] <br> [bit.count] <br> [bit.count] <br> [bit.count] <br> [bit.pow.two] <br> [bit.count] <br> [bit.rot] <br> [bit.rot] <br> [P3793R2](https://wg21.link/P3793R2) <br> [P3793R2](https://wg21.link/P3793R2) |
 | `<xstd/ints/charconv.hpp>` | `to_chars` <br> `to_chars_max_size` | `std::to_chars`, widened to xstd integers it does not cover <br> Buffer size that holds any value of `T` at any base | [charconv.to.chars] <br> none |
-| `<xstd/ints/cstdint.hpp>` | `bit_int<N>` <br> `bit_uint<N>` <br> `bit_int_max_width` <br> `int128` <br> `uint128` | Native bit-precise signed integer (when available) <br> Native bit-precise unsigned integer (when available) <br> Maximum native bit-precise width (when available) <br> Platform 128-bit signed integer <br> Platform 128-bit unsigned integer | [P3666R0](https://wg21.link/P3666R0) <br> [P3666R0](https://wg21.link/P3666R0) <br> none <br> none <br> none |
+| `<xstd/ints/cstdint.hpp>` | `bit_int<N>` <br> `bit_uint<N>` <br> `bit_int_max_width` <br> `int128` <br> `uint128` | Native bit-precise signed integer (when available) <br> Native bit-precise unsigned integer (when available) <br> Maximum native bit-precise width (when available) <br> Platform 128-bit signed integer (when available) <br> Platform 128-bit unsigned integer (when available) | [P3666R0](https://wg21.link/P3666R0) <br> [P3666R0](https://wg21.link/P3666R0) <br> none <br> none <br> none |
 | `<xstd/ints/cstdlib.hpp>` | `div_result` <br> `sign` <br> `abs` <br> `unsigned_abs` <br> `div` <br> `div_euclid` <br> `div_floor` <br> `div_ceil` | Defaulted equality comparison <br> `-1`, `0`, or `1`; `0` or `1` when unsigned <br> `constexpr`, any xstd integer <br> Total `\|x\|`, returning the unsigned counterpart <br> Truncated division, any xstd integer <br> Euclidean division <br> Floored division <br> Ceiling division | none <br> [Boost.Math](https://www.boost.org/doc/libs/1_80_0/libs/math/doc/html/math_toolkit/sign_functions.html) <br> [p0533r9](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0533r9.pdf) (reviewed implementation wording) <br> [Rust `unsigned_abs`](https://doc.rust-lang.org/std/primitive.i32.html#method.unsigned_abs) (no C++ equivalent) <br> [p0533r9](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0533r9.pdf) (reviewed implementation wording) <br> [Euclidean division](https://en.wikipedia.org/wiki/Euclidean_division) <br> [Floored division](http://research.microsoft.com/pubs/151917/divmodnote-letter.pdf) <br> [P3724R4](https://wg21.link/P3724R4) (`div_rem_to_pos_inf`) |
 | `<xstd/ints/ext/absl.hpp>` | `make_unsigned<absl::int128>` <br> `make_signed<absl::uint128>` | Pairs Abseil's two integer-class types, so each models `integer` | none <br> none |
 | `<xstd/ints/ext/boost.hpp>` | `make_unsigned<boost::int128::int128>` <br> `make_signed<boost::int128::uint128>` <br> `hash_append_int` | Pairs Boost.Int128's two integer-class types, so each models `integer` <br> Boost.Hash2's `hash_append` for every xstd integer, hashing the value and never the object | none <br> none <br> none |
@@ -173,7 +176,9 @@ The native bit-precise aliases are available when the compiler defines
 minimum width is two so every exposed type has a signed or unsigned counterpart.
 The 128-bit aliases and their `make_signed` and `make_unsigned` associations are
 defined together in `<xstd/ints/cstdint/int128.hpp>`; `<xstd/ints/cstdint.hpp>` is their
-umbrella. The two `<xstd/ext/>` umbrellas export `<xstd/ints/ext/absl/int128.hpp>`, and
+umbrella. They alias the Microsoft STL's integer classes or the compiler's `__int128`, and
+`XSTD_HAS_INT128` detects them: 32-bit x86 and ARM have neither, and there the aliases are
+absent rather than an error. The two `<xstd/ext/>` umbrellas export `<xstd/ints/ext/absl/int128.hpp>`, and
 `<xstd/ints/ext/boost/int128.hpp>` with `<xstd/ints/ext/boost/hash2.hpp>`, and each needs
 the libraries it adapts on the include path; nothing above them exports either. Each
 adapted header is exported in turn, so including one is enough: `<xstd/ints/ext/absl/int128.hpp>`
@@ -293,6 +298,12 @@ libraries) in both Debug and Release mode:
 | macOS    | Apple Clang | libc++          | 17.0.0 (Xcode 16.4)       | 21.0.0 (Xcode 26.6)       | —                              | [![Apple Clang](https://github.com/rhalbersma/xstd-ints/actions/workflows/apple-clang.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/apple-clang.yml) |
 | Windows  | Clang-CL   | MSVC             | 19.1.5 (VS 2022)          | 20.1.8 (VS 2026)          | 20.1.8 (VS 2026-Preview)       | [![Clang-CL](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang-cl.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang-cl.yml) |
 | Windows  | MSVC       | MSVC             | 2022 (17.11+)             | 2026                      | 2026-Preview                   | [![MSVC](https://github.com/rhalbersma/xstd-ints/actions/workflows/msvc.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/msvc.yml) |
+
+Two more legs build for 32-bit targets, on the stable rung in Debug: i686 with GCC `-m32`, where
+`size_t` is 32 bits and there is no `__int128`, in the GCC workflow; and wasm32 with Emscripten,
+run under node, where `size_t` is 32 bits but 64-bit integers keep their 8-byte alignment.
+
+[![Emscripten](https://github.com/rhalbersma/xstd-ints/actions/workflows/emscripten.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/emscripten.yml)
 
 ## License
 

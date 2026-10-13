@@ -25,8 +25,18 @@ jobs:
   # One input, and not about the ladder: this library builds on every rung,
   # which is what the shared workflow defaults to.
   gcc:
-    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@5e70b2dfcf6a2a4d8f8d442c65703588d198548c # v0.11.1
+    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@1c32e510e25b1d41e613cddc1b169655680f9a01 # main, past v0.11.1
     with:
       # Boost.Test, which vcpkg.json keeps out of its default features so that
       # consuming this library resolves no Boost at all.
+      vcpkg_features: test
+
+  # 32-bit x86: a 32-bit size_t, 4-byte alignment for 64-bit integers, and no
+  # __int128. One rung in Debug, since what is under test is the target.
+  i686:
+    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@1c32e510e25b1d41e613cddc1b169655680f9a01 # main, past v0.11.1
+    with:
+      arch: x86
+      tiers: stable
+      build_types: Debug
       vcpkg_features: test

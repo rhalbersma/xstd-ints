@@ -6,7 +6,7 @@
 #include <xstd/ints/concepts/alignable.hpp>        // alignable, nothrow_alignable
 #include <xstd/ints/concepts/signed_integer.hpp>   // signed_integer
 #include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
-#include <xstd/ints/cstdint/int128.hpp>            // int128, uint128
+#include <xstd/ints/cstdint/int128.hpp>            // XSTD_HAS_INT128, int128, uint128
 #include <xstd/ints/limits/numeric_limits.hpp>     // numeric_limits
 #include <boost/test/unit_test.hpp>                // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
 #include <compare>                                 // IWYU pragma: keep; the result of <=> over built-ins
@@ -47,7 +47,9 @@ BOOST_AUTO_TEST_CASE(AdmitsTheUnsignedIntegers)
         static_assert(xstd::alignable<std::uintptr_t>);
         static_assert(xstd::alignable<std::uint8_t>);
         static_assert(xstd::alignable<std::uint64_t>);
+#ifdef XSTD_HAS_INT128
         static_assert(xstd::alignable<xstd::uint128>);
+#endif
 #ifdef __BITINT_MAXWIDTH__
         static_assert(xstd::alignable<unsigned _BitInt(8)>);
         static_assert(xstd::alignable<unsigned _BitInt(24)>);
@@ -65,7 +67,9 @@ BOOST_AUTO_TEST_CASE(AndRejectsTheRestOnTheirMerits)
         static_assert(not xstd::alignable<int>);
         static_assert(not xstd::alignable<long long>);
         static_assert(not xstd::alignable<std::ptrdiff_t>);
+#ifdef XSTD_HAS_INT128
         static_assert(not xstd::alignable<xstd::int128>);
+#endif
 #ifdef __BITINT_MAXWIDTH__
         static_assert(not xstd::alignable<signed _BitInt(24)>);
 #endif
@@ -89,8 +93,10 @@ BOOST_AUTO_TEST_CASE(IsIntegerLight)
         static_assert(refines_alignable<signed char>);
         static_assert(refines_alignable<int>);
         static_assert(refines_alignable<bool>);
+#ifdef XSTD_HAS_INT128
         static_assert(refines_alignable<xstd::uint128>);
         static_assert(refines_alignable<xstd::int128>);
+#endif
 #ifdef __BITINT_MAXWIDTH__
         static_assert(refines_alignable<unsigned _BitInt(24)>);
         static_assert(refines_alignable<signed _BitInt(24)>);
@@ -117,12 +123,16 @@ BOOST_AUTO_TEST_CASE(IsCvTransparent)
         static_assert(xstd::alignable<unsigned volatile>);
         static_assert(xstd::alignable<unsigned const volatile>);
         static_assert(xstd::alignable<std::size_t const volatile>);
+#ifdef XSTD_HAS_INT128
         static_assert(xstd::alignable<xstd::uint128 const volatile>);
+#endif
         static_assert(xstd::alignable<char16_t const volatile>);
 
         // And a qualifier turns no answer into a yes: the signed half stays out.
         static_assert(not xstd::alignable<int const volatile>);
+#ifdef XSTD_HAS_INT128
         static_assert(not xstd::alignable<xstd::int128 const volatile>);
+#endif
         static_assert(not xstd::alignable<bool const volatile>);
 
         static_assert(xstd::nothrow_alignable<unsigned const volatile>);
@@ -134,9 +144,13 @@ BOOST_AUTO_TEST_CASE(IsCvTransparent)
 BOOST_AUTO_TEST_CASE(TheNothrowRefinementCoversWhatTheCallSpends)
 {
         static_assert(std::is_nothrow_destructible_v<std::size_t>);
+#ifdef XSTD_HAS_INT128
         static_assert(std::is_nothrow_copy_constructible_v<xstd::uint128>);
+#endif
 
+#ifdef XSTD_HAS_INT128
         static_assert(not xstd::nothrow_alignable<xstd::uint128> or std::is_nothrow_move_constructible_v<xstd::uint128>);
+#endif
         static_assert(not xstd::nothrow_alignable<std::size_t> or std::is_nothrow_destructible_v<std::size_t>);
         BOOST_CHECK(true);
 }
@@ -155,7 +169,9 @@ BOOST_AUTO_TEST_CASE(TheNothrowRefinementCoversEveryRelation)
         // And of the types it does hold of, over which all six must be noexcept for the specification to mean anything.
         static_assert(xstd::nothrow_alignable<std::size_t>);
         static_assert(xstd::nothrow_alignable<unsigned>);
+#ifdef XSTD_HAS_INT128
         static_assert(xstd::nothrow_alignable<xstd::uint128>);
+#endif
         BOOST_CHECK(true);
 }
 
