@@ -5,7 +5,8 @@
 
 #include <xstd/ints/bit/detail/portable/block_compress.hpp> // block_compress_by_rank
 #include <xstd/ints/bit/detail/portable/block_expand.hpp>   // block_expand_by_select, block_expand_by_walk
-#include <test/bit/oracle.hpp>                              // oracle_bit_compress, oracle_bit_expand
+#include <xstd/ints/bit/detail/portable/block_reverse.hpp>  // block_reverse_by_swaps
+#include <test/bit/oracle.hpp>                              // oracle_bit_compress, oracle_bit_expand, oracle_bit_reverse
 #include <test/bit/permutation_properties.hpp>              // portable_kernels_round_trip
 #include <test/bit/select_properties.hpp>                   // portable_select_holds
 #include <test/bit/sweep.hpp>                               // alternating_ones, for_each_edge_value_at, for_each_sweep_pair, for_each_sweep_value, holds_at_every_position, next_pseudo_random
@@ -26,7 +27,8 @@ constexpr auto kernels_agree(std::size_t x, std::size_t m)
 {
         return portable::block_compress_by_rank(x, m) == test::oracle_bit_compress(x, m) and
                portable::block_expand_by_walk(x, m) == test::oracle_bit_expand(x, m) and
-               portable::block_expand_by_select(x, m) == test::oracle_bit_expand(x, m);
+               portable::block_expand_by_select(x, m) == test::oracle_bit_expand(x, m) and
+               portable::block_reverse_by_swaps(x) == test::oracle_bit_reverse(x);
 }
 
 constexpr auto agrees_at(int k)

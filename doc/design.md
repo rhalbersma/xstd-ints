@@ -113,19 +113,23 @@ The four permutations from [P3104R6](https://wg21.link/P3104R6) — `bit_reverse
 one template over `unsigned_integer` beside an overload forwarding to the standard function,
 declared once `__cpp_lib_bitops` reaches the working draft's `202607L` and constrained, like
 the counters, on the standard call being well-formed. The template works a block at a time.
-A block is mirrored by Clang's `__builtin_bitreverse64`
-or by a byte swap and three masked swaps. A block is compressed or expanded by one of two
-families of kernels on a single `std::size_t`, each family in a directory of its own under
-`bit/detail/` with one header per kernel:
+A block is mirrored, compressed or expanded by one of two families of kernels on a single
+`std::size_t`, each family in a directory of its own under `bit/detail/` with one header per
+kernel:
 
-- `detail::intrinsic` holds `block_compress` and `block_expand`, which are `_pext_u64` and `_pdep_u64`,
+- `detail::intrinsic` holds `block_reverse`, which is Clang's `__builtin_bitreverse32` and
+  `__builtin_bitreverse64`, declared only where `XSTD_INTS_HAS_BUILTIN_BITREVERSE` says the
+  compiler has them, and like them a constant expression. It also holds `block_compress` and
+  `block_expand`, which are `_pext_u64` and `_pdep_u64`,
   and `block_select`, which is `std::countr_zero(_pdep_u64(1 << k, x))`, all three declared only
   where `XSTD_INTS_HAS_FAST_BMI2` says the target makes them fast: x86-64 with `__BMI2__`, or
   MSVC with `/arch:AVX2`, which implies BMI2 but never defines the macro. A target of `bdver4`,
   `znver1` or `znver2` is excluded even though it enables BMI2, since `PEXT` and `PDEP` are
   microcoded there, with an 18-cycle latency against 3 on Zen 3 and Intel since Haswell.
 - `detail::portable` holds the `constexpr` kernels, which a constant expression always takes
-  and a run-time call takes wherever the intrinsics are absent. `block_compress_by_rank` loops over
+  and a run-time call takes wherever the intrinsics are absent. `block_reverse_by_swaps` mirrors
+  the bytes by `std::byteswap`, then each byte's nibbles, pairs and single bits by three masked
+  swaps. `block_compress_by_rank` loops over
   the selected bits, placing each at its rank among the mask's ones by one `popcount`;
   `block_expand_by_walk` loops over the mask's one-bits, depositing the next bit of the value by a
   mask rather than a branch; `block_expand_by_select` loops over the value's one-bits instead,
@@ -137,7 +141,8 @@ families of kernels on a single `std::size_t`, each family in a directory of its
   holding the `k`-th one, and a 2 KiB table indexed by that byte and the rank left over gives
   the bit within it. It never loops and never branches on the value.
 
-`block_compress`, `block_expand` and `block_select`, each in a header of its own, pick between the two: the intrinsic outside a constant
+`block_reverse`, `block_compress`, `block_expand` and `block_select`, each in a header of its own, pick between the two:
+`block_reverse` takes the builtin wherever it is declared, in a constant expression too; the other three take the intrinsic outside a constant
 expression where it is declared, the portable kernel otherwise. Benchmarked on a Haswell-class
 Xeon, per call: `PEXT` and `PDEP` take about 0.45 ns; `block_compress_by_rank` about 0.4 ns per
 selected bit; `block_expand_by_walk` about 0.8 ns per mask bit; and `block_expand_by_select` about 3.6 ns
