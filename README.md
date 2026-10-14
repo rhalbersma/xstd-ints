@@ -312,8 +312,9 @@ libraries) in both Debug and Release mode:
 
 The `Web` row runs one Emscripten release on the stable rung, in Debug: wasm32 under node,
 where `size_t` is 32 bits but 64-bit integers keep their 8-byte alignment. The GCC workflow
-adds the other 32-bit leg, i686 with GCC `-m32`, where `size_t` is 32 bits and there is no
-`__int128`.
+adds a second 32-bit leg, i686 with GCC `-m32`, where `size_t` is 32 bits and there is no
+`__int128`. The MSVC workflow adds a third, x86 with VS 2026 in Debug, where `xstd::uint128`
+is the MSVC STL's portable 128-bit class and the bit permutations take their portable kernels.
 
 ## License
 
