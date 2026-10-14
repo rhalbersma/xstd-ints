@@ -74,7 +74,8 @@ template<integer I>
         // The walk claims a position per digit, so a step onto last is the short buffer.
         auto* out = first + sign_width;
         // "rest / radix" not "/=": absl::int128 is constexpr on the first only.
-        for (auto rest = magnitude; rest >= radix; rest = rest / radix) {
+        // Prvalue operands: x86 MSVC's optimizer lets the 128-bit STL division write through to named ones.
+        for (auto rest = magnitude; rest >= radix; rest = static_cast<U>(U{rest} / U{radix})) {
                 if (++out == last) {
                         return {.ptr = last, .ec = std::errc::value_too_large};
                 }
@@ -86,9 +87,10 @@ template<integer I>
         // One divmod per digit, named by the library's own truncated division.
         auto rest = magnitude;
         while (rest >= radix) {
-                auto const [quotient, remainder] = xstd::div(rest, radix);
-                *out--                           = digits[static_cast<std::size_t>(remainder)];
-                rest                             = quotient;
+                // Members, not a binding: x86 MSVC passes an over-aligned binding's bytes, not its address.
+                auto const step = xstd::div(rest, radix);
+                *out--          = digits[static_cast<std::size_t>(step.remainder)];
+                rest            = step.quotient;
         }
         // The loop leaves a single digit. No decrement: unsigned, it would step below first.
         *out = digits[static_cast<std::size_t>(rest)];

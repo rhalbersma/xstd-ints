@@ -42,8 +42,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(KeepsTheDivisionIdentity, T, test::exact_width_sig
 {
         for (auto const numer : {T{-9}, T{-8}, T{-1}, T{0}, T{1}, T{8}, T{9}}) {
                 for (auto const denom : {T{-3}, T{-2}, T{2}, T{3}}) {
-                        auto const [quotient, remainder] = xstd::div_ceil(numer, denom);
-                        BOOST_CHECK(numer == static_cast<T>((denom * quotient) + remainder));
+                        // Members, not a binding: x86 MSVC passes an over-aligned binding's bytes, not its address.
+                        auto const ceiled = xstd::div_ceil(numer, denom);
+                        BOOST_CHECK(numer == static_cast<T>((denom * ceiled.quotient) + ceiled.remainder));
                 }
         }
 }
@@ -52,8 +53,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(KeepsTheDivisionIdentityOnUnsigned, T, test::exact
 {
         for (auto const numer : {T{0}, T{1}, T{8}, T{9}, T{40}}) {
                 for (auto const denom : {T{1}, T{2}, T{3}, T{17}}) {
-                        auto const [quotient, remainder] = xstd::div_ceil(numer, denom);
-                        BOOST_CHECK(numer == static_cast<T>((denom * quotient) + remainder));
+                        // Members, not a binding: x86 MSVC passes an over-aligned binding's bytes, not its address.
+                        auto const ceiled = xstd::div_ceil(numer, denom);
+                        BOOST_CHECK(numer == static_cast<T>((denom * ceiled.quotient) + ceiled.remainder));
                 }
         }
 }

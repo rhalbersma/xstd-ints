@@ -27,8 +27,9 @@ template<integer I>
         if constexpr (is_signed_v<I>) {
                 assert(numer != numeric_limits<I>::min() or denom != static_cast<I>(-1));
         }
-        auto const qT = static_cast<I>(numer / denom);
-        auto const rT = static_cast<I>(numer % denom);
+        // Prvalue operands: x86 MSVC's optimizer lets the 128-bit STL division write through to named ones.
+        auto const qT = static_cast<I>(I{numer} / I{denom});
+        auto const rT = static_cast<I>(I{numer} % I{denom});
         assert(numer == static_cast<I>(static_cast<I>(denom * qT) + rT));
         // Said on the counterpart every integer type has, |MIN| fitting in no other.
         assert(xstd::unsigned_abs(rT) < xstd::unsigned_abs(denom));
