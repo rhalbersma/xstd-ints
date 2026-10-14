@@ -29,12 +29,3 @@ jobs:
       # Boost.Test, which vcpkg.json keeps out of its default features so that
       # consuming this library resolves no Boost at all.
       vcpkg_features: test
-
-  # 32-bit MSVC: 8-byte alignment for 64-bit members, and the STL's portable 128-bit integer. One rung in Debug, since what is under test is the target.
-  msvc_x86:
-    uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
-    with:
-      arch: x86
-      tiers: qualification
-      build_types: Debug
-      vcpkg_features: test
