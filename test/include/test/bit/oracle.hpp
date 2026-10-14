@@ -39,9 +39,11 @@ template<class T>
 }
 
 template<class T>
-[[nodiscard]] constexpr auto oracle_popcount(T x) noexcept
+[[nodiscard]] constexpr auto oracle_popcount(T value) noexcept
         -> int
 {
+        // A local, not the parameter: x86 MSVC's optimizer lets an inlined callee's writes to it reach the caller.
+        auto x     = value;
         auto count = 0;
         for (; x != T{0}; x = static_cast<T>(x >> 1U)) {
                 count += (x & T{1}) != T{0} ? 1 : 0;
@@ -73,9 +75,11 @@ template<class T>
 }
 
 template<class T>
-[[nodiscard]] constexpr auto oracle_bit_width(T x) noexcept
+[[nodiscard]] constexpr auto oracle_bit_width(T value) noexcept
         -> int
 {
+        // A local, not the parameter: x86 MSVC's optimizer lets an inlined callee's writes to it reach the caller.
+        auto x     = value;
         auto width = 0;
         for (; x != T{0}; x = static_cast<T>(x >> 1U)) {
                 ++width;
@@ -92,9 +96,11 @@ template<class T>
 
 // Clearing the lowest one until a single one is left.
 template<class T>
-[[nodiscard]] constexpr auto oracle_bit_floor(T x) noexcept
+[[nodiscard]] constexpr auto oracle_bit_floor(T value) noexcept
         -> T
 {
+        // A local, not the parameter: x86 MSVC's optimizer lets an inlined callee's writes to it reach the caller.
+        auto x = value;
         while (static_cast<T>(x & static_cast<T>(x - T{1})) != T{0}) {
                 x = static_cast<T>(x & static_cast<T>(x - T{1}));
         }
@@ -115,9 +121,11 @@ template<class T>
 
 // One place at a time, the bit leaving the top coming back in at the bottom, as many times as the count says.
 template<class T>
-[[nodiscard]] constexpr auto oracle_rotl(T x, int s) noexcept
+[[nodiscard]] constexpr auto oracle_rotl(T value, int s) noexcept
         -> T
 {
+        // A local, not the parameter: x86 MSVC's optimizer lets an inlined callee's writes to it reach the caller.
+        auto x          = value;
         auto const ones = xstd::numeric_limits<T>::max();
         auto const top  = static_cast<T>(ones ^ static_cast<T>(ones >> 1U));
         auto const N    = xstd::numeric_limits<T>::digits;
@@ -146,9 +154,11 @@ template<class T>
 
 // P3793's x times two to the count, one place at a time: doubling in the unsigned counterpart, halving by division.
 template<class T>
-[[nodiscard]] constexpr auto oracle_shift(T x, long long count) noexcept
+[[nodiscard]] constexpr auto oracle_shift(T value, long long count) noexcept
         -> T
 {
+        // A local, not the parameter: x86 MSVC's optimizer lets an inlined callee's writes to it reach the caller.
+        auto x           = value;
         using U          = xstd::make_unsigned_t<T>;
         auto const W     = static_cast<long long>(xstd::numeric_limits<U>::digits);
         auto const steps = count < 0 ? (-count < W ? -count : W) : (count < W ? count : W);
@@ -167,9 +177,11 @@ template<class T>
 
 // The four permutation oracles walk one bit at a time, as P3104R5's own illustrations do.
 template<class T>
-[[nodiscard]] constexpr auto oracle_bit_reverse(T x) noexcept
+[[nodiscard]] constexpr auto oracle_bit_reverse(T value) noexcept
         -> T
 {
+        // A local, not the parameter: x86 MSVC's optimizer lets an inlined callee's writes to it reach the caller.
+        auto x      = value;
         auto result = T{0};
         for ([[maybe_unused]] auto const n : std::views::iota(0, xstd::numeric_limits<T>::digits)) {
                 result = static_cast<T>(static_cast<T>(result << 1U) | static_cast<T>(x & T{1}));
@@ -229,9 +241,11 @@ template<class T>
 
 // The position of x's k-th one, counted off one bit at a time; the width where x has no k-th one.
 template<class T>
-[[nodiscard]] constexpr auto oracle_bit_select(T x, int k) noexcept
+[[nodiscard]] constexpr auto oracle_bit_select(T value, int k) noexcept
         -> int
 {
+        // A local, not the parameter: x86 MSVC's optimizer lets an inlined callee's writes to it reach the caller.
+        auto x = value;
         for (auto const n : std::views::iota(0, xstd::numeric_limits<T>::digits)) {
                 if (static_cast<T>(x & T{1}) != T{0}) {
                         if (k == 0) {
