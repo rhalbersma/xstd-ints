@@ -6,38 +6,20 @@
 #ifndef XSTD_INTS_BIT_DETAIL_BLOCK_REVERSE_HPP
 #define XSTD_INTS_BIT_DETAIL_BLOCK_REVERSE_HPP
 
-#include <bit>     // IWYU pragma: keep; byteswap, where no bit reversal builtin exists
-#include <cstddef> // size_t
-#include <cstdint> // uint32_t, uint64_t
-
-// MSVC 2022 has no __has_builtin, so testing for the bit reversal builtins takes an #if of its own.
-#ifdef __has_builtin
-#if __has_builtin(__builtin_bitreverse32) and __has_builtin(__builtin_bitreverse64)
-#define XSTD_HAS_BUILTIN_BITREVERSE 1
-#endif
-#endif
+#include <xstd/ints/bit/detail/intrinsic/block_reverse.hpp> // IWYU pragma: keep; block_reverse and XSTD_INTS_HAS_BUILTIN_BITREVERSE, where the compiler has the builtins
+#include <xstd/ints/bit/detail/portable/block_reverse.hpp>  // IWYU pragma: keep; block_reverse_by_swaps, where the compiler has no bit reversal builtins
+#include <cstddef>                                          // size_t
 
 namespace xstd::ints::detail {
 
+// The compiler's builtin where it has one, the portable kernel everywhere else; both are constant expressions.
 [[nodiscard]] constexpr auto block_reverse(std::size_t x) noexcept
         -> std::size_t
 {
-#ifdef XSTD_HAS_BUILTIN_BITREVERSE
-        if constexpr (sizeof(std::size_t) == sizeof(std::uint64_t)) {
-                return static_cast<std::size_t>(__builtin_bitreverse64(x));
-        } else {
-                return static_cast<std::size_t>(__builtin_bitreverse32(static_cast<std::uint32_t>(x)));
-        }
+#ifdef XSTD_INTS_HAS_BUILTIN_BITREVERSE
+        return intrinsic::block_reverse(x);
 #else
-        // Mirroring the bytes leaves each byte's own bits to mirror: its nibbles, then its pairs, then its single bits.
-        constexpr auto nibbles = ~0UZ / 0x11UZ;
-        constexpr auto pairs   = ~0UZ / 0x05UZ;
-        constexpr auto singles = ~0UZ / 0x03UZ;
-        x                      = std::byteswap(x);
-        x                      = ((x >> 4U) & nibbles) | ((x & nibbles) << 4U);
-        x                      = ((x >> 2U) & pairs) | ((x & pairs) << 2U);
-        x                      = ((x >> 1U) & singles) | ((x & singles) << 1U);
-        return x;
+        return portable::block_reverse_by_swaps(x);
 #endif
 }
 
