@@ -7,7 +7,7 @@
 #define XSTD_INTS_BIT_DETAIL_BLOCK_REVERSE_HPP
 
 #include <xstd/ints/bit/detail/intrinsic/block_reverse.hpp> // IWYU pragma: keep; block_reverse and XSTD_INTS_HAS_BUILTIN_BITREVERSE, where the compiler has the builtins
-#include <xstd/ints/bit/detail/portable/block_reverse.hpp>  // block_reverse_by_swaps
+#include <xstd/ints/bit/detail/portable/block_reverse.hpp>  // IWYU pragma: keep; block_reverse_by_swaps, where the compiler has no bit reversal builtins
 #include <cstddef>                                          // size_t
 
 namespace xstd::ints::detail {
