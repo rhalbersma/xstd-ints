@@ -24,9 +24,12 @@ template<integer I>
 {
         assert(denom != static_cast<I>(0));
         // Qualified: unqualified, ADL finds Boost.Int128's own div and it wins.
-        auto const [qT, rT] = xstd::div(numer, denom);
-        auto const zero     = static_cast<I>(0);
-        auto const one      = static_cast<I>(1);
+        // Members, not a binding: x86 MSVC passes an over-aligned binding's bytes, not its address.
+        auto const truncated = xstd::div(numer, denom);
+        auto const qT        = truncated.quotient;
+        auto const rT        = truncated.remainder;
+        auto const zero      = static_cast<I>(0);
+        auto const one       = static_cast<I>(1);
         if constexpr (is_unsigned_v<I>) {
                 // Any remainder rounds up, leaving a negative remainder that wraps as P3724R4 words it.
                 auto const adjust = rT != zero;

@@ -180,9 +180,10 @@ BOOST_AUTO_TEST_CASE(InterleavingByExpansion)
 BOOST_AUTO_TEST_CASE_TEMPLATE(InterleavingRoundTrips, T, basis_unsigned_types)
 {
         if constexpr (xstd::numeric_limits<T>::digits >= 2) {
-                constexpr auto odd  = xstd::bit_repeat(static_cast<T>(0b10U), 2);
-                constexpr auto even = xstd::bit_repeat(static_cast<T>(0b01U), 2);
-                auto mismatches     = 0UZ;
+                // Static: in a lambda, x86 MSVC passes an over-aligned constexpr local's bytes, not its address.
+                static constexpr auto odd  = xstd::bit_repeat(static_cast<T>(0b10U), 2);
+                static constexpr auto even = xstd::bit_repeat(static_cast<T>(0b01U), 2);
+                auto mismatches            = 0UZ;
                 test::for_each_sweep_pair<T>([&](T x, T y) -> void {
                         // Bound by reference: Clang 19 crashes emitting a const local _BitInt over 128 bits.
                         auto const& z = static_cast<T>(xstd::bit_expand(x, odd) | xstd::bit_expand(y, even));

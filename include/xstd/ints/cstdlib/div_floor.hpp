@@ -28,12 +28,15 @@ template<integer I>
                 // Qualified: unqualified, ADL finds Boost.Int128's own div and it wins.
                 return xstd::div(numer, denom);
         } else {
-                auto const [qT, rT] = xstd::div(numer, denom);
-                auto const zero     = static_cast<I>(0);
-                auto const one      = static_cast<I>(1);
-                auto const adjust   = xstd::sign(rT) == -xstd::sign(denom);
-                auto const qF       = static_cast<I>(qT - (adjust ? one : zero));
-                auto const rF       = static_cast<I>(rT + (adjust ? denom : zero));
+                // Members, not a binding: x86 MSVC passes an over-aligned binding's bytes, not its address.
+                auto const truncated = xstd::div(numer, denom);
+                auto const qT        = truncated.quotient;
+                auto const rT        = truncated.remainder;
+                auto const zero      = static_cast<I>(0);
+                auto const one       = static_cast<I>(1);
+                auto const adjust    = xstd::sign(rT) == -xstd::sign(denom);
+                auto const qF        = static_cast<I>(qT - (adjust ? one : zero));
+                auto const rF        = static_cast<I>(rT + (adjust ? denom : zero));
                 // Said on the counterpart every integer type has, |MIN| fitting in no other.
                 assert(xstd::unsigned_abs(rF) < xstd::unsigned_abs(denom));
                 assert(xstd::sign(rF) == xstd::sign(denom) or rF == static_cast<I>(0));
