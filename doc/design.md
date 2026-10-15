@@ -118,8 +118,16 @@ A block is mirrored, compressed or expanded by one of two families of kernels on
 kernel:
 
 - `detail::intrinsic` holds `block_reverse`, which is Clang's `__builtin_bitreverse32` and
-  `__builtin_bitreverse64`, declared only where `XSTD_INTS_HAS_BUILTIN_BITREVERSE` says the
-  compiler has them, and like them a constant expression. It also holds `block_compress` and
+  `__builtin_bitreverse64` where `XSTD_INTS_HAS_BUILTIN_BITREVERSE` says the compiler has them,
+  and like them a constant expression. Elsewhere it is one instruction where the target has one,
+  each detected by a header of its own as `bmi2.hpp` detects BMI2: ACLE's `__rbit` and `__rbitll`,
+  one `RBIT`, where `XSTD_INTS_HAS_RBIT` says the target is AArch64 with `<arm_acle.h>`, which
+  brings GCC on AArch64 the instruction Clang reaches through its builtin; or, where
+  `XSTD_INTS_HAS_GFNI` says the target is x86-64 with `__GFNI__`, one `GF2P8AFFINEQB` against the
+  matrix `0x8040201008040201`, which mirrors the bits of every byte, and a byte swap. llvm-mca puts
+  that at 1.7 cycles a block on Ice Lake against 5.5 for GCC's code for the portable kernel; Clang
+  emits the same two instructions for the portable kernel unasked, with the same matrix. MSVC
+  exposes no `RBIT` intrinsic and defines no `__GFNI__`, so it keeps the portable kernel. It also holds `block_compress` and
   `block_expand`, which are `_pext_u64` and `_pdep_u64`,
   and `block_select`, which is `std::countr_zero(_pdep_u64(1 << k, x))`, all three declared only
   where `XSTD_INTS_HAS_FAST_BMI2` says the target makes them fast: x86-64 with `__BMI2__`, or
@@ -142,7 +150,8 @@ kernel:
   the bit within it. It never loops and never branches on the value.
 
 `block_reverse`, `block_compress`, `block_expand` and `block_select`, each in a header of its own, pick between the two:
-`block_reverse` takes the builtin wherever it is declared, in a constant expression too; the other three take the intrinsic outside a constant
+`block_reverse` takes the builtin wherever it is declared, in a constant expression too, and `RBIT` or `GFNI` outside a constant expression
+where those are; the other three take the intrinsic outside a constant
 expression where it is declared, the portable kernel otherwise. Benchmarked on a Haswell-class
 Xeon, per call: `PEXT` and `PDEP` take about 0.45 ns; `block_compress_by_rank` about 0.4 ns per
 selected bit; `block_expand_by_walk` about 0.8 ns per mask bit; and `block_expand_by_select` about 3.6 ns
