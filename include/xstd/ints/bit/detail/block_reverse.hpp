@@ -6,19 +6,24 @@
 #ifndef XSTD_INTS_BIT_DETAIL_BLOCK_REVERSE_HPP
 #define XSTD_INTS_BIT_DETAIL_BLOCK_REVERSE_HPP
 
-#include <xstd/ints/bit/detail/intrinsic/block_reverse.hpp> // IWYU pragma: keep; block_reverse and XSTD_INTS_HAS_BUILTIN_BITREVERSE, where the compiler has the builtins
-#include <xstd/ints/bit/detail/portable/block_reverse.hpp>  // IWYU pragma: keep; block_reverse_by_swaps, where the compiler has no bit reversal builtins
+#include <xstd/ints/bit/detail/intrinsic/block_reverse.hpp> // IWYU pragma: keep; block_reverse and XSTD_INTS_HAS_BUILTIN_BITREVERSE, where the compiler or the target mirrors a block
+#include <xstd/ints/bit/detail/portable/block_reverse.hpp>  // IWYU pragma: keep; block_reverse_by_swaps, a constant expression on every target
 #include <cstddef>                                          // size_t
 
 namespace xstd::ints::detail {
 
-// The compiler's builtin where it has one, the portable kernel everywhere else; both are constant expressions.
+// The compiler's builtin wherever it has one, in a constant expression too; else RBIT or GFNI at run time.
 [[nodiscard]] constexpr auto block_reverse(std::size_t x) noexcept
         -> std::size_t
 {
 #ifdef XSTD_INTS_HAS_BUILTIN_BITREVERSE
         return intrinsic::block_reverse(x);
 #else
+#if defined(XSTD_INTS_HAS_RBIT) or defined(XSTD_INTS_HAS_GFNI)
+        if not consteval {
+                return intrinsic::block_reverse(x);
+        }
+#endif
         return portable::block_reverse_by_swaps(x);
 #endif
 }

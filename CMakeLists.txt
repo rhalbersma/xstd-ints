@@ -72,6 +72,8 @@ target_sources(
         include/xstd/ints/bit/detail/intrinsic/block_reverse.hpp
         include/xstd/ints/bit/detail/intrinsic/block_select.hpp
         include/xstd/ints/bit/detail/intrinsic/bmi2.hpp
+        include/xstd/ints/bit/detail/intrinsic/gfni.hpp
+        include/xstd/ints/bit/detail/intrinsic/rbit.hpp
         include/xstd/ints/bit/detail/mirror_blocks.hpp
         include/xstd/ints/bit/detail/portable/block_compress.hpp
         include/xstd/ints/bit/detail/portable/block_expand.hpp
