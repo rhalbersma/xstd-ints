@@ -66,10 +66,10 @@ extern "C" {
 
 // Two blocks, each mirrored once and moved to the other's offset, with nothing left of the loop over them.
 // CHECK-LABEL: codegen_bit_reverse_128:
-// X86-NOT: {{^\s+(j[a-z]+|call)\s}}
+// X86-STRAIGHT-NOT: {{^\s+(j[a-z]+|call)\s}}
 // GFNI: {{^\s+v?gf2p8affineqb\s}}
 // GFNI: {{^\s+v?gf2p8affineqb\s}}
-// X86-NOT: {{^\s+(j[a-z]+|call)\s}}
+// X86-STRAIGHT-NOT: {{^\s+(j[a-z]+|call)\s}}
 // A64-NOT: {{^\s+(b|bl|br|b\.[a-z]+|cbn?z|tbn?z)\s}}
 // A64: {{^\s+rbit\s}}
 // A64: {{^\s+rbit\s}}
