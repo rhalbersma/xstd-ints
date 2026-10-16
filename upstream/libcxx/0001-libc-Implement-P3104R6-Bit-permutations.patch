@@ -1,0 +1,1069 @@
+From 1e2522f589c00eb99d800543ffb21cadbd9d00a0 Mon Sep 17 00:00:00 2001
+From: Rein Halbersma <rhalbersma@gmail.com>
+Date: Fri, 16 Oct 2026 18:00:17 +0000
+Subject: [PATCH] [libc++] Implement P3104R6: Bit permutations
+
+Adds std::bit_repeat, std::bit_reverse, std::bit_compress and
+std::bit_expand to <bit> in C++29 mode, and bumps __cpp_lib_bitops to
+202607L.
+
+All four work on 64-bit blocks, so they cover every unsigned integer
+type, unsigned __int128 and unsigned _BitInt(N) of any width, including
+widths that are not a multiple of 64. bit_reverse uses
+__builtin_bitreverse64 where available. bit_compress and bit_expand use
+PEXT and PDEP outside constant evaluation where the target has fast BMI2
+(spelled __builtin_elementwise_pext/pdep where Clang has them,
+__builtin_ia32_pext_di/pdep_di otherwise), and leave them out on bdver4,
+znver1 and znver2, where they are microcoded; LLVM still selects PEXT for
+the elementwise builtin on those targets. Elsewhere, and in constant
+evaluation, a portable kernel answers: compress places each selected bit
+by one popcount of the mask below it, expand walks the mask's ones
+without branching on the source.
+
+The portable kernels and the block composition come from xstd-ints
+(https://github.com/rhalbersma/xstd-ints), where they are proved equal to
+the Intel SDM's PEXT/PDEP pseudocode for every 32- and 64-bit input with
+Z3, swept exhaustively over all 16-bit pairs, and fuzzed.
+
+Fixes #204404
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01HVg61PqZMJHpeJmibxQyDV
+---
+ libcxx/docs/FeatureTestMacroTable.rst         |   2 +-
+ libcxx/docs/ReleaseNotes/24.rst               |   1 +
+ libcxx/docs/Status/Cxx29Papers.csv            |   2 +-
+ libcxx/include/CMakeLists.txt                 |   1 +
+ libcxx/include/__bit/permute.h                | 167 ++++++++++++++++++
+ libcxx/include/bit                            |  11 ++
+ libcxx/include/module.modulemap.in            |   1 +
+ libcxx/include/version                        |   4 +-
+ libcxx/modules/std/bit.inc                    |   8 +
+ .../bit.permute/assert.bit_repeat.pass.cpp    |  29 +++
+ .../bit/bit.permute/permute.verify.cpp        |  28 +++
+ .../bit.version.compile.pass.cpp              |   4 +-
+ .../version.version.compile.pass.cpp          |   4 +-
+ .../bit/bit.permute/bit_compress.pass.cpp     | 145 +++++++++++++++
+ .../bit/bit.permute/bit_expand.pass.cpp       | 146 +++++++++++++++
+ .../bit/bit.permute/bit_repeat.pass.cpp       | 139 +++++++++++++++
+ .../bit/bit.permute/bit_reverse.pass.cpp      | 135 ++++++++++++++
+ .../generate_feature_test_macro_components.py |   3 +-
+ 18 files changed, 820 insertions(+), 10 deletions(-)
+ create mode 100644 libcxx/include/__bit/permute.h
+ create mode 100644 libcxx/test/libcxx/numerics/bit/bit.permute/assert.bit_repeat.pass.cpp
+ create mode 100644 libcxx/test/libcxx/numerics/bit/bit.permute/permute.verify.cpp
+ create mode 100644 libcxx/test/std/numerics/bit/bit.permute/bit_compress.pass.cpp
+ create mode 100644 libcxx/test/std/numerics/bit/bit.permute/bit_expand.pass.cpp
+ create mode 100644 libcxx/test/std/numerics/bit/bit.permute/bit_repeat.pass.cpp
+ create mode 100644 libcxx/test/std/numerics/bit/bit.permute/bit_reverse.pass.cpp
+
+diff --git a/libcxx/docs/FeatureTestMacroTable.rst b/libcxx/docs/FeatureTestMacroTable.rst
+index 336a76d3..acbacea1 100644
+--- a/libcxx/docs/FeatureTestMacroTable.rst
++++ b/libcxx/docs/FeatureTestMacroTable.rst
+@@ -560,7 +560,7 @@ Status
+     ---------------------------------------------------------- -----------------
+     **C++29**
+     ----------------------------------------------------------------------------
+-    ``__cpp_lib_bitops``                                       ``202606L``
++    ``__cpp_lib_bitops``                                       ``202607L``
+     ---------------------------------------------------------- -----------------
+     ``__cpp_lib_expected``                                     ``202606L``
+     ---------------------------------------------------------- -----------------
+diff --git a/libcxx/docs/ReleaseNotes/24.rst b/libcxx/docs/ReleaseNotes/24.rst
+index 04f02ab6..c740a6b1 100644
+--- a/libcxx/docs/ReleaseNotes/24.rst
++++ b/libcxx/docs/ReleaseNotes/24.rst
+@@ -56,6 +56,7 @@ Implemented Papers
+ - P4140R0: Proposed resolution for US70-126: allow incomplete types in type_order (`Github <https://llvm.org/PR216616>`__)
+ - P3450R1: Extend ``std::is_within_lifetime`` (`Github <https://llvm.org/PR189610>`__)
+ - P3793R2: Better shifting (`Github <https://llvm.org/PR219389>`__) (no ``std::simd`` overloads)
++- P3104R6: Bit permutations (`Github <https://llvm.org/PR204404>`__)
+ - P0040R3: Extending memory management tools (`Github <https://github.com/llvm/llvm-project/issues/103640>`__)
+ 
+ Improvements and New Features
+diff --git a/libcxx/docs/Status/Cxx29Papers.csv b/libcxx/docs/Status/Cxx29Papers.csv
+index 3fccdf48..07397ab8 100644
+--- a/libcxx/docs/Status/Cxx29Papers.csv
++++ b/libcxx/docs/Status/Cxx29Papers.csv
+@@ -14,7 +14,7 @@
+ "`P3793R2 <https://wg21.link/P3793R2>`__","Better shifting","2026-06 (Brno)","|Partial|","","`#204401 <https://github.com/llvm/llvm-project/issues/204401>`__","No `std::simd` overloads provided yet."
+ "`P3242R4 <https://wg21.link/P3242R4>`__","Copy and fill for ``mdspan``","2026-06 (Brno)","","","`#204402 <https://github.com/llvm/llvm-project/issues/204402>`__",""
+ "`P3692R4 <https://wg21.link/P3692R4>`__","How to Avoid OOTA Without Really Trying","2026-06 (Brno)","","","`#204403 <https://github.com/llvm/llvm-project/issues/204403>`__",""
+-"`P3104R6 <https://wg21.link/P3104R6>`__","Bit permutations","2026-06 (Brno)","","","`#204404 <https://github.com/llvm/llvm-project/issues/204404>`__",""
++"`P3104R6 <https://wg21.link/P3104R6>`__","Bit permutations","2026-06 (Brno)","|Complete|","24","`#204404 <https://github.com/llvm/llvm-project/issues/204404>`__",""
+ "`P3772R2 <https://wg21.link/P3772R2>`__","``std::simd`` overloads for bit permutations","2026-06 (Brno)","","","`#204405 <https://github.com/llvm/llvm-project/issues/204405>`__",""
+ "`P3091R6 <https://wg21.link/P3091R6>`__","Better Lookups for ``map``, ``unordered_map``, and ``flat_map``","2026-06 (Brno)","","","`#204406 <https://github.com/llvm/llvm-project/issues/204406>`__",""
+ "`P3125R6 <https://wg21.link/P3125R6>`__","constexpr pointer tagging","2026-06 (Brno)","","","`#204407 <https://github.com/llvm/llvm-project/issues/204407>`__",""
+diff --git a/libcxx/include/CMakeLists.txt b/libcxx/include/CMakeLists.txt
+index 9af3d00f..0db40e19 100644
+--- a/libcxx/include/CMakeLists.txt
++++ b/libcxx/include/CMakeLists.txt
+@@ -242,6 +242,7 @@ set(files
+   __bit/endian.h
+   __bit/has_single_bit.h
+   __bit/invert_if.h
++  __bit/permute.h
+   __bit/popcount.h
+   __bit/rotate.h
+   __bit/shift.h
+diff --git a/libcxx/include/__bit/permute.h b/libcxx/include/__bit/permute.h
+new file mode 100644
+index 00000000..371d6de8
+--- /dev/null
++++ b/libcxx/include/__bit/permute.h
+@@ -0,0 +1,167 @@
++//===----------------------------------------------------------------------===//
++//
++// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
++// See https://llvm.org/LICENSE.txt for license information.
++// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++//
++//===----------------------------------------------------------------------===//
++
++#ifndef _LIBCPP___BIT_PERMUTE_H
++#define _LIBCPP___BIT_PERMUTE_H
++
++#include <__assert>
++#include <__config>
++#include <__type_traits/integer_traits.h>
++#include <limits>
++
++#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
++#  pragma GCC system_header
++#endif
++
++#if _LIBCPP_STD_VER >= 29
++
++_LIBCPP_BEGIN_NAMESPACE_STD
++
++// PEXT and PDEP are microcoded on AMD processors before Zen 3, so a build targeting one keeps the portable kernels.
++#  if defined(__x86_64__) && defined(__BMI2__) && !defined(__bdver4__) && !defined(__znver1__) && !defined(__znver2__)
++#    define _LIBCPP_HAS_FAST_PEXT_PDEP 1
++#  else
++#    define _LIBCPP_HAS_FAST_PEXT_PDEP 0
++#  endif
++
++// The four permutations work a 64-bit block at a time, which covers every unsigned integer type up to
++// `unsigned _BitInt(N)` of any width.
++using __bit_permute_block = unsigned long long;
++
++inline constexpr int __bit_permute_block_width = numeric_limits<__bit_permute_block>::digits;
++
++[[nodiscard]] _LIBCPP_HIDE_FROM_ABI constexpr __bit_permute_block
++__bit_reverse_block(__bit_permute_block __x) noexcept {
++#  if __has_builtin(__builtin_bitreverse64)
++  return __builtin_bitreverse64(__x);
++#  else
++  // Mirror the bytes, then the nibbles, pairs and single bits within each byte.
++  __x = __builtin_bswap64(__x);
++  __x = ((__x >> 4) & 0x0F0F0F0F0F0F0F0FULL) | ((__x & 0x0F0F0F0F0F0F0F0FULL) << 4);
++  __x = ((__x >> 2) & 0x3333333333333333ULL) | ((__x & 0x3333333333333333ULL) << 2);
++  __x = ((__x >> 1) & 0x5555555555555555ULL) | ((__x & 0x5555555555555555ULL) << 1);
++  return __x;
++#  endif
++}
++
++[[nodiscard]] _LIBCPP_HIDE_FROM_ABI constexpr __bit_permute_block
++__bit_compress_block(__bit_permute_block __x, __bit_permute_block __m) noexcept {
++#  if _LIBCPP_HAS_FAST_PEXT_PDEP
++  if !consteval {
++#    if __has_builtin(__builtin_elementwise_pext)
++    return __builtin_elementwise_pext(__x, __m);
++#    else
++    return __builtin_ia32_pext_di(__x, __m);
++#    endif
++  }
++#  endif
++  // Each selected bit lands at its rank among the mask's ones: one popcount per selected bit, none per mask bit.
++  __bit_permute_block __r = 0;
++  for (__bit_permute_block __s = __x & __m; __s != 0; __s &= __s - 1) {
++    __bit_permute_block __below_lowest = (__s - 1) & ~__s;
++    __r |= __bit_permute_block(1) << __builtin_popcountll(__below_lowest & __m);
++  }
++  return __r;
++}
++
++[[nodiscard]] _LIBCPP_HIDE_FROM_ABI constexpr __bit_permute_block
++__bit_expand_block(__bit_permute_block __x, __bit_permute_block __m) noexcept {
++#  if _LIBCPP_HAS_FAST_PEXT_PDEP
++  if !consteval {
++#    if __has_builtin(__builtin_elementwise_pdep)
++    return __builtin_elementwise_pdep(__x, __m);
++#    else
++    return __builtin_ia32_pdep_di(__x, __m);
++#    endif
++  }
++#  endif
++  // Each one of the mask, lowest first, takes the next bit of the source, selected by a mask rather than a branch.
++  __bit_permute_block __r = 0;
++  for (; __m != 0; __m &= __m - 1, __x >>= 1)
++    __r |= (__m & -__m) & -(__x & 1);
++  return __r;
++}
++
++template <__unsigned_integer _Tp>
++[[nodiscard]] _LIBCPP_HIDE_FROM_ABI constexpr _Tp bit_reverse(_Tp __x) noexcept {
++  constexpr int __n = numeric_limits<_Tp>::digits;
++  constexpr int __w = __bit_permute_block_width;
++  if constexpr (__n <= __w) {
++    return static_cast<_Tp>(std::__bit_reverse_block(static_cast<__bit_permute_block>(__x)) >> (__w - __n));
++  } else {
++    // Each whole block is mirrored and lands at the mirror of its offset; a partial top block lands at the bottom.
++    constexpr int __partial = __n % __w;
++    _Tp __r                 = 0;
++    for (int __k = 0; __k + __w <= __n; __k += __w)
++      __r |= static_cast<_Tp>(std::__bit_reverse_block(static_cast<__bit_permute_block>(__x >> __k)))
++          << (__n - __w - __k);
++    if constexpr (__partial != 0)
++      __r |= static_cast<_Tp>(
++          std::__bit_reverse_block(static_cast<__bit_permute_block>(__x >> (__n - __partial))) >> (__w - __partial));
++    return __r;
++  }
++}
++
++template <__unsigned_integer _Tp>
++[[nodiscard]] _LIBCPP_HIDE_FROM_ABI constexpr _Tp bit_repeat(_Tp __x, int __l) {
++  _LIBCPP_ASSERT_ARGUMENT_WITHIN_DOMAIN(__l > 0, "bit_repeat requires a positive length");
++  // [bit.permute]: a call violating the precondition is not a core constant expression.
++  if consteval {
++    if (__l <= 0)
++      __builtin_unreachable();
++  }
++  constexpr int __n = numeric_limits<_Tp>::digits;
++  if (__l >= __n)
++    return __x;
++  __x &= static_cast<_Tp>((_Tp(1) << __l) - 1);
++  for (; __l < __n; __l <<= 1)
++    __x |= static_cast<_Tp>(__x << __l);
++  return __x;
++}
++
++template <__unsigned_integer _Tp>
++[[nodiscard]] _LIBCPP_HIDE_FROM_ABI constexpr _Tp bit_compress(_Tp __x, _Tp __m) noexcept {
++  constexpr int __n = numeric_limits<_Tp>::digits;
++  constexpr int __w = __bit_permute_block_width;
++  // Each block's selected bits are packed above those the lower blocks selected.
++  _Tp __r      = 0;
++  int __packed = 0;
++  for (int __k = 0; __k < __n; __k += __w) {
++    __bit_permute_block __m_block = static_cast<__bit_permute_block>(__m >> __k);
++    __r |= static_cast<_Tp>(
++        static_cast<_Tp>(std::__bit_compress_block(static_cast<__bit_permute_block>(__x >> __k), __m_block))
++        << __packed);
++    __packed += __builtin_popcountll(__m_block);
++  }
++  return __r;
++}
++
++template <__unsigned_integer _Tp>
++[[nodiscard]] _LIBCPP_HIDE_FROM_ABI constexpr _Tp bit_expand(_Tp __x, _Tp __m) noexcept {
++  constexpr int __n = numeric_limits<_Tp>::digits;
++  constexpr int __w = __bit_permute_block_width;
++  // Each block draws its bits from where the lower blocks stopped.
++  _Tp __r        = 0;
++  int __consumed = 0;
++  for (int __k = 0; __k < __n; __k += __w) {
++    __bit_permute_block __m_block = static_cast<__bit_permute_block>(__m >> __k);
++    __r |= static_cast<_Tp>(
++        static_cast<_Tp>(std::__bit_expand_block(static_cast<__bit_permute_block>(__x >> __consumed), __m_block))
++        << __k);
++    __consumed += __builtin_popcountll(__m_block);
++  }
++  return __r;
++}
++
++#  undef _LIBCPP_HAS_FAST_PEXT_PDEP
++
++_LIBCPP_END_NAMESPACE_STD
++
++#endif // _LIBCPP_STD_VER >= 29
++
++#endif // _LIBCPP___BIT_PERMUTE_H
+diff --git a/libcxx/include/bit b/libcxx/include/bit
+index be3dfdc4..22c51952 100644
+--- a/libcxx/include/bit
++++ b/libcxx/include/bit
+@@ -56,6 +56,16 @@ namespace std {
+   template<class T>
+     constexpr int popcount(T x) noexcept;     // C++20
+ 
++  // [bit.permute], permutations
++  template<class T>
++    constexpr T bit_repeat(T x, int l);           // C++29
++  template<class T>
++    constexpr T bit_reverse(T x) noexcept;        // C++29
++  template<class T>
++    constexpr T bit_compress(T x, T m) noexcept;  // C++29
++  template<class T>
++    constexpr T bit_expand(T x, T m) noexcept;    // C++29
++
+   // [bit.endian], endian
+   enum class endian {
+     little = see below,        // C++20
+@@ -91,6 +101,7 @@ namespace std {
+ #  endif
+ 
+ #  if _LIBCPP_STD_VER >= 29
++#    include <__bit/permute.h>
+ #    include <__bit/shift.h>
+ #  endif
+ 
+diff --git a/libcxx/include/module.modulemap.in b/libcxx/include/module.modulemap.in
+index 2f6640f8..31b70a64 100644
+--- a/libcxx/include/module.modulemap.in
++++ b/libcxx/include/module.modulemap.in
+@@ -930,6 +930,7 @@ module std {
+     module has_single_bit   { header "__bit/has_single_bit.h" }
+     module invert_if        { header "__bit/invert_if.h" }
+     module popcount         { header "__bit/popcount.h" }
++    module permute          { header "__bit/permute.h" }
+     module rotate           { header "__bit/rotate.h" }
+     module shift            { header "__bit/shift.h" }
+ 
+diff --git a/libcxx/include/version b/libcxx/include/version
+index c8fd4004..82fdb531 100644
+--- a/libcxx/include/version
++++ b/libcxx/include/version
+@@ -47,7 +47,7 @@ __cpp_lib_bind_back                                     202202L <functional>
+ __cpp_lib_bind_front                                    202306L <functional>
+                                                         201907L // C++20
+ __cpp_lib_bit_cast                                      201806L <bit>
+-__cpp_lib_bitops                                        202606L <bit>
++__cpp_lib_bitops                                        202607L <bit>
+                                                         201907L // C++20
+ __cpp_lib_bitset                                        202306L <bitset>
+ __cpp_lib_bool_constant                                 201505L <type_traits>
+@@ -670,7 +670,7 @@ __cpp_lib_void_t                                        201411L <type_traits>
+ 
+ #if _LIBCPP_STD_VER >= 29
+ # undef  __cpp_lib_bitops
+-# define __cpp_lib_bitops                               202606L
++# define __cpp_lib_bitops                               202607L
+ # undef  __cpp_lib_expected
+ # define __cpp_lib_expected                             202606L
+ // # define __cpp_lib_map_lookup                           202606L
+diff --git a/libcxx/modules/std/bit.inc b/libcxx/modules/std/bit.inc
+index dd05b396..a9991132 100644
+--- a/libcxx/modules/std/bit.inc
++++ b/libcxx/modules/std/bit.inc
+@@ -39,6 +39,14 @@ export namespace std {
+   using std::countr_zero;
+   using std::popcount;
+ 
++#if _LIBCPP_STD_VER >= 29
++  // [bit.permute], permutations
++  using std::bit_compress;
++  using std::bit_expand;
++  using std::bit_repeat;
++  using std::bit_reverse;
++#endif
++
+   // [bit.endian], endian
+   using std::endian;
+ } // namespace std
+diff --git a/libcxx/test/libcxx/numerics/bit/bit.permute/assert.bit_repeat.pass.cpp b/libcxx/test/libcxx/numerics/bit/bit.permute/assert.bit_repeat.pass.cpp
+new file mode 100644
+index 00000000..8b7cdb3c
+--- /dev/null
++++ b/libcxx/test/libcxx/numerics/bit/bit.permute/assert.bit_repeat.pass.cpp
+@@ -0,0 +1,29 @@
++//===----------------------------------------------------------------------===//
++//
++// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
++// See https://llvm.org/LICENSE.txt for license information.
++// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++//
++//===----------------------------------------------------------------------===//
++
++// REQUIRES: std-at-least-c++29
++// REQUIRES: can-test-hardening-assertions-fast
++
++// <bit>
++
++// template<class T>
++//   constexpr T bit_repeat(T x, int l);
++//
++// Preconditions: l > 0.
++
++#include <bit>
++
++#include "check_assertion.h"
++
++int main(int, char**) {
++  TEST_LIBCPP_ASSERT_FAILURE(std::bit_repeat(1u, 0), "bit_repeat requires a positive length");
++  TEST_LIBCPP_ASSERT_FAILURE(std::bit_repeat(1u, -1), "bit_repeat requires a positive length");
++  TEST_LIBCPP_ASSERT_FAILURE(std::bit_repeat(1ull, -64), "bit_repeat requires a positive length");
++
++  return 0;
++}
+diff --git a/libcxx/test/libcxx/numerics/bit/bit.permute/permute.verify.cpp b/libcxx/test/libcxx/numerics/bit/bit.permute/permute.verify.cpp
+new file mode 100644
+index 00000000..968cb863
+--- /dev/null
++++ b/libcxx/test/libcxx/numerics/bit/bit.permute/permute.verify.cpp
+@@ -0,0 +1,28 @@
++//===----------------------------------------------------------------------===//
++//
++// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
++// See https://llvm.org/LICENSE.txt for license information.
++// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++//
++//===----------------------------------------------------------------------===//
++
++// REQUIRES: std-at-least-c++29
++
++// <bit>
++
++// The four permutations are [[nodiscard]], and a call to bit_repeat that violates
++// its precondition, l > 0, is not a core constant expression ([bit.permute]).
++
++#include <bit>
++
++void test_nodiscard() {
++  std::bit_reverse(1u);   // expected-warning {{ignoring return value of function declared with 'nodiscard' attribute}}
++  std::bit_repeat(1u, 1); // expected-warning {{ignoring return value of function declared with 'nodiscard' attribute}}
++  std::bit_compress(
++      1u, 1u);             // expected-warning {{ignoring return value of function declared with 'nodiscard' attribute}}
++  std::bit_expand(1u, 1u); // expected-warning {{ignoring return value of function declared with 'nodiscard' attribute}}
++}
++
++constexpr unsigned repeated_by_zero = std::bit_repeat(1u, 0);
++// expected-error@-1 {{constexpr variable 'repeated_by_zero' must be initialized by a constant expression}}
++// expected-note@*:* 0+ {{}}
+diff --git a/libcxx/test/std/language.support/support.limits/support.limits.general/bit.version.compile.pass.cpp b/libcxx/test/std/language.support/support.limits/support.limits.general/bit.version.compile.pass.cpp
+index 28a7debf..7a46d972 100644
+--- a/libcxx/test/std/language.support/support.limits/support.limits.general/bit.version.compile.pass.cpp
++++ b/libcxx/test/std/language.support/support.limits/support.limits.general/bit.version.compile.pass.cpp
+@@ -204,8 +204,8 @@
+ #  ifndef __cpp_lib_bitops
+ #    error "__cpp_lib_bitops should be defined in c++29"
+ #  endif
+-#  if __cpp_lib_bitops != 202606L
+-#    error "__cpp_lib_bitops should have the value 202606L in c++29"
++#  if __cpp_lib_bitops != 202607L
++#    error "__cpp_lib_bitops should have the value 202607L in c++29"
+ #  endif
+ 
+ #  ifndef __cpp_lib_byteswap
+diff --git a/libcxx/test/std/language.support/support.limits/support.limits.general/version.version.compile.pass.cpp b/libcxx/test/std/language.support/support.limits/support.limits.general/version.version.compile.pass.cpp
+index e7baa3f1..cecf6e3a 100644
+--- a/libcxx/test/std/language.support/support.limits/support.limits.general/version.version.compile.pass.cpp
++++ b/libcxx/test/std/language.support/support.limits/support.limits.general/version.version.compile.pass.cpp
+@@ -8862,8 +8862,8 @@
+ #  ifndef __cpp_lib_bitops
+ #    error "__cpp_lib_bitops should be defined in c++29"
+ #  endif
+-#  if __cpp_lib_bitops != 202606L
+-#    error "__cpp_lib_bitops should have the value 202606L in c++29"
++#  if __cpp_lib_bitops != 202607L
++#    error "__cpp_lib_bitops should have the value 202607L in c++29"
+ #  endif
+ 
+ #  ifndef __cpp_lib_bitset
+diff --git a/libcxx/test/std/numerics/bit/bit.permute/bit_compress.pass.cpp b/libcxx/test/std/numerics/bit/bit.permute/bit_compress.pass.cpp
+new file mode 100644
+index 00000000..2062e380
+--- /dev/null
++++ b/libcxx/test/std/numerics/bit/bit.permute/bit_compress.pass.cpp
+@@ -0,0 +1,145 @@
++//===----------------------------------------------------------------------===//
++//
++// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
++// See https://llvm.org/LICENSE.txt for license information.
++// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++//
++//===----------------------------------------------------------------------===//
++
++// REQUIRES: std-at-least-c++29
++
++// template<class T>
++//   constexpr T bit_compress(T x, T m) noexcept;
++
++// Constraints: T is an unsigned integer type.
++
++#include <bit>
++#include <cassert>
++#include <cstdint>
++#include <limits>
++#include <type_traits>
++
++#include "test_macros.h"
++#include "type_algorithms.h"
++
++struct A {};
++enum E1 : unsigned char { rEd };
++enum class E2 : unsigned char { red };
++
++template <class T>
++concept can_bit_compress = requires(T t) { std::bit_compress(t, t); };
++
++static_assert(can_bit_compress<unsigned>, "Concept is broken. We should be able to call bit_compress on unsigned.");
++static_assert(!can_bit_compress<bool>);
++static_assert(!can_bit_compress<char>);
++static_assert(!can_bit_compress<wchar_t>);
++static_assert(!can_bit_compress<char8_t>);
++static_assert(!can_bit_compress<char16_t>);
++static_assert(!can_bit_compress<char32_t>);
++static_assert(!can_bit_compress<signed char>);
++static_assert(!can_bit_compress<int>);
++static_assert(!can_bit_compress<long long>);
++static_assert(!can_bit_compress<A>);
++static_assert(!can_bit_compress<A*>);
++static_assert(!can_bit_compress<E1>);
++static_assert(!can_bit_compress<E2>);
++static_assert(!can_bit_compress<float>);
++
++// SplitMix64, so every run and every constant evaluation sees the same values.
++constexpr std::uint64_t next(std::uint64_t& state) {
++  state += 0x9E3779B97F4A7C15ULL;
++  std::uint64_t z = state;
++  z               = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
++  z               = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
++  return z ^ (z >> 31);
++}
++
++template <class T>
++constexpr T draw(std::uint64_t& state) {
++  T value = 0;
++  for (int i = 0; i < std::numeric_limits<T>::digits; i += 64)
++    value |= static_cast<T>(static_cast<T>(next(state)) << i);
++  return value;
++}
++
++// Each bit of x that m selects goes to the next position from the bottom, one bit at a time.
++template <class T>
++constexpr T compress_one_bit_at_a_time(T x, T m) {
++  constexpr int width = std::numeric_limits<T>::digits;
++  T result            = 0;
++  int next_position   = 0;
++  for (int i = 0; i < width; ++i) {
++    if ((m >> i) & 1) {
++      result |= static_cast<T>(static_cast<T>((x >> i) & 1) << next_position);
++      ++next_position;
++    }
++  }
++  return result;
++}
++
++template <class T>
++constexpr bool test() {
++  constexpr int width = std::numeric_limits<T>::digits;
++  constexpr T ones    = static_cast<T>(~T(0));
++
++  ASSERT_SAME_TYPE(decltype(std::bit_compress(T(), T())), T);
++  ASSERT_NOEXCEPT(std::bit_compress(T(), T()));
++
++  assert(std::bit_compress(ones, T(0)) == T(0));
++  assert(std::bit_compress(T(0), ones) == T(0));
++  assert(std::bit_compress(ones, ones) == ones);
++  assert(std::bit_compress(T(0b1011'0110 & ones), T(0b1111'0000 & ones)) ==
++         compress_one_bit_at_a_time(T(0b1011'0110 & ones), T(0b1111'0000 & ones)));
++  for (int i = 0; i < width; i += (width > 64 ? 7 : 1)) {
++    T bit = static_cast<T>(T(1) << i);
++    assert(std::bit_compress(ones, bit) == T(1));
++    assert(std::bit_compress(bit, bit) == T(1));
++    assert(std::bit_compress(static_cast<T>(ones ^ bit), bit) == T(0));
++    assert(std::bit_compress(ones, static_cast<T>(ones ^ bit)) == static_cast<T>(ones >> 1));
++    assert(std::bit_compress(bit, static_cast<T>(ones ^ static_cast<T>(bit - 1))) == T(1));
++  }
++
++  std::uint64_t state = width;
++  for (int i = 0; i < 16; ++i) {
++    T x = draw<T>(state);
++    T y = draw<T>(state);
++    T z = draw<T>(state);
++    assert(std::bit_compress(x, y) == compress_one_bit_at_a_time(x, y));
++    assert(std::bit_compress(x, static_cast<T>(y & z)) == compress_one_bit_at_a_time(x, static_cast<T>(y & z)));
++    assert(std::bit_compress(x, static_cast<T>(y | z)) == compress_one_bit_at_a_time(x, static_cast<T>(y | z)));
++    // Expanding what was compressed gives back the bits the mask selected.
++    assert(std::bit_expand(std::bit_compress(x, y), y) == static_cast<T>(x & y));
++  }
++  return true;
++}
++
++int main(int, char**) {
++  constexpr auto test_type = []<class T> {
++    static_assert(test<T>());
++    test<T>();
++  };
++
++  types::for_each(types::unsigned_integer_types{}, test_type);
++
++#if TEST_HAS_BITINT
++  using bitint_types = types::type_list<
++      unsigned _BitInt(2),
++      unsigned _BitInt(13),
++      unsigned _BitInt(32),
++      unsigned _BitInt(64),
++      unsigned _BitInt(65)
++#  if __BITINT_MAXWIDTH__ >= 147
++          ,
++      unsigned _BitInt(128),
++      unsigned _BitInt(147)
++#  endif
++#  if __BITINT_MAXWIDTH__ >= 256
++          ,
++      unsigned _BitInt(256)
++#  endif
++      >;
++  types::for_each(bitint_types{}, test_type);
++#endif
++
++  return 0;
++}
+diff --git a/libcxx/test/std/numerics/bit/bit.permute/bit_expand.pass.cpp b/libcxx/test/std/numerics/bit/bit.permute/bit_expand.pass.cpp
+new file mode 100644
+index 00000000..27cea6bd
+--- /dev/null
++++ b/libcxx/test/std/numerics/bit/bit.permute/bit_expand.pass.cpp
+@@ -0,0 +1,146 @@
++//===----------------------------------------------------------------------===//
++//
++// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
++// See https://llvm.org/LICENSE.txt for license information.
++// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++//
++//===----------------------------------------------------------------------===//
++
++// REQUIRES: std-at-least-c++29
++
++// template<class T>
++//   constexpr T bit_expand(T x, T m) noexcept;
++
++// Constraints: T is an unsigned integer type.
++
++#include <bit>
++#include <cassert>
++#include <cstdint>
++#include <limits>
++#include <type_traits>
++
++#include "test_macros.h"
++#include "type_algorithms.h"
++
++struct A {};
++enum E1 : unsigned char { rEd };
++enum class E2 : unsigned char { red };
++
++template <class T>
++concept can_bit_expand = requires(T t) { std::bit_expand(t, t); };
++
++static_assert(can_bit_expand<unsigned>, "Concept is broken. We should be able to call bit_expand on unsigned.");
++static_assert(!can_bit_expand<bool>);
++static_assert(!can_bit_expand<char>);
++static_assert(!can_bit_expand<wchar_t>);
++static_assert(!can_bit_expand<char8_t>);
++static_assert(!can_bit_expand<char16_t>);
++static_assert(!can_bit_expand<char32_t>);
++static_assert(!can_bit_expand<signed char>);
++static_assert(!can_bit_expand<int>);
++static_assert(!can_bit_expand<long long>);
++static_assert(!can_bit_expand<A>);
++static_assert(!can_bit_expand<A*>);
++static_assert(!can_bit_expand<E1>);
++static_assert(!can_bit_expand<E2>);
++static_assert(!can_bit_expand<float>);
++
++// SplitMix64, so every run and every constant evaluation sees the same values.
++constexpr std::uint64_t next(std::uint64_t& state) {
++  state += 0x9E3779B97F4A7C15ULL;
++  std::uint64_t z = state;
++  z               = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
++  z               = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
++  return z ^ (z >> 31);
++}
++
++template <class T>
++constexpr T draw(std::uint64_t& state) {
++  T value = 0;
++  for (int i = 0; i < std::numeric_limits<T>::digits; i += 64)
++    value |= static_cast<T>(static_cast<T>(next(state)) << i);
++  return value;
++}
++
++// Each position that m selects takes the next bit of x from the bottom, one bit at a time.
++template <class T>
++constexpr T expand_one_bit_at_a_time(T x, T m) {
++  constexpr int width = std::numeric_limits<T>::digits;
++  T result            = 0;
++  int next_source     = 0;
++  for (int i = 0; i < width; ++i) {
++    if ((m >> i) & 1) {
++      result |= static_cast<T>(static_cast<T>((x >> next_source) & 1) << i);
++      ++next_source;
++    }
++  }
++  return result;
++}
++
++template <class T>
++constexpr bool test() {
++  constexpr int width = std::numeric_limits<T>::digits;
++  constexpr T ones    = static_cast<T>(~T(0));
++
++  ASSERT_SAME_TYPE(decltype(std::bit_expand(T(), T())), T);
++  ASSERT_NOEXCEPT(std::bit_expand(T(), T()));
++
++  assert(std::bit_expand(ones, T(0)) == T(0));
++  assert(std::bit_expand(T(0), ones) == T(0));
++  assert(std::bit_expand(ones, ones) == ones);
++  assert(std::bit_expand(T(0b1011 & ones), T(0b1111'0000 & ones)) ==
++         expand_one_bit_at_a_time(T(0b1011 & ones), T(0b1111'0000 & ones)));
++  for (int i = 0; i < width; i += (width > 64 ? 7 : 1)) {
++    T bit = static_cast<T>(T(1) << i);
++    assert(std::bit_expand(ones, bit) == bit);
++    assert(std::bit_expand(T(1), bit) == bit);
++    assert(std::bit_expand(T(0), bit) == T(0));
++    assert(std::bit_expand(ones, static_cast<T>(ones ^ bit)) == static_cast<T>(ones ^ bit));
++  }
++
++  std::uint64_t state = width;
++  for (int i = 0; i < 16; ++i) {
++    T x = draw<T>(state);
++    T y = draw<T>(state);
++    T z = draw<T>(state);
++    assert(std::bit_expand(x, y) == expand_one_bit_at_a_time(x, y));
++    assert(std::bit_expand(x, static_cast<T>(y & z)) == expand_one_bit_at_a_time(x, static_cast<T>(y & z)));
++    assert(std::bit_expand(x, static_cast<T>(y | z)) == expand_one_bit_at_a_time(x, static_cast<T>(y | z)));
++    // Compressing what was expanded gives back as many low bits of x as the mask has ones.
++    int ones_of_y = std::popcount(y);
++    T low_bits    = ones_of_y == width ? ones : static_cast<T>(static_cast<T>(T(1) << ones_of_y) - 1);
++    assert(std::bit_compress(std::bit_expand(x, y), y) == static_cast<T>(x & low_bits));
++  }
++  return true;
++}
++
++int main(int, char**) {
++  constexpr auto test_type = []<class T> {
++    static_assert(test<T>());
++    test<T>();
++  };
++
++  types::for_each(types::unsigned_integer_types{}, test_type);
++
++#if TEST_HAS_BITINT
++  using bitint_types = types::type_list<
++      unsigned _BitInt(2),
++      unsigned _BitInt(13),
++      unsigned _BitInt(32),
++      unsigned _BitInt(64),
++      unsigned _BitInt(65)
++#  if __BITINT_MAXWIDTH__ >= 147
++          ,
++      unsigned _BitInt(128),
++      unsigned _BitInt(147)
++#  endif
++#  if __BITINT_MAXWIDTH__ >= 256
++          ,
++      unsigned _BitInt(256)
++#  endif
++      >;
++  types::for_each(bitint_types{}, test_type);
++#endif
++
++  return 0;
++}
+diff --git a/libcxx/test/std/numerics/bit/bit.permute/bit_repeat.pass.cpp b/libcxx/test/std/numerics/bit/bit.permute/bit_repeat.pass.cpp
+new file mode 100644
+index 00000000..bebadafe
+--- /dev/null
++++ b/libcxx/test/std/numerics/bit/bit.permute/bit_repeat.pass.cpp
+@@ -0,0 +1,139 @@
++//===----------------------------------------------------------------------===//
++//
++// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
++// See https://llvm.org/LICENSE.txt for license information.
++// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++//
++//===----------------------------------------------------------------------===//
++
++// REQUIRES: std-at-least-c++29
++
++// template<class T>
++//   constexpr T bit_repeat(T x, int l);
++
++// Constraints: T is an unsigned integer type.
++
++#include <bit>
++#include <cassert>
++#include <cstdint>
++#include <limits>
++#include <type_traits>
++
++#include "test_macros.h"
++#include "type_algorithms.h"
++
++struct A {};
++enum E1 : unsigned char { rEd };
++enum class E2 : unsigned char { red };
++
++template <class T>
++concept can_bit_repeat = requires(T t) { std::bit_repeat(t, 1); };
++
++static_assert(can_bit_repeat<unsigned>, "Concept is broken. We should be able to call bit_repeat on unsigned.");
++static_assert(!can_bit_repeat<bool>);
++static_assert(!can_bit_repeat<char>);
++static_assert(!can_bit_repeat<wchar_t>);
++static_assert(!can_bit_repeat<char8_t>);
++static_assert(!can_bit_repeat<char16_t>);
++static_assert(!can_bit_repeat<char32_t>);
++static_assert(!can_bit_repeat<signed char>);
++static_assert(!can_bit_repeat<int>);
++static_assert(!can_bit_repeat<long long>);
++static_assert(!can_bit_repeat<A>);
++static_assert(!can_bit_repeat<A*>);
++static_assert(!can_bit_repeat<E1>);
++static_assert(!can_bit_repeat<E2>);
++static_assert(!can_bit_repeat<float>);
++
++// SplitMix64, so every run and every constant evaluation sees the same values.
++constexpr std::uint64_t next(std::uint64_t& state) {
++  state += 0x9E3779B97F4A7C15ULL;
++  std::uint64_t z = state;
++  z               = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
++  z               = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
++  return z ^ (z >> 31);
++}
++
++template <class T>
++constexpr T draw(std::uint64_t& state) {
++  T value = 0;
++  for (int i = 0; i < std::numeric_limits<T>::digits; i += 64)
++    value |= static_cast<T>(static_cast<T>(next(state)) << i);
++  return value;
++}
++
++// Bit i of the result is bit i % l of x, one bit at a time.
++template <class T>
++constexpr T repeat_one_bit_at_a_time(T x, int l) {
++  constexpr int width = std::numeric_limits<T>::digits;
++  T result            = 0;
++  for (int i = 0; i < width; ++i)
++    result |= static_cast<T>(static_cast<T>((x >> (i % l)) & 1) << i);
++  return result;
++}
++
++template <class T>
++constexpr bool test() {
++  constexpr int width = std::numeric_limits<T>::digits;
++  constexpr T ones    = static_cast<T>(~T(0));
++
++  ASSERT_SAME_TYPE(decltype(std::bit_repeat(T(), 1)), T);
++  ASSERT_NOT_NOEXCEPT(std::bit_repeat(T(), 1));
++
++  assert(std::bit_repeat(T(0), 1) == T(0));
++  assert(std::bit_repeat(T(1), 1) == ones);
++  assert(std::bit_repeat(ones, 1) == ones);
++  assert(std::bit_repeat(ones, width) == ones);
++  assert(std::bit_repeat(T(1), width) == T(1));
++  // A length at or past the width leaves x as it is.
++  assert(std::bit_repeat(static_cast<T>(ones - 1), width) == static_cast<T>(ones - 1));
++  assert(std::bit_repeat(static_cast<T>(ones - 1), width + 1) == static_cast<T>(ones - 1));
++  assert(std::bit_repeat(static_cast<T>(ones - 1), std::numeric_limits<int>::max()) == static_cast<T>(ones - 1));
++  for (int l = 1; l <= width + 1; l += (width > 64 ? 5 : 1)) {
++    assert(std::bit_repeat(T(1), l) == repeat_one_bit_at_a_time(T(1), l));
++    assert(std::bit_repeat(ones, l) == ones);
++  }
++
++  std::uint64_t state = width;
++  for (int i = 0; i < 16; ++i) {
++    T x = draw<T>(state);
++    T y = draw<T>(state);
++    T z = draw<T>(state);
++    for (int l = 1; l <= width + 1; l += (width > 16 ? 9 : 1))
++      assert(std::bit_repeat(x, l) == repeat_one_bit_at_a_time(x, l));
++    (void)y;
++    (void)z;
++  }
++  return true;
++}
++
++int main(int, char**) {
++  constexpr auto test_type = []<class T> {
++    static_assert(test<T>());
++    test<T>();
++  };
++
++  types::for_each(types::unsigned_integer_types{}, test_type);
++
++#if TEST_HAS_BITINT
++  using bitint_types = types::type_list<
++      unsigned _BitInt(2),
++      unsigned _BitInt(13),
++      unsigned _BitInt(32),
++      unsigned _BitInt(64),
++      unsigned _BitInt(65)
++#  if __BITINT_MAXWIDTH__ >= 147
++          ,
++      unsigned _BitInt(128),
++      unsigned _BitInt(147)
++#  endif
++#  if __BITINT_MAXWIDTH__ >= 256
++          ,
++      unsigned _BitInt(256)
++#  endif
++      >;
++  types::for_each(bitint_types{}, test_type);
++#endif
++
++  return 0;
++}
+diff --git a/libcxx/test/std/numerics/bit/bit.permute/bit_reverse.pass.cpp b/libcxx/test/std/numerics/bit/bit.permute/bit_reverse.pass.cpp
+new file mode 100644
+index 00000000..4350d2cf
+--- /dev/null
++++ b/libcxx/test/std/numerics/bit/bit.permute/bit_reverse.pass.cpp
+@@ -0,0 +1,135 @@
++//===----------------------------------------------------------------------===//
++//
++// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
++// See https://llvm.org/LICENSE.txt for license information.
++// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++//
++//===----------------------------------------------------------------------===//
++
++// REQUIRES: std-at-least-c++29
++
++// template<class T>
++//   constexpr T bit_reverse(T x) noexcept;
++
++// Constraints: T is an unsigned integer type.
++
++#include <bit>
++#include <cassert>
++#include <cstdint>
++#include <limits>
++#include <type_traits>
++
++#include "test_macros.h"
++#include "type_algorithms.h"
++
++struct A {};
++enum E1 : unsigned char { rEd };
++enum class E2 : unsigned char { red };
++
++template <class T>
++concept can_bit_reverse = requires(T t) { std::bit_reverse(t); };
++
++static_assert(can_bit_reverse<unsigned>, "Concept is broken. We should be able to call bit_reverse on unsigned.");
++static_assert(!can_bit_reverse<bool>);
++static_assert(!can_bit_reverse<char>);
++static_assert(!can_bit_reverse<wchar_t>);
++static_assert(!can_bit_reverse<char8_t>);
++static_assert(!can_bit_reverse<char16_t>);
++static_assert(!can_bit_reverse<char32_t>);
++static_assert(!can_bit_reverse<signed char>);
++static_assert(!can_bit_reverse<int>);
++static_assert(!can_bit_reverse<long long>);
++static_assert(!can_bit_reverse<A>);
++static_assert(!can_bit_reverse<A*>);
++static_assert(!can_bit_reverse<E1>);
++static_assert(!can_bit_reverse<E2>);
++static_assert(!can_bit_reverse<float>);
++
++// SplitMix64, so every run and every constant evaluation sees the same values.
++constexpr std::uint64_t next(std::uint64_t& state) {
++  state += 0x9E3779B97F4A7C15ULL;
++  std::uint64_t z = state;
++  z               = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
++  z               = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
++  return z ^ (z >> 31);
++}
++
++template <class T>
++constexpr T draw(std::uint64_t& state) {
++  T value = 0;
++  for (int i = 0; i < std::numeric_limits<T>::digits; i += 64)
++    value |= static_cast<T>(static_cast<T>(next(state)) << i);
++  return value;
++}
++
++// Bit i of x becomes bit width - 1 - i, one bit at a time.
++template <class T>
++constexpr T reverse_one_bit_at_a_time(T x) {
++  constexpr int width = std::numeric_limits<T>::digits;
++  T result            = 0;
++  for (int i = 0; i < width; ++i)
++    result |= static_cast<T>(static_cast<T>((x >> i) & 1) << (width - 1 - i));
++  return result;
++}
++
++template <class T>
++constexpr bool test() {
++  constexpr int width = std::numeric_limits<T>::digits;
++  constexpr T ones    = static_cast<T>(~T(0));
++
++  ASSERT_SAME_TYPE(decltype(std::bit_reverse(T())), T);
++  ASSERT_NOEXCEPT(std::bit_reverse(T()));
++
++  assert(std::bit_reverse(T(0)) == T(0));
++  assert(std::bit_reverse(ones) == ones);
++  assert(std::bit_reverse(T(1)) == static_cast<T>(T(1) << (width - 1)));
++  for (int i = 0; i < width; i += (width > 64 ? 7 : 1)) {
++    T bit = static_cast<T>(T(1) << i);
++    assert(std::bit_reverse(bit) == static_cast<T>(T(1) << (width - 1 - i)));
++    assert(std::bit_reverse(static_cast<T>(ones ^ bit)) ==
++           static_cast<T>(ones ^ static_cast<T>(T(1) << (width - 1 - i))));
++    assert(std::bit_reverse(static_cast<T>(bit - 1)) == reverse_one_bit_at_a_time(static_cast<T>(bit - 1)));
++  }
++
++  std::uint64_t state = width;
++  for (int i = 0; i < 16; ++i) {
++    T x = draw<T>(state);
++    T y = draw<T>(state);
++    T z = draw<T>(state);
++    assert(std::bit_reverse(x) == reverse_one_bit_at_a_time(x));
++    assert(std::bit_reverse(std::bit_reverse(y)) == y);
++    assert(std::bit_reverse(static_cast<T>(x & z)) == static_cast<T>(std::bit_reverse(x) & std::bit_reverse(z)));
++  }
++  return true;
++}
++
++int main(int, char**) {
++  constexpr auto test_type = []<class T> {
++    static_assert(test<T>());
++    test<T>();
++  };
++
++  types::for_each(types::unsigned_integer_types{}, test_type);
++
++#if TEST_HAS_BITINT
++  using bitint_types = types::type_list<
++      unsigned _BitInt(2),
++      unsigned _BitInt(13),
++      unsigned _BitInt(32),
++      unsigned _BitInt(64),
++      unsigned _BitInt(65)
++#  if __BITINT_MAXWIDTH__ >= 147
++          ,
++      unsigned _BitInt(128),
++      unsigned _BitInt(147)
++#  endif
++#  if __BITINT_MAXWIDTH__ >= 256
++          ,
++      unsigned _BitInt(256)
++#  endif
++      >;
++  types::for_each(bitint_types{}, test_type);
++#endif
++
++  return 0;
++}
+diff --git a/libcxx/utils/generate_feature_test_macro_components.py b/libcxx/utils/generate_feature_test_macro_components.py
+index 86d91f5e..a7b35f6f 100755
+--- a/libcxx/utils/generate_feature_test_macro_components.py
++++ b/libcxx/utils/generate_feature_test_macro_components.py
+@@ -248,8 +248,7 @@ feature_test_macros = [
+             "name": "__cpp_lib_bitops",
+             "values": {
+                 "c++20": 201907,
+-                "c++29": 202606,  # P3793R2 Better shifting
+-                # "c++29": 202607,  # P3104R6 Bit permutations
++                "c++29": 202607,  # P3104R6 Bit permutations; P3793R2 Better shifting is 202606
+             },
+             "headers": ["bit"],
+         },
+-- 
+2.43.0
+
