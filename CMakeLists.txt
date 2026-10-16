@@ -187,6 +187,15 @@ if(PROJECT_IS_TOP_LEVEL)
     if(${project_option_prefix}_BUILD_FUZZERS)
         add_subdirectory(fuzz)
     endif()
+
+    # Off by default, and outside BUILD_TESTING: the proofs run Z3 from Python for many minutes and need no Boost.Test.
+    # enable_testing() stays here, where ctest looks for the tests.
+    option(${project_option_prefix}_BUILD_PROOFS "Prove the portable bit kernels with Z3, under proofs/" OFF)
+
+    if(${project_option_prefix}_BUILD_PROOFS)
+        enable_testing()
+        add_subdirectory(proofs)
+    endif()
 endif()
 
 install(

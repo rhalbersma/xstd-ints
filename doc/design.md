@@ -160,7 +160,10 @@ alternatives measured and left out are the bit-at-a-time mask walk with a branch
 times slower; Hacker's Delight's parallel suffix, a flat 21 to 23 ns; and Wegner's zp7, a flat
 6 to 8 ns with `PCLMULQDQ` and 17 to 20 ns without. Tests check every portable kernel against a
 bit-at-a-time oracle at compile time and at run time, and the run-time block kernels against
-the portable ones, so a build with BMI2 checks the instructions too.
+the portable ones, so a build with BMI2 checks the instructions too. Beyond what tests can sample, Z3 proves
+each portable kernel equal to its specification for every input at 32 and 64 bits: PEXT and PDEP as the
+Intel SDM's pseudocode gives them, RBIT as the Arm ARM's ASL does, and select by its defining property, each
+shift within the width and the select's precondition met at every call.
 Wider types compose the blocks: reversal sends each mirrored block to the mirror of its offset,
 compression packs each block's result above the bits the lower blocks selected, expansion
 draws each block's bits from where the lower blocks stopped, and selection skips whole blocks,

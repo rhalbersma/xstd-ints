@@ -154,6 +154,26 @@ The target is built with ASan and UBSan, and `XSTD_INTS_FUZZ_COMPILE_OPTIONS` an
 
 The unit tests reach PEXT and PDEP only where the build targets BMI2, so [`gcc.yml`](.github/workflows/gcc.yml) and [`clang.yml`](.github/workflows/clang.yml) each add a leg at `-march=x86-64-v3` on the stable rung; every other leg runs the portable kernels.
 
+## Proofs
+
+The portable kernels under `include/xstd/ints/bit/detail/portable/` answer every constant expression and every target without the instructions, and the tests and the fuzzer can only sample their 2^128 pairs of inputs. [`proofs/`](proofs) proves them equal to their specifications for every input, with [Z3](https://github.com/Z3Prover/z3)'s Python bindings, at both widths `std::size_t` has, 32 and 64 bits:
+
+- [`specifications.py`](proofs/specifications.py) transcribes what each kernel must compute from its primary source: PEXT and PDEP from the Operation pseudocode of the Intel 64 and IA-32 Architectures Software Developer's Manual, RBIT from the Arm Architecture Reference Manual's ASL, and select from its defining property.
+- [`kernels.py`](proofs/kernels.py) transcribes each kernel statement by statement, over the word operations of [`operations.py`](proofs/operations.py), with each loop given as its parts. Each kernel records what the C++ needs there to be defined: a shift within the width, the select's precondition, a table index in range and a rank that names a one of its byte.
+- [`prove.py`](proofs/prove.py) proves `block_reverse_by_swaps` directly, and each loop by an inductive invariant: it holds on entry, one pass keeps it while a variable falls, so the loop ends, and on exit it makes the result a closed form that a further claim proves equal to the SDM's pseudocode. `block_select_by_broadword` is proved in two parts that meet at its counts, the second a case for each byte and each bit within it, with the `select_in_byte` table standing in by a contract that is checked entry by entry. `block_expand_by_select` relies on the select's proved contract rather than on its code. Three mutants, each a kernel with one deliberate error, must be refuted.
+- [`drift.py`](proofs/drift.py) holds the models to the C++, since a proof is about the transcription: it runs the compiled kernels through [`drift.cpp`](proofs/drift.cpp) on edge values and pseudo-random words and requires every output to equal the model's at the same width.
+
+Z3 is pinned by hash in [`tools/z3-requirements.txt`](tools/z3-requirements.txt):
+
+```sh
+pip install --user --require-hashes -r tools/z3-requirements.txt
+cmake -S . -B build-proofs -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_PROOFS=ON
+cmake --build build-proofs
+ctest --test-dir build-proofs --output-on-failure --verbose
+```
+
+`python3 proofs/prove.py --widths 16 --jobs 4` runs every claim at 16 bits in seconds, which is the quick check while editing a kernel or its model. The [Proofs workflow](.github/workflows/proofs.yml) runs both widths weekly, by hand, and on a pull request touching the portable kernels or the proofs. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
+
 ## Standards-paper tracking
 
 Implementation-relevant proposals must record the paper number, the revision-pinned wording reviewed by xstd, the corresponding live `cplusplus/papers` tracking issue, the last-reviewed date, and a short statement saying whether xstd implements, partially follows, extends, or merely references the paper. Unversioned `wg21.link/P####` links are reserved for links explicitly described as the latest revision; implementation and conformance claims use pinned `P####R#` links. Durable prose does not copy volatile WG21 status labels.

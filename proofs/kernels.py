@@ -111,8 +111,11 @@ def select_counts(o, x):
     return ((counts + o.lshr(counts, 4)) & byte_lows) * ones_per_byte
 
 
-def select_from_counts(o, x, k, counts, path, table=SELECT_IN_BYTE):
-    """The rest of the kernel; besides the position, the byte it found and the table's answer within it."""
+def select_from_counts(o, x, k, counts, path, table=SELECT_IN_BYTE, lookup=None):
+    """The rest of the kernel; besides the position, the byte it found and the table's answer within it.
+
+    A proof passes lookup to stand in for the table by its contract, which select_in_byte_holds checks entry by entry.
+    """
     byte_mask = BYTE_VALUES - 1
     ones_per_byte = ones(o) // byte_mask
     byte_tops = (ones_per_byte << (BYTE_DIGITS - 1)) % (1 << o.width)
@@ -122,10 +125,23 @@ def select_from_counts(o, x, k, counts, path, table=SELECT_IN_BYTE):
     rank_in_byte = o.word(k) - (o.lshr(o.shl(counts, BYTE_DIGITS), offset) & byte_mask)
     # Below 8 in the word, so it never wrapped, so the C++ unsigned arithmetic gives the same small value.
     o.require(path, o.ult(rank_in_byte, BYTE_DIGITS), "block_select_by_broadword: rank within the byte below 8")
-    index = (o.lshr(x, offset) & byte_mask) | o.shl(rank_in_byte, BYTE_DIGITS)
+    byte = o.lshr(x, offset) & byte_mask
+    # The table answers zero for a rank the byte does not have, so the rank must name one of its ones.
+    o.require(path, o.ult(rank_in_byte, o.popcount(byte)), "block_select_by_broadword: rank names a one of the byte")
+    index = byte | o.shl(rank_in_byte, BYTE_DIGITS)
     o.require(path, o.ult(index, len(table)), "block_select_by_broadword: index inside select_in_byte")
-    answer = o.table(table, index, SELECT_INDEX_BITS)
+    answer = o.table(table, index, SELECT_INDEX_BITS) if lookup is None else lookup(o, byte, rank_in_byte)
     return offset + answer, bytes_below, answer
+
+
+def select_in_byte_holds(table=SELECT_IN_BYTE):
+    """The table's contract, entry by entry: for each byte and each rank below its population, the rank-th one."""
+    for byte in range(BYTE_VALUES):
+        ones_of_byte = [bit for bit in range(BYTE_DIGITS) if (byte >> bit) & 1]
+        for rank, bit in enumerate(ones_of_byte):
+            if table[byte | (rank << BYTE_DIGITS)] != bit:
+                return False
+    return True
 
 
 def block_select_by_broadword(o, x, k, path=None, table=SELECT_IN_BYTE):

@@ -141,14 +141,25 @@ def select_counts_claim(o):
     return prefix_populations(o, x, kernels.select_counts(o, x))
 
 
-def select_case(byte, bit, table=kernels.SELECT_IN_BYTE):
-    """From any counts of x's prefix populations, the k-th one is found at 8 * byte + bit, wherever the kernel says so."""
+def select_case(byte, bit):
+    """From any counts of x's prefix populations, the k-th one is found at 8 * byte + bit, wherever the kernel says so.
+
+    The table stands in by its contract, which select_in_byte_holds checks entry by entry: its answer is a one of the
+    byte with exactly the asked rank of ones below it.
+    """
     def claim(o):
-        x, k, counts = words(o, "x", "k", "counts")
+        x, k, counts, answer = words(o, "x", "k", "counts", "answer")
+        contract = []
+
+        def lookup(o, byte_value, rank_in_byte):
+            contract.append(z3.And(o.ult(answer, kernels.BYTE_DIGITS), o.bit_at(byte_value, answer),
+                                   o.popcount(byte_value & (o.shl(1, answer) - 1)) == rank_in_byte))
+            return answer
+
         path = z3.And(o.ult(k, o.popcount(x)), prefix_populations(o, x, counts))
-        position, bytes_below, answer = kernels.select_from_counts(o, x, k, counts, path, table)
+        position, bytes_below, _ = kernels.select_from_counts(o, x, k, counts, path, lookup=lookup)
         found = 8 * byte + bit
-        case = z3.And(path, bytes_below == byte, answer == bit)
+        case = z3.And(path, bytes_below == byte, answer == bit, *contract)
         return with_obligations(o, z3.Implies(case, z3.And(position == found, specifications.selects(o, x, k, o.word(found)))))
     return claim
 
@@ -210,6 +221,7 @@ def walk_step_ignoring_src(o, state, path):
 def claims(width):
     """Every claim at this width, in order, as (name, builder, expected to hold)."""
     found = [
+        ("select_in_byte holds the k-th one of every byte, entry by entry", lambda o: kernels.select_in_byte_holds(), True),
         ("block_reverse_by_swaps is RBIT", reverse_is_rbit, True),
         ("PEXT's closed form is the SDM's", closed_pext_is_sdm, True),
         ("PDEP's closed form is the SDM's", closed_pdep_is_sdm, True),
@@ -226,7 +238,7 @@ def claims(width):
     found += [
         ("mutant: a reversal without its swap of bit pairs", lambda o: reverse_is_rbit(o, reverse_without_pairs), False),
         ("mutant: a walk depositing whatever the source bit", walk_claim("pass", walk_step_ignoring_src), False),
-        ("mutant: a select table answering bit 6 for the eighth one of 0xFF", select_case(0, 6, wrong_table()), False),
+        ("mutant: a select table answering bit 6 for the eighth one of 0xFF", lambda o: kernels.select_in_byte_holds(wrong_table()), False),
     ]
     return found
 
@@ -237,6 +249,8 @@ def solve(task):
     name, build, expected = claims(width)[index]
     o = operations.Z3Ops(width)
     formula = build(o)
+    if isinstance(formula, bool):
+        return width, name, expected, "unsat" if formula else "sat", 0.0, "" if formula else "an entry differs"
     solver = z3.SolverFor("QF_ABV")
     solver.add(z3.Not(formula))
     start = time.monotonic()
@@ -256,7 +270,6 @@ def main():
     parser.add_argument("--widths", default="32,64", help="comma-separated std::size_t widths, each a multiple of 8 from 16")
     parser.add_argument("--jobs", type=int, default=os.cpu_count() or 1)
     args = parser.parse_args()
-    assert all(entry < kernels.BYTE_DIGITS for entry in kernels.SELECT_IN_BYTE), "a select_in_byte entry outside its byte"
     tasks = [(width, index) for width in (int(w) for w in args.widths.split(",")) for index in range(len(claims(width)))]
     as_expected = True
     with multiprocessing.get_context("spawn").Pool(args.jobs) as pool:
