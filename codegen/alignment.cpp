@@ -8,7 +8,7 @@
 #include <cstddef>                         // size_t
 #include <cstdint>                         // uint64_t
 
-// Each library function beside the idiom it declines, keeping the high bits by the complemented mask: same bodies.
+// Each library function beside the idiom it declines, the high bits kept by complementing the mask: same instructions.
 extern "C" {
 
 [[nodiscard]] auto codegen_align_up(std::uint64_t value, std::size_t alignment)

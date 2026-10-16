@@ -170,7 +170,7 @@ The unit tests and the fuzzer check that the intrinsic kernels agree with the po
 | `bmi2-excluded` | `-march=znver2` | the `x86-64-v3` checks **rejected**, which proves they see the kernels gone while BMI2 is still enabled |
 | `armv8-a` | `-march=armv8-a` | `bit_reverse` an `rbit`, two for 128 bits, without a branch |
 
-[`codegen/alignment.cpp`](codegen/alignment.cpp) puts `align_up` and `align_down` beside the complement idiom they decline, and its tests require each pair's instructions to be identical. The x86-64 configurations run on an x86-64 host and `armv8-a` on an AArch64 one; nothing cross-compiles. They need GCC or Clang with its GNU-style driver, and no Boost:
+[`codegen/alignment.cpp`](codegen/alignment.cpp) puts `align_up` and `align_down` beside the complement idiom they decline, and its tests require each pair to compile to the same instructions, as often each, in whatever order and registers the compiler picks. The x86-64 configurations run on an x86-64 host and `armv8-a` on an AArch64 one; nothing cross-compiles. They need GCC or Clang with its GNU-style driver, and no Boost:
 
 ```sh
 tools/setup-toolchain.sh

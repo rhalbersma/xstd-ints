@@ -601,7 +601,7 @@ remainder, licensed by `v % 2^N == v & (2^N - 1)` — which holds only for an
 unsigned type of radix 2, which is why `alignable` asks for radix 2 rather than
 assuming it. Subtracting the remainder suffices; complementing the mask to keep
 the high bits instead is a second trick that costs a requirement and, both
-compilers agree, emits the same instructions.
+compilers agree, emits the same instructions, at most scheduled in another order.
 
 `alignable` is `integer_class`'s opening clauses and then a stop: specialized,
 integer, radix 2, unsigned, wider than one bit, convertible both ways with
