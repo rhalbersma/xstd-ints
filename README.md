@@ -241,8 +241,9 @@ P3104: the position of the `k`-th one bit of `x`, counting from zero at the leas
 end, so `bit_select(0b1011'0100u, 2)` is `5`. It is the inverse of rank, since exactly `k` ones
 of `x` lie below the one it finds. It takes every `unsigned_integer`, an `int` rank and returns
 an `int`, as `<bit>`'s counting functions do. A type wider than one `std::size_t` word skips
-whole words by their `popcount`; within the word, BMI2 makes it `PDEP` and `TZCNT`, the lone
-bit `1 << k` deposited on the `k`-th one of `x`, and Vigna's broadword select finds it
+whole words by their `popcount`; within the word, BMI2 makes it `PDEP`, the lone
+bit `1 << k` deposited on the `k`-th one of `x`, then BMI1's `TZCNT` where the build enables it
+too, as `-march=x86-64-v3` does, and a zero test otherwise; Vigna's broadword select finds it
 elsewhere, a constant expression included. Its precondition is `0 <= k` and `k < popcount(x)`, a call that violates it is not a constant
 expression even under `NDEBUG`, and it is not `noexcept`.
 
