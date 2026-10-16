@@ -17,6 +17,7 @@ This repository enforces its quality bar through CI rather than through review d
 - **`clang-tidy` is clean.** The [Clang-Tidy workflow](.github/workflows/clang-tidy.yml) runs the checks in [`.clang-tidy`](.clang-tidy) with `WarningsAsErrors: '*'` over the public headers, so any finding fails the job outright - there is no "advisory, fix later" mode.
 - **Line and branch coverage stay at 100%, project-wide and for the PR's own diff.** [`codecov.yml`](.github/codecov.yml) sets both the `project` and `patch` Codecov status checks to a 100% target with zero tolerance, backed by the [Coverage workflow](.github/workflows/coverage.yml)'s own `gcovr --fail-under-line 100 --fail-under-branch 100` gate. New code needs a test that exercises every line and branch it adds; existing coverage may not regress. Excluded from this bar: `assert(...)` contract checks (their failure path is undefined behavior by design, not something a correct test can hit), compiler-synthesized `= default;` special members (gcov cannot attribute a hit counter to them regardless of how often they run), and the exception-unwinding branch gcc/gcov attaches to any call that could throw (`--exclude-throw-branches`/`--exclude-unreachable-branches`) - not a code path a test can meaningfully hit either.
 - **No new sanitizer failures.** The [sanitizers workflow](.github/workflows/sanitizers.yml) must stay green.
+- **The bit kernels compile to the instructions they exist for.** The [Codegen workflow](.github/workflows/codegen.yml) compiles [`codegen/`](codegen) to assembly with the stable rung's GCC and Clang, on an x86-64 and an AArch64 runner, and reads it with FileCheck - see [Codegen tests](#codegen-tests) below.
 - **The public headers stay self-sufficient.** Each header is compiled as its own translation unit (see `test/CMakeLists.txt`); don't rely on include order from another header.
 - **`clang-format` is clean.** The [Clang-Format workflow](.github/workflows/clang-format.yml) runs `clang-format --dry-run --Werror` over every header and test source against [`.clang-format`](.clang-format), so any diff fails the job. Run `clang-format -i` on changed files before pushing, with **version 22 or newer**: before 22, clang-format reads `{ a * b }` in a requires-expression as a pointer declaration and rewrites the binary-operator rows of `integer_class.hpp` and `nothrow_const_operators.hpp`. The remaining `// clang-format off` / `// clang-format on` guards are the hand-laid-out test-data tables, which clang-format cannot express; don't add new guards without a comparable reason.
 - **Workflow files pass `actionlint`.** The [Actionlint workflow](.github/workflows/actionlint.yml) validates GitHub Actions syntax and expressions.
@@ -42,6 +43,7 @@ The library itself has no dependencies outside `<xstd/ext/>`, whose headers each
 | [gcovr](https://gcovr.com/) | reproducing the coverage gate | Only for the workflow below; `pip install gcovr` |
 | `clang-tidy` and `run-clang-tidy` | reproducing the clang-tidy gate | Only for the workflow below |
 | `clang-format` 22+ | the formatting gate | Run `clang-format -i` on changed files before pushing; older versions rewrite the requires-expressions in `concepts/` |
+| [FileCheck](https://pypi.org/project/filecheck/) | the codegen tests | The pure-Python port of LLVM's, pinned by hash in [`tools/filecheck-requirements.txt`](tools/filecheck-requirements.txt), which `setup-toolchain.sh` installs; LLVM's own `FileCheck` reads the same directives |
 
 ## Getting a toolchain
 
@@ -154,6 +156,30 @@ The target is built with ASan and UBSan, and `XSTD_INTS_FUZZ_COMPILE_OPTIONS` an
 
 The unit tests reach PEXT and PDEP only where the build targets BMI2, so [`gcc.yml`](.github/workflows/gcc.yml) and [`clang.yml`](.github/workflows/clang.yml) each add a leg at `-march=x86-64-v3` on the stable rung; every other leg runs the portable kernels.
 
+## Codegen tests
+
+The unit tests and the fuzzer check that the intrinsic kernels agree with the portable ones, which they must, and which also means a detection macro that stops firing goes unseen: the portable kernel answers, every value stays right, and every test stays green. The codegen tests close that gap. Each function in [`codegen/`](codegen) wraps one public call at a fixed width; CTest compiles the file to assembly once per target configuration, with `-std=c++23 -O2 -DNDEBUG` as a consumer builds, and FileCheck reads it against the directives above each function, under the prefixes that configuration names:
+
+| Configuration | Flags | Expected |
+| :--- | :--- | :--- |
+| `x86-64` | `-march=x86-64` | no `pext` or `pdep`; with Clang, the 128-bit `bit_reverse` without a branch in this and every configuration below, which GCC gives only under GFNI and on AArch64 (#309) |
+| `bmi2` | `-mbmi2` | `bit_compress` a `pext` and `bit_expand` a `pdep`, neither with a branch; `bit_select` through `pdep` |
+| `x86-64-v3` | `-march=x86-64-v3` | as `bmi2`, and `bit_select` a `pdep` followed by `tzcnt` with no branch, `tzcnt` being BMI1's |
+| `gfni` | `-mgfni` | `bit_reverse` a `gf2p8affineqb` and a `bswap`, twice that for 128 bits, without a branch |
+| `bdver4`, `znver1`, `znver2` | `-march=` each | no `pext` or `pdep`, BMI2 enabled but microcoded there |
+| `bmi2-excluded` | `-march=znver2` | the `x86-64-v3` checks **rejected**, which proves they see the kernels gone while BMI2 is still enabled |
+| `armv8-a` | `-march=armv8-a` | `bit_reverse` an `rbit`, two for 128 bits, without a branch |
+
+[`codegen/alignment.cpp`](codegen/alignment.cpp) puts `align_up` and `align_down` beside the complement idiom they decline, and its tests require each pair to compile to the same instructions, as often each, in whatever order and registers the compiler picks. The x86-64 configurations run on an x86-64 host and `armv8-a` on an AArch64 one; nothing cross-compiles. They need GCC or Clang with its GNU-style driver, and no Boost:
+
+```sh
+tools/setup-toolchain.sh
+cmake -S . -B build-codegen -DCMAKE_CXX_COMPILER=clang++-22 -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_CODEGEN_TESTS=ON
+ctest --test-dir build-codegen --output-on-failure
+```
+
+Each test leaves its assembly beside it as `build-codegen/codegen/<source>.<configuration>.s`. The [Codegen workflow](.github/workflows/codegen.yml) runs them with GCC 15 and Clang 22 on `ubuntu-24.04` and `ubuntu-24.04-arm`.
+
 ## Standards-paper tracking
 
 Implementation-relevant proposals must record the paper number, the revision-pinned wording reviewed by xstd, the corresponding live `cplusplus/papers` tracking issue, the last-reviewed date, and a short statement saying whether xstd implements, partially follows, extends, or merely references the paper. Unversioned `wg21.link/P####` links are reserved for links explicitly described as the latest revision; implementation and conformance claims use pinned `P####R#` links. Durable prose does not copy volatile WG21 status labels.
@@ -180,6 +206,7 @@ The names to tick under branch protection, exactly as GitHub reports them:
 | `clang_format / clang-format` | `clang-format --dry-run --Werror` against [`.clang-format`](.clang-format) |
 | `clang_libcxx / all` | Clang 22, 23, 24-SVN with libc++ |
 | `clang_tidy / all` | clang-tidy on all three rungs |
+| `codegen / all` | GCC 15 and Clang 22 assembly on x86-64 and AArch64 |
 | `codeql / Analyze` | `security-extended` |
 | `consumption / Consume` | the three CMake consumption models |
 | `coverage / gcovr` | 100% of lines and branches |
