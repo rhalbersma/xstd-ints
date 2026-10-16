@@ -173,7 +173,7 @@ The reference digests need numpy, pinned by hash in [`tools/numpy-requirements.t
 
 ```sh
 pip install --user --require-hashes -r tools/numpy-requirements.txt
-python3 -I tools/division_digests.py --check exhaustive/division_digests.txt
+python3 tools/division_digests.py --check exhaustive/division_digests.txt
 ```
 
 The [Exhaustive workflow](.github/workflows/exhaustive.yml) runs the sweeps weekly, by hand, and on a pull request touching what they cover: GCC 15 with the portable kernels, Clang 22 at `-march=x86-64-v3`, GCC 15 on AArch64 and MSVC on x64, with the digests recomputed beside them. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
