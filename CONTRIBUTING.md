@@ -154,6 +154,30 @@ The target is built with ASan and UBSan, and `XSTD_INTS_FUZZ_COMPILE_OPTIONS` an
 
 The unit tests reach PEXT and PDEP only where the build targets BMI2, so [`gcc.yml`](.github/workflows/gcc.yml) and [`clang.yml`](.github/workflows/clang.yml) each add a leg at `-march=x86-64-v3` on the stable rung; every other leg runs the portable kernels.
 
+## Exhaustive sweeps
+
+At 16 bits every pair of operands can be tried, 2^32 of them, which the unit tests and the fuzzer only sample. The two sweeps under [`exhaustive/`](exhaustive) try them all, split across the machine's threads:
+
+- `exhaustive_bit_permutation` checks every 16-bit source against every 16-bit mask with the fuzzer's own properties: `bit_compress` and `bit_expand` against their oracles and each other, the portable kernels at `std::size_t` width, and, where the build has fast BMI2, `PEXT` and `PDEP` against those kernels.
+- `exhaustive_division` checks `div`, `div_floor`, `div_euclid` and `div_ceil` over every `int16_t` and `uint16_t` pair in their domain against their postconditions, which alone determine each result, and folds every numerator, denominator, quotient and remainder into a digest per type and function. Those eight digests must equal [`exhaustive/division_digests.txt`](exhaustive/division_digests.txt), which [`tools/division_digests.py`](tools/division_digests.py) computes with numpy's own division routines, so the postconditions are held to an implementation xstd did not write.
+
+They take minutes each and need no Boost:
+
+```sh
+cmake -S . -B build-exhaustive -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_EXHAUSTIVE_TESTS=ON
+cmake --build build-exhaustive --parallel
+ctest --test-dir build-exhaustive --output-on-failure
+```
+
+The reference digests need numpy, pinned by hash in [`tools/numpy-requirements.txt`](tools/numpy-requirements.txt), and take several minutes more:
+
+```sh
+pip install --user --require-hashes -r tools/numpy-requirements.txt
+python3 -I tools/division_digests.py --check exhaustive/division_digests.txt
+```
+
+The [Exhaustive workflow](.github/workflows/exhaustive.yml) runs the sweeps weekly, by hand, and on a pull request touching what they cover: GCC 15 with the portable kernels, Clang 22 at `-march=x86-64-v3`, GCC 15 on AArch64 and MSVC on x64, with the digests recomputed beside them. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
+
 ## Standards-paper tracking
 
 Implementation-relevant proposals must record the paper number, the revision-pinned wording reviewed by xstd, the corresponding live `cplusplus/papers` tracking issue, the last-reviewed date, and a short statement saying whether xstd implements, partially follows, extends, or merely references the paper. Unversioned `wg21.link/P####` links are reserved for links explicitly described as the latest revision; implementation and conformance claims use pinned `P####R#` links. Durable prose does not copy volatile WG21 status labels.

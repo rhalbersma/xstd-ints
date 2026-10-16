@@ -1,0 +1,99 @@
+#          Copyright Rein Halbersma 2014-2026.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+name: Exhaustive
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Weekly, by hand, and on a pull request that touches what the sweeps cover. Not a required check: a path filter
+# would leave it pending on every pull request that does not.
+on:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'include/xstd/ints/bit/**'
+      - 'include/xstd/ints/cstdlib/**'
+      - 'exhaustive/**'
+      - 'test/include/test/bit/**'
+      - 'tools/division_digests.py'
+      - 'tools/numpy-requirements.txt'
+      - '.github/workflows/exhaustive.yml'
+
+jobs:
+  # The checked-in digests are numpy's, recomputed here, so the file the sweeps compare against is not xstd's own say-so.
+  reference:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install numpy
+        run: pip install --quiet --user --break-system-packages --require-hashes -r tools/numpy-requirements.txt
+
+      - name: Recompute the division digests
+        run: python3 -I tools/division_digests.py --check exhaustive/division_digests.txt
+
+  sweep:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: GCC 15, portable kernels
+            runner: ubuntu-24.04
+            compiler: g++-15
+            flags: ''
+          - name: Clang 22, x86-64-v3
+            runner: ubuntu-24.04
+            compiler: clang++-22
+            flags: '-march=x86-64-v3'
+          - name: GCC 15, AArch64
+            runner: ubuntu-24.04-arm
+            compiler: g++-15
+            flags: ''
+          - name: MSVC, x64
+            runner: windows-2025
+            compiler: ''
+            flags: ''
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install the stable rung and CMake
+        if: runner.os == 'Linux'
+        run: |
+          tools/setup-toolchain.sh
+          pip install --quiet --user --break-system-packages --require-hashes -r tools/cmake-requirements.txt
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+
+      - name: Configure
+        if: runner.os == 'Linux'
+        env:
+          CXX: ${{ matrix.compiler }}
+          FLAGS: ${{ matrix.flags }}
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER="${CXX}" -DCMAKE_CXX_FLAGS="${FLAGS}" -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_EXHAUSTIVE_TESTS=ON
+
+      - name: Configure
+        if: runner.os == 'Windows'
+        run: cmake -S . -B build -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_EXHAUSTIVE_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Sweep
+        run: ctest --test-dir build --build-config Release --output-on-failure
