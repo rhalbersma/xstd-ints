@@ -17,6 +17,8 @@ summed modulo 2^64, which is the digest the C++ sweep computes over xstd's resul
 """
 
 import argparse
+import multiprocessing
+import os
 import sys
 
 import numpy as np
@@ -59,23 +61,34 @@ def unsigned_roundings(n, d):
     return {"div": (q, r), "div_floor": (q, r), "div_euclid": (q, r), "div_ceil": (q_ceil, r_ceil)}
 
 
-def digests():
-    """The eight digests, one per type and rounding, over every pair in the functions' domain."""
-    names = ("div", "div_floor", "div_euclid", "div_ceil")
-    sums = {(t, f): 0 for t in ("int16", "uint16") for f in names}
+NAMES = ("div", "div_floor", "div_euclid", "div_ceil")
+
+
+def rows(numerators):
+    """The eight partial digests over the given 16-bit numerator patterns, against every denominator in the domain."""
+    sums = {(t, f): 0 for t in ("int16", "uint16") for f in NAMES}
     signed_d = np.arange(-0x8000, 0x8000, dtype=np.int64)
     signed_d = signed_d[signed_d != 0]
     unsigned_d = np.arange(1, 0x10000, dtype=np.int64)
-    for bits in range(0x10000):
-        signed_n = bits - 0x10000 if bits >= 0x8000 else bits
-        d = signed_d[signed_d != -1] if signed_n == -0x8000 else signed_d
-        n = np.full_like(d, signed_n)
-        for f, (q, r) in signed_roundings(n, d).items():
-            sums[("int16", f)] += digest(n, d, q, r)
-        n = np.full_like(unsigned_d, bits)
-        for f, (q, r) in unsigned_roundings(n, unsigned_d).items():
-            sums[("uint16", f)] += digest(n, unsigned_d, q, r)
-    return {key: value % 2**64 for key, value in sums.items()}
+    with np.errstate(over="ignore"):
+        for bits in numerators:
+            signed_n = bits - 0x10000 if bits >= 0x8000 else bits
+            d = signed_d[signed_d != -1] if signed_n == -0x8000 else signed_d
+            n = np.full_like(d, signed_n)
+            for f, (q, r) in signed_roundings(n, d).items():
+                sums[("int16", f)] += digest(n, d, q, r)
+            n = np.full_like(unsigned_d, bits)
+            for f, (q, r) in unsigned_roundings(n, unsigned_d).items():
+                sums[("uint16", f)] += digest(n, unsigned_d, q, r)
+    return sums
+
+
+def digests():
+    """The eight digests, one per type and rounding, over every pair in the functions' domain, the rows across processes."""
+    workers = os.cpu_count() or 1
+    with multiprocessing.Pool(workers) as pool:
+        parts = pool.map(rows, [range(w, 0x10000, workers) for w in range(workers)])
+    return {key: sum(part[key] for part in parts) % 2**64 for key in parts[0]}
 
 
 def render(table):
@@ -88,8 +101,7 @@ def main():
     action.add_argument("--write", metavar="FILE")
     action.add_argument("--check", metavar="FILE")
     args = parser.parse_args()
-    with np.errstate(over="ignore"):
-        text = render(digests())
+    text = render(digests())
     if args.write:
         with open(args.write, "w", encoding="ascii") as out:
             out.write(text)
