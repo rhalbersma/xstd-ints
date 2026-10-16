@@ -196,6 +196,15 @@ if(PROJECT_IS_TOP_LEVEL)
         enable_testing()
         add_subdirectory(codegen)
     endif()
+
+    # Off by default, and outside BUILD_TESTING: Mull's clang plugin builds its own copy of the unit tests, unoptimized and
+    # instrumented, and the run takes minutes. enable_testing() stays here for the reason given above.
+    option(${project_option_prefix}_BUILD_MUTATION_TESTS "Score the unit tests by the mutants they kill, under mutation/" OFF)
+
+    if(${project_option_prefix}_BUILD_MUTATION_TESTS)
+        enable_testing()
+        add_subdirectory(mutation)
+    endif()
 endif()
 
 install(

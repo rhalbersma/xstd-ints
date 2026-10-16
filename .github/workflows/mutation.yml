@@ -1,0 +1,74 @@
+#          Copyright Rein Halbersma 2014-2026.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+name: Mutation
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Weekly, by hand, and on a pull request that touches what is mutated or what kills it. Not a required check until its
+# runtime and noise are known: a path filter would leave it pending on every pull request that does not.
+on:
+  schedule:
+    - cron: '41 3 * * 1'
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'include/xstd/ints/bit/detail/portable/**'
+      - 'include/xstd/ints/bit/detail/shift.hpp'
+      - 'include/xstd/ints/cstdlib/**'
+      - 'test/include/**'
+      - 'test/src/ints/bit/**'
+      - 'test/src/ints/cstdlib/**'
+      - 'mutation/**'
+      - '.github/workflows/mutation.yml'
+
+jobs:
+  mutation:
+    name: Mull ${{ matrix.mull }}, clang ${{ matrix.llvm }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      matrix:
+        # Mull's newest LLVM, which lags the stable rung's clang; noble's own archive carries this one.
+        include:
+          - mull: 0.34.1
+            llvm: 20
+            deb: Mull-20-0.34.1-LLVM-20.1.2-ubuntu-amd64-24.04.deb
+            sha256: c4c6ae0410da5e92e1c4e0d6a33fdf034a3ea1dab5780ec0dd545b97a299dc54
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install clang, Boost.Test, Mull and CMake
+        env:
+          LLVM: ${{ matrix.llvm }}
+          MULL: ${{ matrix.mull }}
+          DEB: ${{ matrix.deb }}
+          SHA256: ${{ matrix.sha256 }}
+        run: |
+          curl -fsSL -o "${RUNNER_TEMP}/${DEB}" "https://dl.cloudsmith.io/public/mull-project/mull-stable/deb/ubuntu/pool/noble/main/M/Mu/mull-${LLVM}_${MULL}/${DEB}"
+          echo "${SHA256}  ${RUNNER_TEMP}/${DEB}" | sha256sum --check
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq "clang-${LLVM}" libboost-test-dev "${RUNNER_TEMP}/${DEB}"
+          pip install --quiet --user --break-system-packages --require-hashes -r tools/cmake-requirements.txt
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+
+      - name: Configure
+        env:
+          LLVM: ${{ matrix.llvm }}
+        run: cmake -S . -B build -DCMAKE_CXX_COMPILER="clang++-${LLVM}" -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_MUTATION_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Score
+        run: ctest --test-dir build --output-on-failure
