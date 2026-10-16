@@ -196,6 +196,15 @@ if(PROJECT_IS_TOP_LEVEL)
         enable_testing()
         add_subdirectory(codegen)
     endif()
+
+    # Off by default, and outside BUILD_TESTING: each exhaustive sweep runs for minutes and needs no Boost.Test, so it
+    # is a job of its own rather than a unit test. enable_testing() stays here for the reason given above.
+    option(${project_option_prefix}_BUILD_EXHAUSTIVE_TESTS "Build the exhaustive 16-bit sweeps under exhaustive/" OFF)
+
+    if(${project_option_prefix}_BUILD_EXHAUSTIVE_TESTS)
+        enable_testing()
+        add_subdirectory(exhaustive)
+    endif()
 endif()
 
 install(

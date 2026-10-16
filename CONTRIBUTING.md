@@ -162,7 +162,7 @@ The unit tests and the fuzzer check that the intrinsic kernels agree with the po
 
 | Configuration | Flags | Expected |
 | :--- | :--- | :--- |
-| `x86-64` | `-march=x86-64` | no `pext` or `pdep`; the 128-bit `bit_reverse` without a branch, in this and every x86-64 configuration below |
+| `x86-64` | `-march=x86-64` | no `pext` or `pdep`; with Clang, the 128-bit `bit_reverse` without a branch in this and every configuration below, which GCC gives only under GFNI and on AArch64 (#309) |
 | `bmi2` | `-mbmi2` | `bit_compress` a `pext` and `bit_expand` a `pdep`, neither with a branch; `bit_select` through `pdep` |
 | `x86-64-v3` | `-march=x86-64-v3` | as `bmi2`, and `bit_select` a `pdep` followed by `tzcnt` with no branch, `tzcnt` being BMI1's |
 | `gfni` | `-mgfni` | `bit_reverse` a `gf2p8affineqb` and a `bswap`, twice that for 128 bits, without a branch |
@@ -179,6 +179,30 @@ ctest --test-dir build-codegen --output-on-failure
 ```
 
 Each test leaves its assembly beside it as `build-codegen/codegen/<source>.<configuration>.s`. The [Codegen workflow](.github/workflows/codegen.yml) runs them with GCC 15 and Clang 22 on `ubuntu-24.04` and `ubuntu-24.04-arm`.
+
+## Exhaustive sweeps
+
+At 16 bits every pair of operands can be tried, 2^32 of them, which the unit tests and the fuzzer only sample. The two sweeps under [`exhaustive/`](exhaustive) try them all, split across the machine's threads:
+
+- `exhaustive_bit_permutation` checks every 16-bit source against every 16-bit mask with the fuzzer's own properties: `bit_compress` and `bit_expand` against their oracles and each other, the portable kernels at `std::size_t` width, and, where the build has fast BMI2, `PEXT` and `PDEP` against those kernels.
+- `exhaustive_division` checks `div`, `div_floor`, `div_euclid` and `div_ceil` over every `int16_t` and `uint16_t` pair in their domain against their postconditions, which alone determine each result, and folds every numerator, denominator, quotient and remainder into a digest per type and function. Those eight digests must equal [`exhaustive/division_digests.txt`](exhaustive/division_digests.txt), which [`tools/division_digests.py`](tools/division_digests.py) computes with numpy's own division routines, so the postconditions are held to an implementation xstd did not write.
+
+They take minutes each and need no Boost:
+
+```sh
+cmake -S . -B build-exhaustive -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_EXHAUSTIVE_TESTS=ON
+cmake --build build-exhaustive --parallel
+ctest --test-dir build-exhaustive --output-on-failure
+```
+
+The reference digests need numpy, pinned by hash in [`tools/numpy-requirements.txt`](tools/numpy-requirements.txt), and take several minutes more:
+
+```sh
+pip install --user --require-hashes -r tools/numpy-requirements.txt
+python3 tools/division_digests.py --check exhaustive/division_digests.txt
+```
+
+The [Exhaustive workflow](.github/workflows/exhaustive.yml) runs the sweeps weekly, by hand, and on a pull request touching what they cover: GCC 15 with the portable kernels, Clang 22 at `-march=x86-64-v3`, GCC 15 on AArch64 and MSVC on x64, with the digests recomputed beside them. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
 
 ## Standards-paper tracking
 
