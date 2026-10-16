@@ -43,21 +43,14 @@ endfunction()
 set(alignment_pairs "codegen_align_up=codegen_align_up_by_complement,codegen_align_down=codegen_align_down_by_complement")
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
-    # GCC keeps the loop over the two blocks of a 128-bit bit_reverse wherever the portable block kernel answers.
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        set(straight ",X86-STRAIGHT")
-    else()
-        set(straight "")
-    endif()
-
-    add_codegen_test(bit_permutation.cpp x86-64 "-masm=intel -march=x86-64" "CHECK${straight},PORTABLE")
-    add_codegen_test(bit_permutation.cpp bmi2 "-masm=intel -mbmi2" "CHECK${straight},FAST-BMI2,PDEP-SELECT")
-    add_codegen_test(bit_permutation.cpp x86-64-v3 "-masm=intel -march=x86-64-v3" "CHECK${straight},FAST-BMI2,TZCNT")
+    add_codegen_test(bit_permutation.cpp x86-64 "-masm=intel -march=x86-64" "CHECK,X86-STRAIGHT,PORTABLE")
+    add_codegen_test(bit_permutation.cpp bmi2 "-masm=intel -mbmi2" "CHECK,X86-STRAIGHT,FAST-BMI2,PDEP-SELECT")
+    add_codegen_test(bit_permutation.cpp x86-64-v3 "-masm=intel -march=x86-64-v3" "CHECK,X86-STRAIGHT,FAST-BMI2,TZCNT")
     add_codegen_test(bit_permutation.cpp gfni "-masm=intel -mgfni" "CHECK,X86-STRAIGHT,PORTABLE,GFNI")
 
     # BMI2 is enabled on each of these, but PEXT and PDEP are microcoded there.
     foreach(march bdver4 znver1 znver2)
-        add_codegen_test(bit_permutation.cpp ${march} "-masm=intel -march=${march}" "CHECK${straight},PORTABLE")
+        add_codegen_test(bit_permutation.cpp ${march} "-masm=intel -march=${march}" "CHECK,X86-STRAIGHT,PORTABLE")
     endforeach()
 
     # BMI2 enabled and its kernels excluded: the checks for the instructions must see them gone.
