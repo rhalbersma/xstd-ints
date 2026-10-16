@@ -1,0 +1,8 @@
+int16 div a1827f5b0075b968
+int16 div_floor b58b66613493a3c2
+int16 div_euclid cee3b9c2763981a7
+int16 div_ceil 94df9bef802a40a5
+uint16 div 621f0dbbdf501487
+uint16 div_floor 621f0dbbdf501487
+uint16 div_euclid 621f0dbbdf501487
+uint16 div_ceil c8569f902be1dba5
