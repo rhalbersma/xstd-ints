@@ -11,12 +11,13 @@
 #
 # Installed by default, matching the `stable` column of the README's matrix:
 #
-#   GCC 15, clang 22, libc++ 22, clang-format 22, and Boost's headers with Boost.Test.
+#   GCC 15, clang 22, libc++ 22, clang-format 22, FileCheck, and Boost's headers with Boost.Test.
 #
 # Set XSTD_TOOLCHAIN_FULL=1 to add GCC 16, the qualification rung. Its libstdc++ is the oldest carrying
 # <inplace_vector>, so a repository with a C++26 leg needs it to reach that leg locally.
 #
-# This gets syntax-only checks, clang-tidy and the format gate, and it is what a comment or style sweep needs.
+# This gets syntax-only checks, clang-tidy, the format gate and the codegen tests, and it is what a comment or style
+# sweep needs.
 # It is not a test run: vcpkg.json's dependencies come through vcpkg, and CMake fetches any sibling xstd
 # repository on top, which is a build worth starting deliberately rather than on every container start.
 
@@ -69,6 +70,12 @@ CLANG_FORMAT_REQUIREMENTS="$(dirname "${BASH_SOURCE[0]}")/clang-format-requireme
 readonly CLANG_FORMAT_REQUIREMENTS
 pip install --quiet --user --break-system-packages --require-hashes -r "${CLANG_FORMAT_REQUIREMENTS}" \
         || pip3 install --quiet --user --require-hashes -r "${CLANG_FORMAT_REQUIREMENTS}"
+
+# The codegen tests' FileCheck, a pure-Python port of LLVM's, from PyPI the same way and into the same directory.
+FILECHECK_REQUIREMENTS="$(dirname "${BASH_SOURCE[0]}")/filecheck-requirements.txt"
+readonly FILECHECK_REQUIREMENTS
+pip install --quiet --user --break-system-packages --require-hashes -r "${FILECHECK_REQUIREMENTS}" \
+        || pip3 install --quiet --user --require-hashes -r "${FILECHECK_REQUIREMENTS}"
 
 # Report what landed, but never fail a setup over a version banner: everything above has already
 # installed by this point, and a caller that cannot print is not a caller that cannot build.

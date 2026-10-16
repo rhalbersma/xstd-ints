@@ -160,7 +160,10 @@ alternatives measured and left out are the bit-at-a-time mask walk with a branch
 times slower; Hacker's Delight's parallel suffix, a flat 21 to 23 ns; and Wegner's zp7, a flat
 6 to 8 ns with `PCLMULQDQ` and 17 to 20 ns without. Tests check every portable kernel against a
 bit-at-a-time oracle at compile time and at run time, and the run-time block kernels against
-the portable ones, so a build with BMI2 checks the instructions too.
+the portable ones, so a build with BMI2 checks the instructions too. Agreement cannot show which
+kernel ran, so codegen tests compile the public functions to assembly for each target that
+selects a kernel and check the instructions that come out, and that they are absent where the
+target is excluded.
 Wider types compose the blocks: reversal sends each mirrored block to the mirror of its offset,
 compression packs each block's result above the bits the lower blocks selected, expansion
 draws each block's bits from where the lower blocks stopped, and selection skips whole blocks,
@@ -187,8 +190,10 @@ functions take it, `k` an `int` as `bit_repeat`'s length and `rotl`'s count are,
 result as `countr_zero` returns. Its one-block kernel under BMI2 rests on a property of `PDEP`:
 it deposits the `k`-th bit of its source on the `k`-th one of its mask, so expanding the lone bit
 `1 << k` through `x` leaves exactly that one, whose position `TZCNT` reads off, two
-instructions with no loop and no table. A type no wider than a block calls the block kernel
-directly. Its contract is narrow, as `bit_repeat`'s is, so it is not `noexcept`.
+instructions with no loop and no table. `TZCNT` is BMI1's, which every processor with BMI2 has
+but `-mbmi2` alone does not enable: there `countr_zero` falls back to `BSF`, which leaves zero
+undefined, so a zero test joins it, though the precondition leaves the deposit nonzero. A type
+no wider than a block calls the block kernel directly. Its contract is narrow, as `bit_repeat`'s is, so it is not `noexcept`.
 
 ### `bit_mask`
 
