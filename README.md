@@ -318,7 +318,9 @@ where `size_t` is 32 bits but 64-bit integers keep their 8-byte alignment. The G
 adds a second 32-bit leg, i686 with GCC `-m32`, where `size_t` is 32 bits and there is no
 `__int128`. The MSVC workflow adds a third, x86 with VS 2026 in Debug and Release, where
 `xstd::uint128` is the MSVC STL's portable 128-bit class and the bit permutations take their
-portable kernels.
+portable kernels. One more GCC leg runs the trunk snapshot in C++29 mode,
+`-std=gnu++2d`, the one mode in which libstdc++ declares `shl` and `shr`: it is where the
+overloads forwarding to `<bit>` compile and their agreement tests run.
 
 ## License
 
