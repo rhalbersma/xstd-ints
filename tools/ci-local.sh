@@ -51,7 +51,7 @@ suite() {
                 && ctest --test-dir "${dir}" --output-on-failure --parallel "${jobs}"
 }
 
-# A suite leg on another standard library or target links a Boost.Test built for it: <leg> <compiler> <flags>
+# A suite leg on another standard library, a trunk one or another target links a Boost.Test built for it.
 boost_test_for() {
         "${root}/tools/boost-test.sh" "${out}/boost-test-$1" "$2" $3
 }
@@ -79,8 +79,13 @@ format() {
 
 run_leg() {
         case "$1" in
-                gcc-1[567]) suite "$1" "g++-${1#gcc-}" "" "${build_type}" ;;
-                clang-2[234]) suite "$1" "clang++-${1#clang-}" "$(gcc_for_clang "${1#clang-}")" "${build_type}" ;;
+                gcc-1[56]) suite "$1" "g++-${1#gcc-}" "" "${build_type}" ;;
+                clang-2[23]) suite "$1" "clang++-${1#clang-}" "$(gcc_for_clang "${1#clang-}")" "${build_type}" ;;
+                # The trunk libstdc++ is newer than the GCC 15 that built the installed Boost.Test.
+                gcc-17) suite "$1" g++-17 "" "${build_type}" "$(boost_test_for "$1" g++-17)" ;;
+                clang-24)
+                        suite "$1" clang++-24 "$(gcc_for_clang 24)" "${build_type}" \
+                                "$(boost_test_for "$1" clang++-24 "$(gcc_for_clang 24)")" ;;
                 libcxx-22)
                         suite "$1" clang++-22 "-stdlib=libc++" "${build_type}" -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ \
                                 "$(boost_test_for "$1" clang++-22 -stdlib=libc++)" ;;

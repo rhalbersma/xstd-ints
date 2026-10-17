@@ -154,12 +154,20 @@ A fixture that runs a component over a user-shaped argument probes no concept, a
 
 ## Checking your work
 
-Compile with the **stable rung** of [README.md](README.md)'s matrix, never with whatever `g++` or `clang++`
-happen to resolve to. Ubuntu 24.04 ships GCC 13, which rejects `-std=c++2c` outright, so the default compiler
-cannot build this library at all, and a check that quietly falls back to a cut-down reproduction proves less than
-it appears to. [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) installs every rung, clang-tidy for each of
-the three clangs, the format gate's clang-format 22 and the Boost CI resolves, so a leg that fails in CI can be rerun
-locally on its own compiler.
+Break things here, not on CI's runners, where a push waits hours for its first result. Two scripts make that
+possible, and the work relies on them rather than on whatever happens to be installed:
+
+- [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) installs what CI builds with: every rung of
+  [README.md](README.md)'s matrix, clang-tidy for each of the three clangs, the format gate's clang-format 22, the
+  CMake the workflows pin and the Boost CI resolves. Run it once per container; it is idempotent.
+- [`tools/ci-local.sh`](tools/ci-local.sh) runs the ladders' Linux legs on that toolchain. Run the legs a change can
+  break while iterating, and every leg before a push. Push only what it reports green: CI is there to confirm,
+  not to discover.
+
+Never build with whatever `g++` or `clang++` happen to resolve to. Ubuntu 24.04 ships GCC 13, which rejects
+`-std=c++2c` outright, so the default compiler cannot build this library at all, and a check that quietly falls
+back to a cut-down reproduction proves less than it appears to. What `ci-local.sh` cannot cover, MSVC, clang-cl,
+MinGW, Apple Clang and Emscripten, is CI's alone; say so rather than claim it was checked.
 
 A comment or formatting change is not exempt, because two gates read lines rather than syntax. `NOLINT` and
 `GCOVR_EXCL_LINE` suppress the line they sit on, so a formatter that splits that line leaves the marker behind on

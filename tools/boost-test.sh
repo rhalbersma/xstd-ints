@@ -6,8 +6,8 @@
 
 # Builds Boost.Test's framework from the installed Boost headers with the compiler given, and writes it as a CMake
 # package, so a compiler on another standard library links a Boost.Test built against that library. The one
-# setup-toolchain.sh installs is GCC 15's: linked with libc++, its test runner fails before the first test. CI gets
-# the same from vcpkg, which builds Boost with the compiler under test.
+# setup-toolchain.sh installs is GCC 15's: linked with libc++ or with the trunk snapshot's libstdc++, its test runner
+# fails before the first test. CI gets the same from vcpkg, which builds Boost with the compiler under test.
 #
 #   tools/boost-test.sh <output directory> <C++ compiler> [compiler flags...]
 #

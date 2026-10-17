@@ -17,7 +17,7 @@
 #   FileCheck from PyPI; and Boost 1.92's Align, Hash2 and Test, built from Boost's release tarball by
 #   GCC 15 into /usr/local.
 #
-# A compiler with a standard library other than GCC 15's links a Boost.Test of its own, which boost-test.sh beside
+# A compiler on libc++ or on the trunk snapshot's libstdc++ links a Boost.Test of its own, which boost-test.sh beside
 # this script builds; CI gets one from vcpkg, which builds Boost with the compiler under test. The unit tests,
 # clang-tidy, the format gate and the codegen tests then all run locally. CMake fetches the test suite's pre-release
 # dependencies, such as Boost.Int128 from GitHub, at configure time.

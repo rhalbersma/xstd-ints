@@ -113,7 +113,7 @@ cmake --build --preset dev
 ctest --preset dev
 ```
 
-The Boost.Test that `setup-toolchain.sh` builds is GCC 15's, and serves every compiler on libstdc++. A compiler with another standard library needs a Boost.Test built against it: linked with libc++, GCC 15's fails before the first test. CI gets one from vcpkg, which builds Boost with the compiler under test. Locally, [`tools/boost-test.sh`](tools/boost-test.sh) builds the framework from the installed headers with the compiler and flags given, in about a minute, and prints the `-D` that makes the suite use it:
+The Boost.Test that `setup-toolchain.sh` builds is GCC 15's, and serves the released rungs, GCC 15 and 16 and clang 22 and 23. A compiler on another standard library, or on the trunk snapshot's libstdc++, needs a Boost.Test built against it: linked with libc++ or with GCC 17's libstdc++, GCC 15's fails before the first test, on a corrupted parameter. CI gets one from vcpkg, which builds Boost with the compiler under test. Locally, [`tools/boost-test.sh`](tools/boost-test.sh) builds the framework from the installed headers with the compiler and flags given, in about a minute, and prints the `-D` that makes the suite use it:
 
 ```sh
 cmake -S . -B build-libcxx -DCMAKE_CXX_COMPILER=clang++-22 -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ \
