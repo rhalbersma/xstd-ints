@@ -41,7 +41,13 @@ a byte-wise prefix population count and a lookup table. On x86-64 with BMI2 it i
 `TZCNT(PDEP(1 << k, x))`, except on processors whose `PDEP` is microcoded, where it is the slowest choice (section 5.3).
 Getting the dispatch right per target is the kind of work the standard library is placed to do once.
 
-**2.4** Scope: one function template, for every unsigned integer type as `<bit>` already defines that set, with a
+**2.4** With P3104's `bit_expand`, select can be spelled `countr_zero(bit_expand(T(1) << k, x))`, as P3104 itself
+notes for clearing the `k`-th one [P3104, 4.2.4]. That spelling is exact where `bit_expand` is one `PDEP`, but elsewhere
+it inherits a general deposit's cost for a one-bit source. libstdc++ trunk's `bit_expand`, which uses no `PDEP`, costs a
+flat 28 to 30 ns per 64-bit call on a Broadwell Xeon [xstd-libstdcxx], where broadword select costs 8 to 12 cycles
+(section 5.4). The spelling also leaves the reader to recognise select in it.
+
+**2.5** Scope: one function template, for every unsigned integer type as `<bit>` already defines that set, with a
 precondition and no new types. It does not propose a rank function; section 4.4 explains why, and the alternative.
 
 3 Proposed interface
@@ -61,8 +67,25 @@ precondition and no new types. It does not propose a rank function; section 4.4 
 4 Design decisions
 ------------------
 
-**4.1 Prior art.** *(Survey in progress: index base, argument order, return type and out-of-range behaviour for sux,
-SDSL, folly, the Rust crates, and any C or Rust proposal. To be filled in before review.)*
+**4.1 Prior art.** Word-level select as the libraries of the field define it, read at the commits and versions cited:
+
+| Library | Spelling | `k` counts from | `k >= popcount(x)` | Returns |
+| :-- | :-- | :-- | :-- | :-- |
+| sux [sux] | `select64(x, k)` | 0 | undocumented: 64 with BMI2, 72 without, with two undefined shifts | `uint64_t` |
+| dsiutils [dsiutils] | `Fast.select(x, rank)` | 0 | assertion; "impredictable results" otherwise | `int` |
+| folly [folly] | `select64(x, k)` | 0 | `DCHECK`, debug builds only | `uint64_t` |
+| ot/succinct [ot-succinct] | `select_in_word(x, k)` | 0 | assertion | `uint64_t` |
+| SDSL [SDSL] | `bits::sel(x, i)` | 1 | precondition `i` in `[1, cnt(x)]` | `uint32_t` |
+| Rust `sucds` 0.10 | `select_in_word(x, k)` | 0 | `None` | `Option<usize>` |
+| Rust `succinct` 0.5 | `select1(r, x)` | 0 | `None`; 72 from `select1_raw` | `Option<usize>` |
+| Rust `simple-sds` 0.4 | `unsafe bits::select(n, rank)` | 0 | undefined behaviour | `usize` |
+| Rust `qwt` 0.4 | `select_in_word(word, k)` | 0 | 64, undocumented | `u32` |
+
+No standard library or language has the function. Go's `math/bits` and Java's `Long` have none; Java does have
+`expand`, so it can be spelled as in 2.4. C23's `<stdbit.h>` has none, and WG14's N3367 adds none. No WG21 paper we
+found proposes one, and no Rust RFC or API change proposal does: the nearest, libs-team#695, accepted `gather_bits` and
+`scatter_bits`, the counterparts of `PEXT` and `PDEP`. GCC and Clang have no select builtin, and no instruction set we
+found has a select instruction; x86's `PDEP` and SVE2's `BDEP` give one in two instructions.
 
 **4.2 Index base.** `k` counts from zero, so that `bit_select(x, 0) == countr_zero(x)` for every nonzero `x`, and so that
 `bit_select(x, k)` for `k` in `[0, popcount(x))` enumerates the set bits in order, as a loop over a range would. A
@@ -76,21 +99,36 @@ alternatives considered:
   when `k < 64`, and the portable kernel would need an explicit test. It also gives `k < 0` a meaning it should not have.
 - *Return `-1`*, which no other `<bit>` function does.
 
-A precondition keeps the function a single expression where the hardware has one, lets hardened implementations check
-it, and makes a violating call ill-formed in constant evaluation (section 3). *(To be revisited once 4.1 shows what the
-libraries do.)*
+No surveyed library defines a result for an out-of-range `k`. Those that return a value at all disagree: sux returns 64
+or 72 for the same call depending on whether it was built with BMI2, and its portable path shifts past the width on the
+way. Rust's safe APIs return `None`, which in C++ would be an `optional<int>` on the hot path of every succinct query.
+
+A precondition keeps the function a single expression where the hardware has one, records what every library already
+assumes, lets hardened implementations check it, and makes a violating call ill-formed in constant evaluation (section
+3), as P3104 does for `bit_repeat`.
 
 **4.4 Rank.** Rank on a word, the number of set bits below position `i`, is `popcount(x & ((T(1) << i) - 1))` for `i` in
-`[0, digits)`. At `i == digits` the shift is undefined, which is the one argument for a `bit_rank(x, i)` defined on
-`[0, digits]`. We do not propose it here: the masked `popcount` is the spelling every surveyed library uses, and the
-`i == digits` case is `popcount(x)`. *(To be revisited with 4.1.)*
+`[0, digits)`. No surveyed C++ library has it as a function of its own: sux writes the masked `popcount`, and SDSL indexes
+a 65-entry mask table so that `i` runs over `[0, 64]`. Rust's `succinct` is the exception, and counts inclusively, up to
+and including position `i`. We do not propose it. Should LEWG want it, the form that removes the one pitfall, the
+undefined shift at `i == digits`, is the exclusive count with `i` in `[0, digits]`:
+
+    template<class T>
+      constexpr int bit_rank(T x, int i);   // the number of bits of x below position i that are set
 
 **4.5 Return type.** `int`, as `countr_zero`, `countl_zero`, `popcount` and `bit_width` return. `k` is `int` for the
 same reason and because it is compared against `popcount(x)`.
 
-**4.6 Name.** `bit_select` follows `bit_ceil`, `bit_floor`, `bit_width` and P3104's `bit_compress`/`bit_expand`. The name
-"select" is the field's own [Jacobson; Vigna]. *(Naming risk to check: OpenCL's `bitselect(a, b, c)` is a bitwise
-multiplexer; whether any std::simd or `<bit>` proposal uses `select` for that meaning.)*
+**4.6 Name.** "Select" is the field's own name for the operation [Jacobson; Vigna], and `bit_select` follows `bit_ceil`,
+`bit_floor`, `bit_width` and P3104's `bit_compress` and `bit_expand`. But "bit select" also names a bitwise multiplexer,
+`(a & ~m) | (b & m)`: OpenCL's `bitselect`, WebAssembly's `v128.bitselect`, and Arm's `BSL`, "bitwise select". C++26
+has `std::simd::select(c, a, b)` with that meaning lane-wise. A reader meeting `bit_select(x, k)` beside a SIMD
+`select` may expect the multiplexer. The signature rules the confusion out at the call site (an integer and an `int`,
+where the multiplexer takes three operands of one type), but not in a reader's head. We propose `bit_select` and ask
+LEWG to poll it against:
+
+- `nth_one(x, k)` or `select_one(x, k)`, which name what is selected;
+- `countr_select(x, k)`, beside `countr_zero` and `countr_one`, which reads as counting from the right.
 
 5 Implementation experience
 ---------------------------
@@ -188,12 +226,16 @@ Wording relative to the working draft. *(Draft number to be filled in.)*
 - [Jacobson] G. Jacobson, *Space-efficient static trees and graphs*, FOCS 1989.
 - [Navarro] G. Navarro, *Compact Data Structures*, Cambridge University Press, 2016.
 - [Vigna] S. Vigna, *Broadword implementation of rank/select queries*, WEA 2008.
-- [sux] https://github.com/vigna/sux
-- [SDSL] https://github.com/xxsds/sdsl-lite
-- [folly] https://github.com/facebook/folly
+- [sux] https://github.com/vigna/sux/blob/568903f1b7957ef03620ebad65d6ef68e031fef9/sux/support/common.hpp#L358-L407
+- [dsiutils] https://github.com/vigna/dsiutils/blob/9d32ae412396f10fe459d7597c1676299e1f2088/src/it/unimi/dsi/bits/Fast.java#L349-L357
+- [ot-succinct] https://github.com/ot/succinct/blob/669eebbdcaa0562028a22cb7c877e512e4f1210b/broadword.hpp#L86
+- [SDSL] https://github.com/xxsds/sdsl-lite/blob/5a7e423b200f2f81ba27ceb47986fe9fa30a091b/include/sdsl/bits.hpp#L407-L414
+- [folly] https://github.com/facebook/folly/blob/070549fca8e80fdc7cae3142a09cfbd58b872e4e/folly/compression/Select64.h#L69
 - [uops.info] https://uops.info/html-instr/PDEP_R64_R64_R64.html
 - [xstd] https://github.com/rhalbersma/xstd-ints
 - [xstd-bench] https://github.com/rhalbersma/xstd-ints/tree/main/bench/results
 - [xstd-succinct] https://github.com/rhalbersma/xstd-ints/blob/main/bench/succinct/results.md
+- [xstd-libstdcxx] https://github.com/rhalbersma/xstd-ints/issues/313#issuecomment-6236458190
+- [Pandey] P. Pandey, M. A. Bender, R. Johnson, *A Fast x86 Implementation of Select*, https://arxiv.org/abs/1706.00990
 - [xstd-proofs] https://github.com/rhalbersma/xstd-ints/tree/main/proofs
 - [P3104] J. Müller, *Bit permutations*, https://wg21.link/P3104
