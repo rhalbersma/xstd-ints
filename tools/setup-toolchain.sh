@@ -13,8 +13,9 @@
 # Installed, matching the three rungs of the README's matrix and the Boost CI resolves:
 #
 #   GCC 15, 16 and the trunk snapshot as g++-17; clang 22, 23 and trunk as clang++-24, with clang-tidy for each;
-#   libc++ 22; GCC 15's 32-bit multilib for the i686 leg; clang-format 22, CMake and FileCheck; and Boost 1.92's
-#   Align, Hash2 and Test, built from Boost's release tarball by GCC 15 into /usr/local.
+#   clang-format 22, the format gate's one rung; libc++ 22; GCC 15's 32-bit multilib for the i686 leg; CMake and
+#   FileCheck from PyPI; and Boost 1.92's Align, Hash2 and Test, built from Boost's release tarball by
+#   GCC 15 into /usr/local.
 #
 # A compiler with a standard library other than GCC 15's links a Boost.Test of its own, which boost-test.sh beside
 # this script builds; CI gets one from vcpkg, which builds Boost with the compiler under test. The unit tests,
@@ -65,6 +66,7 @@ packages=(
         "g++-${GCC_VERSION}"
         "clang-${CLANG_VERSION}"
         "clang-tidy-${CLANG_VERSION}"
+        "clang-format-${CLANG_VERSION}"
         "libc++-${CLANG_VERSION}-dev"
         "libc++abi-${CLANG_VERSION}-dev"
         "g++-${GCC_QUALIFICATION_VERSION}"
@@ -93,9 +95,10 @@ done
 printf '%s\n' /opt/gcc-latest/lib /opt/gcc-latest/lib64 | $SUDO tee /etc/ld.so.conf.d/gcc-latest.conf > /dev/null
 $SUDO ldconfig
 
-# The format gate pins 22, and before 22 clang-format reads `{ a * b }` in a requires-expression as a pointer
-# declaration. apt has no clang-format-22 for noble, so it comes from PyPI, pinned by hash in
-# clang-format-requirements.txt beside this script, and lands in ~/.local/bin.
+# The format gate runs clang-format-22 from apt.llvm.org, installed above, at the stable rung alone: a formatter
+# release reformats the code base. Before 22 it reads `{ a * b }` in a requires-expression as a pointer declaration.
+# The same 22 also comes from PyPI as an unversioned clang-format, pinned by hash in clang-format-requirements.txt
+# beside this script, and lands in ~/.local/bin for editors and hooks.
 CLANG_FORMAT_REQUIREMENTS="$(dirname "${BASH_SOURCE[0]}")/clang-format-requirements.txt"
 readonly CLANG_FORMAT_REQUIREMENTS
 pip install --quiet --user --break-system-packages --require-hashes -r "${CLANG_FORMAT_REQUIREMENTS}" \

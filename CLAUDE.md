@@ -158,7 +158,8 @@ Compile with the **stable rung** of [README.md](README.md)'s matrix, never with 
 happen to resolve to. Ubuntu 24.04 ships GCC 13, which rejects `-std=c++2c` outright, so the default compiler
 cannot build this library at all, and a check that quietly falls back to a cut-down reproduction proves less than
 it appears to. [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) installs every rung, clang-tidy for each of
-the three clangs and the Boost CI resolves, so a leg that fails in CI can be rerun locally on its own compiler.
+the three clangs, the format gate's clang-format 22 and the Boost CI resolves, so a leg that fails in CI can be rerun
+locally on its own compiler.
 
 A comment or formatting change is not exempt, because two gates read lines rather than syntax. `NOLINT` and
 `GCOVR_EXCL_LINE` suppress the line they sit on, so a formatter that splits that line leaves the marker behind on

@@ -55,9 +55,9 @@ Boost.Hash2. [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) brings a con
 ladders as an Ubuntu box gets, every rung of [README.md](README.md)'s matrix and the Boost CI resolves:
 
 - GCC 15 and 16 from the Ubuntu toolchain PPA, and the GCC trunk snapshot the development rung uses, as `g++-17`;
-- clang 22, 23 and trunk, as `clang++-24`, each with its clang-tidy, and libc++ 22, from apt.llvm.org;
+- clang 22, 23 and trunk, as `clang++-24`, each with its clang-tidy, and clang-format 22 and libc++ 22, from apt.llvm.org;
 - GCC 15's 32-bit multilib, for the i686 leg;
-- clang-format 22, FileCheck and CMake, from PyPI, pinned by hash;
+- the same clang-format 22 as an unversioned `clang-format`, FileCheck and CMake, from PyPI, pinned by hash;
 - Boost 1.92's Align, Hash2 and Test, built by GCC 15 from Boost's CMake release tarball, checked against the SHA-256
   Boost publishes, into `/usr/local`.
 
