@@ -111,6 +111,25 @@ def analyse(triple, cpu, instructions, llvm_mca):
     return cycles / 1000, report
 
 
+# uiCA's XED names a VEX-encoded general-purpose operand VGPR, where the uops.info data it reads still says GPR, so
+# every BMI1 and BMI2 instruction would be unsupported. The launcher renames each form before uiCA looks it up.
+LAUNCH_UICA = """
+import sys
+sys.path.insert(0, sys.argv[1])
+import xed
+disassemble = xed.disasFile
+def renamed(*args, **kwargs):
+    instructions = disassemble(*args, **kwargs)
+    for instruction in instructions:
+        instruction["iform"] = instruction["iform"].replace("VGPR", "GPR")
+    return instructions
+xed.disasFile = renamed
+import uiCA
+sys.argv = ["uiCA.py", *sys.argv[2:]]
+uiCA.main()
+"""
+
+
 def simulate(arch, instructions, uica):
     """uiCA's prediction for the region, assembled by GNU as, with the bottleneck it names and its full report."""
     with tempfile.TemporaryDirectory() as scratch:
@@ -118,8 +137,12 @@ def simulate(arch, instructions, uica):
         source.write_text(".text\n" + "\n".join(instructions) + "\n")
         assembled = source.with_suffix(".o")
         subprocess.run(["as", "--64", "-o", str(assembled), str(source)], check=True, capture_output=True)
-        report = subprocess.run([sys.executable, str(uica), str(assembled), "-arch", arch], check=True,
-                                capture_output=True, text=True).stdout
+        report = subprocess.run([sys.executable, "-c", LAUNCH_UICA, str(uica.parent), str(assembled), "-arch", arch],
+                                check=True, capture_output=True, text=True).stdout
+    # uiCA links each instruction to its uops.info page with terminal escapes, which a text file shows as noise.
+    report = re.sub(r"\x1b]8;;[^\x07\x1b]*(?:\x07|\x1b\\)", "", report)
+    if re.search(r"│\s+X\s+│", report):
+        raise RuntimeError(f"uiCA does not support an instruction of this region on {arch}:\n{report}")
     throughput = float(re.search(r"Throughput \(in cycles per iteration\): ([\d.]+)", report).group(1))
     bottleneck = re.search(r"Bottlenecks?: (.*)", report)
     return throughput, bottleneck.group(1).strip() if bottleneck else "unknown", report
