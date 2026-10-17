@@ -153,6 +153,21 @@ cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 run-clang-tidy -quiet -p build "$PWD/build/test/header_self_sufficiency/.*"
 ```
 
+Before a push, [`tools/ci-local.sh`](tools/ci-local.sh) runs the GitHub Actions ladders' Linux legs on what `setup-toolchain.sh` installs, so a change is green here before it waits on CI's runners:
+- the suite on GCC 15, 16 and 17-SVN, and on clang 22, 23 and 24-SVN, each clang on its own rung's libstdc++;
+- the libc++ 22 leg, the i686 leg, and the two BMI2 legs at `-march=x86-64-v3`;
+- clang-tidy 22, 23 and 24-SVN, with the clang-tidy job's passes;
+- the format gate.
+
+It takes a list of legs, or runs them all, one after another, with every core each; `--list` names them. Each leg logs to `build/ci-local/<leg>.log`, and the run ends in one line per leg. The suite legs build in Debug, or in `CI_LOCAL_BUILD_TYPE`; CI builds both.
+
+```sh
+tools/ci-local.sh                  # every leg
+tools/ci-local.sh gcc-17 tidy-24   # the ones a change is likeliest to break
+```
+
+MSVC, clang-cl, MinGW, Apple Clang and Emscripten have no Linux equivalent. The sanitizer, coverage, codegen, CodeQL and consumption jobs are not in it either; their own commands are in the sections below.
+
 ## Fuzzing
 
 The tests sweep fixed values and a seeded random sample; the libFuzzer target under [`fuzz/`](fuzz) searches for the inputs they miss. `fuzz_bit_permutation` reads a source and a mask from its input bytes and checks, at one `std::size_t` block, that both portable expansions agree and each round-trips with the portable compression, that every overload of PEXT and PDEP agrees with those kernels and round-trips on its own, and that the portable select and the one through PDEP find the source's one of every rank where the oracle does. It then reads the same bytes at every width from 8 bits up, through `unsigned _BitInt(147)` where the compiler has it, and checks that `bit_compress` and `bit_expand` agree with their oracles and undo each other, and that `bit_select` agrees with its oracle and inverts rank at the source's lowest and highest ones and at the rank the mask's population names. The checks live in [`test/include/test/bit/permutation_properties.hpp`](test/include/test/bit/permutation_properties.hpp) and [`test/include/test/bit/select_properties.hpp`](test/include/test/bit/select_properties.hpp), which the unit tests run as well; a failing one aborts.
