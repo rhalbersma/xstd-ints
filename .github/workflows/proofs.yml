@@ -35,15 +35,16 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install the stable rung, CMake and Z3
+      - name: Install the stable rung, its 32-bit multilib, CMake and Z3
         run: |
           tools/setup-toolchain.sh
+          sudo apt-get install -y -qq g++-15-multilib
           pip install --quiet --user --break-system-packages --require-hashes -r tools/cmake-requirements.txt
           pip install --quiet --user --break-system-packages --require-hashes -r tools/z3-requirements.txt
           echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
 
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-15 -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_PROOFS=ON
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-15 -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_PROOFS=ON -DXSTD_INTS_PROOFS_DRIFT_32=ON
 
       - name: Build
         run: cmake --build build --parallel
