@@ -24,6 +24,17 @@
 
 set -euo pipefail
 
+# --stable installs the stable rung alone: GCC 15, clang 22 with its clang-tidy and libc++, clang-format 22, FileCheck
+# and CMake. It is for a CI job that builds on that rung and nothing else, such as the codegen, benchmark, exhaustive
+# and proof workflows, which would otherwise spend minutes installing rungs they never call.
+stable_only=0
+case "${1:-}" in
+        "") ;;
+        --stable) stable_only=1 ;;
+        *) echo "usage: $0 [--stable]" >&2; exit 2 ;;
+esac
+readonly stable_only
+
 export DEBIAN_FRONTEND=noninteractive
 
 # A cloud setup script runs as root; a developer's shell does not.
@@ -73,8 +84,10 @@ if [ ! -s /usr/share/keyrings/ubuntu-toolchain.gpg ]; then
 fi
 write_if_changed /etc/apt/sources.list.d/llvm.list "$(
         echo "deb [signed-by=/usr/share/keyrings/llvm.gpg] https://apt.llvm.org/noble/ llvm-toolchain-noble-${CLANG_VERSION} main"
-        echo "deb [signed-by=/usr/share/keyrings/llvm.gpg] https://apt.llvm.org/noble/ llvm-toolchain-noble-${CLANG_QUALIFICATION_VERSION} main"
-        echo "deb [signed-by=/usr/share/keyrings/llvm.gpg] https://apt.llvm.org/noble/ llvm-toolchain-noble main"
+        if [ "${stable_only}" -eq 0 ]; then
+                echo "deb [signed-by=/usr/share/keyrings/llvm.gpg] https://apt.llvm.org/noble/ llvm-toolchain-noble-${CLANG_QUALIFICATION_VERSION} main"
+                echo "deb [signed-by=/usr/share/keyrings/llvm.gpg] https://apt.llvm.org/noble/ llvm-toolchain-noble main"
+        fi
 )" && sources_changed=1
 write_if_changed /etc/apt/sources.list.d/ubuntu-toolchain.list \
         "deb [signed-by=/usr/share/keyrings/ubuntu-toolchain.gpg] https://ppa.launchpadcontent.net/ubuntu-toolchain-r/test/ubuntu noble main" \
@@ -87,15 +100,16 @@ packages=(
         "clang-format-${CLANG_VERSION}"
         "libc++-${CLANG_VERSION}-dev"
         "libc++abi-${CLANG_VERSION}-dev"
-        "g++-${GCC_QUALIFICATION_VERSION}"
-        "g++-${GCC_VERSION}-multilib"
 )
 
 # Each libc++ leg has a runner to itself, but apt's libc++ packages exclude one another, so libc++ stays at the
 # stable rung's here; `apt-get install libc++-24-dev libc++abi-24-dev` swaps it for a trunk libc++ leg.
-for version in "${CLANG_QUALIFICATION_VERSION}" "${CLANG_TRUNK_VERSION}"; do
-        packages+=("clang-${version}" "clang-tidy-${version}")
-done
+if [ "${stable_only}" -eq 0 ]; then
+        packages+=("g++-${GCC_QUALIFICATION_VERSION}" "g++-${GCC_VERSION}-multilib")
+        for version in "${CLANG_QUALIFICATION_VERSION}" "${CLANG_TRUNK_VERSION}"; do
+                packages+=("clang-${version}" "clang-tidy-${version}")
+        done
+fi
 
 missing=()
 for package in "${packages[@]}"; do
@@ -109,25 +123,27 @@ fi
 # GCC trunk is Jonathan Wakely's weekly binary snapshot, the one the ladders' development rung installs, under the
 # same g++-17 name. Upstream publishes neither checksums nor signatures, so what arrived is recorded instead. Its
 # ETag is kept beside it, so a rerun downloads only a snapshot newer than the one installed.
-snapshot_url=https://kayari.org/gcc-latest/gcc-latest.deb
-snapshot_etag_file=/opt/gcc-latest/.etag
-snapshot_etag="$(curl -fsSIL "${snapshot_url}" | tr -d '\r' | sed -n 's/^[Ee][Tt]ag: //p' | tail -1 || true)"
-if [ ! -x /opt/gcc-latest/bin/g++ ] \
-        || { [ -n "${snapshot_etag}" ] && [ "$(cat "${snapshot_etag_file}" 2>/dev/null)" != "${snapshot_etag}" ]; }; then
-        snapshot="$(mktemp -d)"
-        curl -fsSL --retry 3 "${snapshot_url}" -o "${snapshot}/gcc-latest.deb"
-        dpkg-deb -f "${snapshot}/gcc-latest.deb" Package Version
-        sha256sum "${snapshot}/gcc-latest.deb"
-        $SUDO dpkg -i "${snapshot}/gcc-latest.deb" > /dev/null || $SUDO apt-get install -f -y -qq
-        rm -rf "${snapshot}"
-        [ -z "${snapshot_etag}" ] || printf '%s\n' "${snapshot_etag}" | $SUDO tee "${snapshot_etag_file}" > /dev/null
-fi
-for tool in gcc g++ gcov; do
-        [ "$(readlink "/usr/bin/${tool}-${GCC_TRUNK_VERSION}")" = "/opt/gcc-latest/bin/${tool}" ] \
-                || $SUDO ln -sf "/opt/gcc-latest/bin/${tool}" "/usr/bin/${tool}-${GCC_TRUNK_VERSION}"
-done
-if write_if_changed /etc/ld.so.conf.d/gcc-latest.conf "$(printf '%s\n' /opt/gcc-latest/lib /opt/gcc-latest/lib64)"; then
-        $SUDO ldconfig
+if [ "${stable_only}" -eq 0 ]; then
+        snapshot_url=https://kayari.org/gcc-latest/gcc-latest.deb
+        snapshot_etag_file=/opt/gcc-latest/.etag
+        snapshot_etag="$(curl -fsSIL "${snapshot_url}" | tr -d '\r' | sed -n 's/^[Ee][Tt]ag: //p' | tail -1 || true)"
+        if [ ! -x /opt/gcc-latest/bin/g++ ] \
+                || { [ -n "${snapshot_etag}" ] && [ "$(cat "${snapshot_etag_file}" 2>/dev/null)" != "${snapshot_etag}" ]; }; then
+                snapshot="$(mktemp -d)"
+                curl -fsSL --retry 3 "${snapshot_url}" -o "${snapshot}/gcc-latest.deb"
+                dpkg-deb -f "${snapshot}/gcc-latest.deb" Package Version
+                sha256sum "${snapshot}/gcc-latest.deb"
+                $SUDO dpkg -i "${snapshot}/gcc-latest.deb" > /dev/null || $SUDO apt-get install -f -y -qq
+                rm -rf "${snapshot}"
+                [ -z "${snapshot_etag}" ] || printf '%s\n' "${snapshot_etag}" | $SUDO tee "${snapshot_etag_file}" > /dev/null
+        fi
+        for tool in gcc g++ gcov; do
+                [ "$(readlink "/usr/bin/${tool}-${GCC_TRUNK_VERSION}")" = "/opt/gcc-latest/bin/${tool}" ] \
+                        || $SUDO ln -sf "/opt/gcc-latest/bin/${tool}" "/usr/bin/${tool}-${GCC_TRUNK_VERSION}"
+        done
+        if write_if_changed /etc/ld.so.conf.d/gcc-latest.conf "$(printf '%s\n' /opt/gcc-latest/lib /opt/gcc-latest/lib64)"; then
+                $SUDO ldconfig
+        fi
 fi
 
 # Installs a hash-pinned requirements file into ~/.local unless every package it pins is already at its version.
@@ -158,10 +174,10 @@ pip_install_pinned "${FILECHECK_REQUIREMENTS}"
 # gcovr for the coverage gate, from PyPI, pinned by hash as the coverage job pins it.
 GCOVR_REQUIREMENTS="$(dirname "${BASH_SOURCE[0]}")/gcovr-requirements.txt"
 readonly GCOVR_REQUIREMENTS
-pip_install_pinned "${GCOVR_REQUIREMENTS}"
+[ "${stable_only}" -eq 1 ] || pip_install_pinned "${GCOVR_REQUIREMENTS}"
 
 # actionlint from its GitHub release into ~/.local/bin; the job builds the same release with go install.
-if ! "${HOME:-/root}/.local/bin/actionlint" --version 2>/dev/null | grep -qx "${ACTIONLINT_VERSION}"; then
+if [ "${stable_only}" -eq 0 ] && ! "${HOME:-/root}/.local/bin/actionlint" --version 2>/dev/null | grep -qx "${ACTIONLINT_VERSION}"; then
         actionlint_dir="$(mktemp -d)"
         curl -fsSL --retry 3 "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" \
                 -o "${actionlint_dir}/actionlint.tar.gz"
@@ -180,7 +196,7 @@ readonly CMAKE="${HOME:-/root}/.local/bin/cmake"
 
 # Boost from its CMake release tarball, which installs a CMake package for every library, the header-only ones the
 # test suite finds by name included. Only what the suite uses is built, by GCC 15, and a rerun skips a done install.
-if [ ! -f "${BOOST_PREFIX}/lib/cmake/Boost-${BOOST_VERSION}/BoostConfig.cmake" ]; then
+if [ "${stable_only}" -eq 0 ] && [ ! -f "${BOOST_PREFIX}/lib/cmake/Boost-${BOOST_VERSION}/BoostConfig.cmake" ]; then
         boost="$(mktemp -d)"
         curl -fsSL --retry 3 "https://github.com/boostorg/boost/releases/download/boost-${BOOST_VERSION}/boost-${BOOST_VERSION}-cmake.tar.xz" \
                 -o "${boost}/boost.tar.xz"
@@ -200,6 +216,7 @@ fi
 "clang++-${CLANG_VERSION}" --version | head -1 || true
 "${HOME:-/root}/.local/bin/clang-format" --version || true
 "${CMAKE}" --version | head -1 || true
+[ "${stable_only}" -eq 0 ] || exit 0
 "${HOME:-/root}/.local/bin/gcovr" --version | head -1 || true
 echo "actionlint $("${HOME:-/root}/.local/bin/actionlint" --version | head -1)" || true
 echo "Boost ${BOOST_VERSION} in ${BOOST_PREFIX}"

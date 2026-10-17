@@ -69,6 +69,10 @@ tools/setup-toolchain.sh
 apt's libc++ packages exclude one another, so libc++ stays at 22; the script names the command that swaps in another
 for a libc++ leg of a newer rung. The script is idempotent, so re-running it on a warm container is safe.
 
+`tools/setup-toolchain.sh --stable` installs the stable rung alone: GCC 15, clang 22 with its clang-tidy and libc++,
+clang-format 22, FileCheck and CMake. The codegen, benchmark, exhaustive and proof workflows build on that rung and
+nothing else, so they call it that way rather than spend minutes on the rest.
+
 In a [Claude Code cloud](https://code.claude.com/docs/en/claude-code-on-the-web) environment, the environment's
 setup script runs it, so every session starts with the rung already in place. That field holds a script rather than
 a command, and it runs from outside the checkout, so it needs a shebang and an absolute path:
