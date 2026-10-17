@@ -12,6 +12,7 @@
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
 #include <bit>                                            // IWYU pragma: keep; bit_reverse, where the standard library ships it
+#include <cstddef>                                        // size_t
 
 // P3104R5's bit_reverse, over every unsigned integer xstd knows.
 namespace xstd {
@@ -34,7 +35,8 @@ template<unsigned_integer T>
 [[nodiscard]] constexpr auto bit_reverse(T x) noexcept(nothrow_const_operators<T>)
         -> T
 {
-        return ints::detail::mirror_blocks(x, ints::detail::block_reverse);
+        // A lambda rather than the function: GCC inlines neither block through a function passed as an argument.
+        return ints::detail::mirror_blocks(x, [](std::size_t block) noexcept -> std::size_t { return ints::detail::block_reverse(block); });
 }
 
 } // namespace xstd

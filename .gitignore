@@ -9,3 +9,6 @@
 # Written into the source tree by the Coverage workflow and by a local gcovr run.
 /coverage.txt
 /coverage.xml
+
+# Written beside proofs/kernels.py whenever the proofs import it.
+__pycache__/

@@ -197,6 +197,24 @@ if(PROJECT_IS_TOP_LEVEL)
         add_subdirectory(codegen)
     endif()
 
+    # Off by default, and outside BUILD_TESTING: each exhaustive sweep runs for minutes and needs no Boost.Test, so it
+    # is a job of its own rather than a unit test. enable_testing() stays here for the reason given above.
+    option(${project_option_prefix}_BUILD_EXHAUSTIVE_TESTS "Build the exhaustive 16-bit sweeps under exhaustive/" OFF)
+
+    if(${project_option_prefix}_BUILD_EXHAUSTIVE_TESTS)
+        enable_testing()
+        add_subdirectory(exhaustive)
+    endif()
+
+    # Off by default, and outside BUILD_TESTING: the proofs run Z3 from Python for many minutes and need no Boost.Test.
+    # enable_testing() stays here for the reason given above.
+    option(${project_option_prefix}_BUILD_PROOFS "Prove the portable bit kernels with Z3, under proofs/" OFF)
+
+    if(${project_option_prefix}_BUILD_PROOFS)
+        enable_testing()
+        add_subdirectory(proofs)
+    endif()
+
     # Off by default, and outside BUILD_TESTING: Mull's clang plugin builds its own copy of the unit tests, unoptimized and
     # instrumented, and the run takes minutes. enable_testing() stays here for the reason given above.
     option(${project_option_prefix}_BUILD_MUTATION_TESTS "Score the unit tests by the mutants they kill, under mutation/" OFF)
