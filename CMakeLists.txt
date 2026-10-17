@@ -188,8 +188,26 @@ if(PROJECT_IS_TOP_LEVEL)
         add_subdirectory(fuzz)
     endif()
 
+    # Off by default, and outside BUILD_TESTING: the codegen tests compile to assembly and read it with FileCheck, so
+    # they need neither Boost.Test nor a test executable. enable_testing() stays here, where ctest looks for the tests.
+    option(${project_option_prefix}_BUILD_CODEGEN_TESTS "Check the assembly the bit kernels compile to, under codegen/" OFF)
+
+    if(${project_option_prefix}_BUILD_CODEGEN_TESTS)
+        enable_testing()
+        add_subdirectory(codegen)
+    endif()
+
+    # Off by default, and outside BUILD_TESTING: each exhaustive sweep runs for minutes and needs no Boost.Test, so it
+    # is a job of its own rather than a unit test. enable_testing() stays here for the reason given above.
+    option(${project_option_prefix}_BUILD_EXHAUSTIVE_TESTS "Build the exhaustive 16-bit sweeps under exhaustive/" OFF)
+
+    if(${project_option_prefix}_BUILD_EXHAUSTIVE_TESTS)
+        enable_testing()
+        add_subdirectory(exhaustive)
+    endif()
+
     # Off by default, and outside BUILD_TESTING: the proofs run Z3 from Python for many minutes and need no Boost.Test.
-    # enable_testing() stays here, where ctest looks for the tests.
+    # enable_testing() stays here for the reason given above.
     option(${project_option_prefix}_BUILD_PROOFS "Prove the portable bit kernels with Z3, under proofs/" OFF)
 
     if(${project_option_prefix}_BUILD_PROOFS)
