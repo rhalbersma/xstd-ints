@@ -214,6 +214,15 @@ if(PROJECT_IS_TOP_LEVEL)
         enable_testing()
         add_subdirectory(proofs)
     endif()
+
+    # Off by default, and outside BUILD_TESTING: the examples are programs that use the library the way its users do,
+    # each checking its own output. enable_testing() stays here for the reason given above.
+    option(${project_option_prefix}_BUILD_EXAMPLES "Build the example programs under examples/" OFF)
+
+    if(${project_option_prefix}_BUILD_EXAMPLES)
+        enable_testing()
+        add_subdirectory(examples/perft)
+    endif()
 endif()
 
 install(

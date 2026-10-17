@@ -224,6 +224,19 @@ ctest --test-dir build-proofs --output-on-failure --verbose
 
 `python3 proofs/prove.py --widths 16 --jobs 4` runs every claim at 16 bits in seconds, which is the quick check while editing a kernel or its model. The [Proofs workflow](.github/workflows/proofs.yml) runs both widths weekly, by hand, and on a pull request touching the portable kernels or the proofs. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
 
+## Examples
+
+[`examples/perft/`](examples/perft) is a chess move generator built on the library as an engine author would use it: `xstd::countr_zero` to walk a bitboard, and the attacks of the sliding pieces found three ways, each its own table, `xstd::bit_compress` indexing a table as Stockfish's BMI2 path does, hyperbola quintessence over `xstd::bit_reverse`, and magic bitboards, which use no xstd function, as the baseline. Perft counts the leaves of the legal move tree, and every count must equal the one chessprogramming.org publishes for the start position, Kiwipete and positions 3 to 6, so a wrong bit primitive anywhere fails it. Every table is also checked against a square-by-square walk before it is used.
+
+```sh
+cmake -S . -B build-perft -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_CXX_FLAGS=-march=x86-64-v3 -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_EXAMPLES=ON
+cmake --build build-perft
+ctest --test-dir build-perft
+build-perft/examples/perft/perft full
+```
+
+The test runs the suite to shallow depths in seconds; `perft full` runs it to depths of up to 194 million leaves and prints each method's speed. [`examples/perft/results.md`](examples/perft/results.md) keeps a run. The [Perft workflow](.github/workflows/perft.yml) runs `perft full` with the portable kernels and at `-march=x86-64-v3` on `ubuntu-24.04`, and on `ubuntu-24.04-arm`, weekly, by hand, and on a pull request that touches the bit functions or the example. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
+
 ## Standards-paper tracking
 
 Implementation-relevant proposals must record the paper number, the revision-pinned wording reviewed by xstd, the corresponding live `cplusplus/papers` tracking issue, the last-reviewed date, and a short statement saying whether xstd implements, partially follows, extends, or merely references the paper. Unversioned `wg21.link/P####` links are reserved for links explicitly described as the latest revision; implementation and conformance claims use pinned `P####R#` links. Durable prose does not copy volatile WG21 status labels.
