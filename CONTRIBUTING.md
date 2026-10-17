@@ -162,7 +162,7 @@ The unit tests and the fuzzer check that the intrinsic kernels agree with the po
 
 | Configuration | Flags | Expected |
 | :--- | :--- | :--- |
-| `x86-64` | `-march=x86-64` | no `pext` or `pdep`; with Clang, the 128-bit `bit_reverse` without a branch in this and every configuration below, which GCC gives only under GFNI and on AArch64 (#309) |
+| `x86-64` | `-march=x86-64` | no `pext` or `pdep`; the 128-bit `bit_reverse` without a branch, in this and every x86-64 configuration below |
 | `bmi2` | `-mbmi2` | `bit_compress` a `pext` and `bit_expand` a `pdep`, neither with a branch; `bit_select` through `pdep` |
 | `x86-64-v3` | `-march=x86-64-v3` | as `bmi2`, and `bit_select` a `pdep` followed by `tzcnt` with no branch, `tzcnt` being BMI1's |
 | `gfni` | `-mgfni` | `bit_reverse` a `gf2p8affineqb` and a `bswap`, twice that for 128 bits, without a branch |
