@@ -163,7 +163,10 @@ bit-at-a-time oracle at compile time and at run time, and the run-time block ker
 the portable ones, so a build with BMI2 checks the instructions too. Agreement cannot show which
 kernel ran, so codegen tests compile the public functions to assembly for each target that
 selects a kernel and check the instructions that come out, and that they are absent where the
-target is excluded.
+target is excluded. Beyond what tests can sample, Z3 proves each portable kernel equal to its
+specification for every input at 32 and 64 bits: PEXT and PDEP as the Intel SDM's pseudocode
+gives them, RBIT as the Arm ARM's ASL does, and select by its defining property, each shift
+within the width and the select's precondition met at every call.
 Wider types compose the blocks: reversal sends each mirrored block to the mirror of its offset,
 compression packs each block's result above the bits the lower blocks selected, expansion
 draws each block's bits from where the lower blocks stopped, and selection skips whole blocks,
