@@ -37,7 +37,7 @@ jobs:
 
       - name: Install the stable rung, its 32-bit multilib, CMake and Z3
         run: |
-          tools/setup-toolchain.sh
+          tools/setup-toolchain.sh --stable
           sudo apt-get install -y -qq g++-15-multilib
           pip install --quiet --user --break-system-packages --require-hashes -r tools/cmake-requirements.txt
           pip install --quiet --user --break-system-packages --require-hashes -r tools/z3-requirements.txt
