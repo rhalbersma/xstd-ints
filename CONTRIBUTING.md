@@ -243,6 +243,18 @@ ctest --test-dir build-mutation --output-on-failure
 
 A run takes about eight minutes on four cores and leaves one SQLite report per executable under `build-mutation/mutation/reports/`. The [Mutation workflow](.github/workflows/mutation.yml) runs it weekly, by hand, and on a pull request that touches the mutated headers, the tests that kill their mutants, or `mutation/`. It is not a required check while its runtime and noise are still being learned.
 
+## Succinct benchmark
+
+`bit_select` is justified by succinct data structures, so [`bench/succinct/`](bench/succinct) holds it to that field's practice. `select_dictionary.hpp` is a rank/select dictionary a user of xstd would write: a count per block of eight words, a block sampled every 8192 ones, a binary search between samples, a word scan by `popcount`, and `bit_select` within the word. `bench_select` builds it over a bit vector of 2<sup>30</sup> bits, by default, at uniform densities from 1% to 90% and in a clustered distribution, and times 4 million selects of random ranks against [sux](https://github.com/vigna/sux)'s `Rank9Sel` and [SDSL](https://github.com/xxsds/sdsl-lite)'s `select_support_mcl`, each the fastest of five interleaved rounds. A last column replaces `bit_select` by one `countr_zero`, so the difference is what the in-word select costs. Every select must agree across the three libraries, and every rank with sux's, or the executable exits 1. CMake fetches both libraries, pinned by commit, and reads them as headers only; they need GCC or Clang:
+
+```sh
+cmake -S . -B build-succinct -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_CXX_FLAGS=-march=native -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_SUCCINCT_BENCHMARKS=ON
+cmake --build build-succinct
+build-succinct/bench/succinct/bench_select
+```
+
+A run takes about six minutes and under a gigabyte of memory; a number of bits as its argument runs a smaller vector.
+
 ## Standards-paper tracking
 
 Implementation-relevant proposals must record the paper number, the revision-pinned wording reviewed by xstd, the corresponding live `cplusplus/papers` tracking issue, the last-reviewed date, and a short statement saying whether xstd implements, partially follows, extends, or merely references the paper. Unversioned `wg21.link/P####` links are reserved for links explicitly described as the latest revision; implementation and conformance claims use pinned `P####R#` links. Durable prose does not copy volatile WG21 status labels.
