@@ -23,6 +23,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(LeavesANonNegativeRemainder, T, test::exact_width_
         XSTD_CONSTEXPR_CHECK_EQUAL_IF(test::has_constexpr_division<T>, (xstd::div_euclid(T{+1}, T{-2})), (xstd::div_result<T>{0, +1}));
         XSTD_CONSTEXPR_CHECK_EQUAL_IF(test::has_constexpr_division<T>, (xstd::div_euclid(T{-1}, T{+2})), (xstd::div_result<T>{-1, +1}));
         XSTD_CONSTEXPR_CHECK_EQUAL_IF(test::has_constexpr_division<T>, (xstd::div_euclid(T{-1}, T{-2})), (xstd::div_result<T>{+1, +1}));
+        XSTD_CONSTEXPR_CHECK_EQUAL_IF(test::has_constexpr_division<T>, (xstd::div_euclid(T{+9}, T{+3})), (xstd::div_result<T>{+3, 0}));
+        XSTD_CONSTEXPR_CHECK_EQUAL_IF(test::has_constexpr_division<T>, (xstd::div_euclid(T{+9}, T{-3})), (xstd::div_result<T>{-3, 0}));
+        XSTD_CONSTEXPR_CHECK_EQUAL_IF(test::has_constexpr_division<T>, (xstd::div_euclid(T{-9}, T{+3})), (xstd::div_result<T>{-3, 0}));
+        XSTD_CONSTEXPR_CHECK_EQUAL_IF(test::has_constexpr_division<T>, (xstd::div_euclid(T{-9}, T{-3})), (xstd::div_result<T>{+3, 0}));
 }
 
 // Unsigned, the three conventions coincide; checked against xstd::div, not against literals.

@@ -35,8 +35,9 @@ template<integer I>
                 auto const zero      = static_cast<I>(0);
                 auto const one       = static_cast<I>(1);
                 auto const adjust    = rT < zero;
-                auto const qE        = adjust ? (denom > zero ? static_cast<I>(qT - one) : static_cast<I>(qT + one)) : qT;
-                auto const rE        = adjust ? (denom > zero ? static_cast<I>(rT + denom) : static_cast<I>(rT - denom)) : rT;
+                // The precondition rules out a zero denom, so > and >= are the same test on it.
+                auto const qE = adjust ? (denom > zero ? static_cast<I>(qT - one) : static_cast<I>(qT + one)) : qT;     // mull-ignore: cxx_gt_to_ge
+                auto const rE = adjust ? (denom > zero ? static_cast<I>(rT + denom) : static_cast<I>(rT - denom)) : rT; // mull-ignore: cxx_gt_to_ge
                 // Said on the counterpart every integer type has, |MIN| fitting in no other.
                 assert(xstd::unsigned_abs(rE) < xstd::unsigned_abs(denom));
                 assert(xstd::sign(rE) >= 0);
