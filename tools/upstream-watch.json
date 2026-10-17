@@ -1,0 +1,93 @@
+{
+  "draft": {
+    "clauses": [
+      "bit",
+      "bitmask.types",
+      "charconv.to.chars",
+      "iterator.concept.winc"
+    ],
+    "commit": "47974a2fafeca9a2207d3b5eff3dfd65ce771277"
+  },
+  "libraries": {
+    "libc++": {
+      "bitops": 201907
+    },
+    "libstdc++": {
+      "bitops": 201907
+    }
+  },
+  "lwg": {
+    "1357": "Resolved",
+    "262": "CD1",
+    "2692": "NAD",
+    "3092": "Open",
+    "3366": "Resolved",
+    "3367": "C++20",
+    "3376": "Resolved",
+    "3467": "C++23",
+    "3575": "Resolved",
+    "3656": "C++23",
+    "3890": "New",
+    "3968": "New",
+    "3977": "New",
+    "4421": "Ready",
+    "4539": "New",
+    "4546": "Ready",
+    "4583": "NAD",
+    "4602": "Ready"
+  },
+  "tracking": {
+    "P3104": {
+      "labels": [
+        "C++29",
+        "IS",
+        "LWG",
+        "plenary-approved",
+        "size - medium"
+      ],
+      "milestone": "2026-telecon",
+      "state": "closed"
+    },
+    "P3666": {
+      "labels": [
+        "C++29",
+        "CWG",
+        "LEWG",
+        "ready-for-library-evolution-meeting-review"
+      ],
+      "milestone": "2026-telecon",
+      "state": "open"
+    },
+    "P3701": {
+      "labels": [
+        "B3 - addition",
+        "C++29",
+        "IS",
+        "LEWG",
+        "ready-for-library-evolution-meeting-review",
+        "size - small"
+      ],
+      "milestone": "2026-telecon",
+      "state": "open"
+    },
+    "P3724": {
+      "labels": [
+        "C++29",
+        "IS",
+        "LWG"
+      ],
+      "milestone": "2026-telecon",
+      "state": "open"
+    },
+    "P3793": {
+      "labels": [
+        "C++29",
+        "LEWG",
+        "plenary-approved",
+        "simd"
+      ],
+      "milestone": "2026-telecon",
+      "state": "closed"
+    }
+  }
+}
