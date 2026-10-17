@@ -169,6 +169,11 @@ Never build with whatever `g++` or `clang++` happen to resolve to. Ubuntu 24.04 
 back to a cut-down reproduction proves less than it appears to. What `ci-local.sh` cannot cover, MSVC, clang-cl,
 MinGW, Apple Clang and Emscripten, is CI's alone; say so rather than claim it was checked.
 
+Run anything that takes more than a minute in the background: a build, a `ci-local.sh` leg, a sweep, a proof, a
+fuzz run. The conversation then stays free for questions asked in the meantime. Report the result when it lands,
+from its output, never from a guess at it, and keep two jobs off one working tree: a second checkout, such as a
+`git worktree`, gives a parallel job its own sources.
+
 A comment or formatting change is not exempt, because two gates read lines rather than syntax. `NOLINT` and
 `GCOVR_EXCL_LINE` suppress the line they sit on, so a formatter that splits that line leaves the marker behind on
 the wrong half, where it goes silent with nothing to say it has. Check that the code is byte-identical when a
