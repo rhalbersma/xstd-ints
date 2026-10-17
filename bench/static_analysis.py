@@ -4,17 +4,20 @@
 #    (See accompanying file LICENSE_1_0.txt or copy at
 #          http://www.boost.org/LICENSE_1_0.txt)
 
-"""Writes llvm-mca's analysis of every bit kernel, for each compiler and each named microarchitecture, under mca/.
+"""Writes llvm-mca's analysis of every bit kernel under mca/, and uiCA's under uica/ for the Intel targets.
 
 static_analysis.cpp gives each kernel a function of its own. Each compiler turns it into assembly for each target, and
 llvm-mca simulates the result on that target's scheduling model. A function without a loop is analysed whole, so its
 figure is the cost of one call; a function with a loop is analysed by its innermost loop's body, so its figure is the
 cost of one trip, that is of one selected bit, one mask bit or one source bit. mca/README.md tabulates llvm-mca's
-cycles per iteration, and mca/<compiler>-<cpu>.txt holds its summary beside the assembly it read.
+cycles per iteration, and mca/<compiler>-<cpu>.txt holds its summary beside the assembly it read. Given a uiCA
+checkout, uiCA simulates the same regions of the x86-64 code as well, on the three targets above that it models,
+Haswell, Cascade Lake and Ice Lake, into uica/ in the same shape.
 
-    static_analysis.py --zp7 build/_deps/zp7-src [--clang clang++-22] [--gcc g++-15] [--llvm-mca llvm-mca-22]
+    static_analysis.py --zp7 build/_deps/zp7-src [--uica uiCA/uiCA.py] [--clang clang++-22] [--gcc g++-15]
+                       [--llvm-mca llvm-mca-22]
 
-zp7 is the checkout CMake fetches when it configures the benchmarks.
+zp7 is the checkout CMake fetches when it configures the benchmarks, and uiCA one that its own setup.sh has prepared.
 
 AArch64 needs a cross standard library for clang to compile against, such as noble's libstdc++-14-dev-arm64-cross.
 """
@@ -23,12 +26,15 @@ import argparse
 import pathlib
 import re
 import subprocess
+import sys
+import tempfile
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
 
 X86 = ["haswell", "cascadelake", "icelake-server", "znver2", "znver3", "znver4"]
 AARCH64 = ["neoverse-n1", "neoverse-n2", "neoverse-v2"]
+INTEL = {"haswell": "HSW", "cascadelake": "CLX", "icelake-server": "ICL"}
 
 # Two loop-free kernels before the loops, then the loops by family, in the order the tables in the README list them.
 KERNELS = [
@@ -105,9 +111,36 @@ def analyse(triple, cpu, instructions, llvm_mca):
     return cycles / 1000, report
 
 
+def simulate(arch, instructions, uica):
+    """uiCA's prediction for the region, assembled by GNU as, with the bottleneck it names and its full report."""
+    with tempfile.TemporaryDirectory() as scratch:
+        source = pathlib.Path(scratch) / "region.s"
+        source.write_text(".text\n" + "\n".join(instructions) + "\n")
+        assembled = source.with_suffix(".o")
+        subprocess.run(["as", "--64", "-o", str(assembled), str(source)], check=True, capture_output=True)
+        report = subprocess.run([sys.executable, str(uica), str(assembled), "-arch", arch], check=True,
+                                capture_output=True, text=True).stdout
+    throughput = float(re.search(r"Throughput \(in cycles per iteration\): ([\d.]+)", report).group(1))
+    bottleneck = re.search(r"Bottlenecks?: (.*)", report)
+    return throughput, bottleneck.group(1).strip() if bottleneck else "unknown", report
+
+
+def table(title, cpus, kernels, cell):
+    """One Markdown table: a row per kernel present, a column per target, a cell as `cell` renders it."""
+    lines = [title, "", "| kernel | " + " | ".join(cpus) + " |", "| :-- | " + " | ".join("--:" for _ in cpus) + " |"]
+    for kernel in KERNELS:
+        if kernel not in kernels:
+            continue
+        cells = [cell(kernels[kernel][cpu]) if cpu in kernels[kernel] else "" for cpu in cpus]
+        loop = any(entry[0] == "loop body" for entry in kernels[kernel].values())
+        lines.append(f"| `{kernel}`{', *loop*' if loop else ''} | " + " | ".join(cells) + " |")
+    return lines + [""]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--zp7", required=True, type=pathlib.Path)
+    parser.add_argument("--uica", type=pathlib.Path)
     parser.add_argument("--clang", default="clang++-22")
     parser.add_argument("--gcc", default="g++-15")
     parser.add_argument("--llvm-mca", default="llvm-mca-22")
@@ -122,11 +155,13 @@ def main():
 
     versions = {}
     tables = {}
+    simulated = {}
     for compiler, family, triple, cpu, flags, comment in configurations:
         versions[family] = subprocess.run([compiler, "--version"], check=True, capture_output=True,
                                           text=True).stdout.splitlines()[0]
         bodies = functions(assembly(compiler, flags, args.zp7.resolve()), comment)
         sections = []
+        reports = []
         for kernel in KERNELS:
             if kernel not in bodies:
                 continue
@@ -134,9 +169,17 @@ def main():
             cycles, report = analyse(triple, cpu, instructions, args.llvm_mca)
             tables.setdefault((family, triple), {}).setdefault(kernel, {})[cpu] = (scope, cycles)
             sections.append(f"## {kernel}, {scope}\n\n" + "\n".join(instructions) + "\n\n" + report)
+            if args.uica and cpu in INTEL:
+                throughput, bottleneck, report = simulate(INTEL[cpu], instructions, args.uica.resolve())
+                simulated.setdefault(family, {}).setdefault(kernel, {})[cpu] = (scope, throughput, bottleneck)
+                reports.append(f"## {kernel}, {scope}\n\n" + "\n".join(instructions) + "\n\n" + report)
         name = f"{family.lower()}-{cpu}.txt"
         (out / name).write_text(f"# {versions[family]}, {' '.join(flags)} -O3, analysed by llvm-mca -mcpu={cpu}\n\n"
                                 + "\n".join(sections))
+        if reports:
+            (HERE / "uica").mkdir(exist_ok=True)
+            (HERE / "uica" / name).write_text(f"# {versions[family]}, {' '.join(flags)} -O3, simulated by uiCA -arch "
+                                              f"{INTEL[cpu]}\n\n" + "\n".join(reports))
 
     mca_version = subprocess.run([args.llvm_mca, "--version"], check=True, capture_output=True, text=True).stdout
     mca_version = next(line.strip() for line in mca_version.splitlines() if "version" in line)
@@ -153,19 +196,22 @@ def main():
              f"Analysed by {mca_version}.", ""]
     for (family, triple), kernels in tables.items():
         cpus = X86 if triple.startswith("x86") else AARCH64
-        lines += [f"## {versions[family]}, {triple.split('-')[0]}", "", "| kernel | " + " | ".join(cpus) + " |",
-                  "| :-- | " + " | ".join("--:" for _ in cpus) + " |"]
-        for kernel in KERNELS:
-            if kernel not in kernels:
-                continue
-            cells = []
-            for cpu in cpus:
-                scope, cycles = kernels[kernel].get(cpu, ("", None))
-                cells.append("" if cycles is None else f"{cycles:.2f}")
-            loop = any(scope == "loop body" for scope, _ in kernels[kernel].values())
-            lines.append(f"| `{kernel}`{', *loop*' if loop else ''} | " + " | ".join(cells) + " |")
-        lines.append("")
+        lines += table(f"## {versions[family]}, {triple.split('-')[0]}", cpus, kernels, lambda entry: f"{entry[1]:.2f}")
     (out / "README.md").write_text("\n".join(lines))
+
+    if simulated:
+        uica_commit = subprocess.run(["git", "-C", str(args.uica.resolve().parent), "rev-parse", "--short=12", "HEAD"],
+                                     check=True, capture_output=True, text=True).stdout.strip()
+        lines = ["# uiCA's cycles per iteration", "",
+                 "Written by `bench/static_analysis.py --uica`; do not edit. uiCA simulates the same regions llvm-mca",
+                 "analyses, so a row means what it means in `bench/mca/README.md`; it models Intel cores only. Each",
+                 "cell is uiCA's throughput prediction and the bottleneck it names. Each full report, with the",
+                 "assembly it read, is beside this file.", "",
+                 f"Simulated by uiCA at commit `{uica_commit}`, with the uops.info data its setup downloaded.", ""]
+        for family, kernels in simulated.items():
+            lines += table(f"## {versions[family]}, x86_64", list(INTEL), kernels,
+                           lambda entry: f"{entry[1]:.2f}, {entry[2].lower()}")
+        (HERE / "uica" / "README.md").write_text("\n".join(lines))
 
 
 if __name__ == "__main__":

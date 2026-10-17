@@ -71,7 +71,7 @@ jobs:
       - name: Measure
         run: build/bench/bench_bit_permutation | tee -a "${GITHUB_STEP_SUMMARY}"
 
-  # The checked-in llvm-mca output, regenerated; a difference is reported, not failed, since a point release moves it.
+  # The checked-in llvm-mca and uiCA output, regenerated; a difference is reported, not failed, since releases move it.
   analyse:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -90,14 +90,29 @@ jobs:
       - name: Fetch zp7
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++-22 -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_BENCHMARKS=ON
 
+      # uiCA pinned by commit; its setup builds XED's Python module and converts uops.info's current instruction data.
+      - name: Install uiCA
+        env:
+          UICA: ${{ runner.temp }}/uiCA
+        run: |
+          git clone --quiet https://github.com/andreas-abel/uiCA.git "${UICA}"
+          git -C "${UICA}" checkout --quiet 6ebeeab0f8705cae4b17a9362f9c65ef91f5cc44
+          cd "${UICA}" && ./setup.sh
+
       - name: Analyse
-        run: python3 bench/static_analysis.py --zp7 build/_deps/zp7-src
+        env:
+          UICA: ${{ runner.temp }}/uiCA
+        run: python3 bench/static_analysis.py --zp7 build/_deps/zp7-src --uica "${UICA}/uiCA.py"
 
       - name: Compare with the checked-in analysis
         run: |
           {
             echo '```diff'
-            git diff --stat -- bench/mca
-            git diff -- bench/mca/README.md
+            git status --short -- bench
+            git diff -- bench/mca/README.md bench/uica/README.md
             echo '```'
+            cat bench/uica/README.md
           } | tee -a "${GITHUB_STEP_SUMMARY}"
+
+      - name: Print uiCA's reports
+        run: tail -n +1 bench/uica/*.txt

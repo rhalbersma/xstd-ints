@@ -244,9 +244,9 @@ sudo apt-get install libstdc++-14-dev-arm64-cross
 python3 bench/static_analysis.py --zp7 build-bench/_deps/zp7-src
 ```
 
-llvm-mca reports its model, not the hardware, and its Zen 2 model misses the microcode behind `PEXT` and `PDEP`. A claim about how fast an instruction is cites [uops.info](https://uops.info) by instruction and microarchitecture rather than restating a number.
+Given `--uica` and a [uiCA](https://github.com/andreas-abel/uiCA) checkout that its own `setup.sh` has prepared, the script also has uiCA simulate the same regions of the x86-64 code on the three targets it models, Haswell, Cascade Lake and Ice Lake, under [`bench/uica/`](bench/uica). llvm-mca reports its model, not the hardware, and its Zen 2 model misses the microcode behind `PEXT` and `PDEP`. A claim about how fast an instruction is cites [uops.info](https://uops.info) by instruction and microarchitecture rather than restating a number.
 
-The [Bench workflow](.github/workflows/bench.yml) runs both, by hand and on a pull request that touches the kernels or `bench/`: the benchmark with GCC 15 and Clang 22 on `ubuntu-24.04` and `ubuntu-24.04-arm` at `-march=native`, `-mcpu=native` on Arm, with each job's page in its summary, and the analysis beside them, reporting any difference from the checked-in files. A benchmark reports a number and never fails on one, so it is not a required check.
+The [Bench workflow](.github/workflows/bench.yml) runs both, by hand and on a pull request that touches the kernels or `bench/`: the benchmark with GCC 15 and Clang 22 on `ubuntu-24.04` and `ubuntu-24.04-arm` at `-march=native`, `-mcpu=native` on Arm, with each job's page in its summary, and the analysis beside them, uiCA included, pinned by commit, reporting any difference from the checked-in files. A benchmark reports a number and never fails on one, so it is not a required check.
 
 ## Standards-paper tracking
 
