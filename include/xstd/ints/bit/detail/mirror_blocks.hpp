@@ -26,16 +26,17 @@ template<class T, class Mirror>
         constexpr auto partial = N % L;
         constexpr auto whole   = static_cast<std::size_t>((N - partial) / L);
         // Unrolled at compile time, so every shift count is a constant: GCC keeps a two-block loop at -O2 otherwise.
-        auto result = [&]<std::size_t... i>(std::index_sequence<i...>) -> T {
+        auto const whole_blocks = [&]<std::size_t... i>(std::index_sequence<i...>) -> T {
                 // Kept a std::size_t until shifted: Clang 19 crashes emitting a const local _BitInt over 128 bits.
                 return static_cast<T>((T{0} | ... | static_cast<T>(static_cast<T>(mirror(static_cast<std::size_t>(x >> (static_cast<shift_count>(i) * L)))) << (N - L - (static_cast<shift_count>(i) * L)))));
-        }(std::make_index_sequence<whole>{});
-        if constexpr (partial != 0) {
+        };
+        if constexpr (partial == 0) {
+                return whole_blocks(std::make_index_sequence<whole>{});
+        } else {
                 constexpr auto slack = unsigned{L - partial};
                 auto const mirrored  = mirror(static_cast<std::size_t>(x >> (N - partial)));
-                result               = static_cast<T>(result | static_cast<T>(mirrored >> slack));
+                return static_cast<T>(whole_blocks(std::make_index_sequence<whole>{}) | static_cast<T>(mirrored >> slack));
         }
-        return result;
 }
 
 } // namespace xstd::ints::detail
