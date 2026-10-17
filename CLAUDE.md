@@ -154,20 +154,33 @@ A fixture that runs a component over a user-shaped argument probes no concept, a
 
 ## Checking your work
 
-Break things here, not on CI's runners, where a push waits hours for its first result. Two scripts make that
-possible, and the work relies on them rather than on whatever happens to be installed:
+Fail early, fail fast: break things here, not on CI's runners, where a push waits hours for its first result. The
+closer a change gets to a push and a pull request, the more of CI it has already passed locally. Two scripts make
+that possible, and the work relies on them rather than on whatever happens to be installed:
 
 - [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) installs what CI builds with: every rung of
-  [README.md](README.md)'s matrix, clang-tidy for each of the three clangs, the format gate's clang-format 22, the
-  CMake the workflows pin and the Boost CI resolves. Run it once per container; it is idempotent.
-- [`tools/ci-local.sh`](tools/ci-local.sh) runs the ladders' Linux legs on that toolchain. Run the legs a change can
-  break while iterating, and every leg before a push. Push only what it reports green: CI is there to confirm,
-  not to discover.
+  [README.md](README.md)'s matrix, clang-tidy for each of the three clangs, the format gate's clang-format 22,
+  actionlint, gcovr, the CMake the workflows pin and the Boost CI resolves. Run it once per container; it is
+  idempotent.
+- [`tools/ci-local.sh`](tools/ci-local.sh) runs the CI jobs' Linux legs on that toolchain, cheapest first, and stops
+  at the first that fails.
+
+Each step toward GitHub runs more:
+
+| Step | Run | Takes |
+| :-- | :-- | :-- |
+| While editing | the tests the change touches, on one compiler | seconds |
+| Before a commit | `tools/ci-local.sh --quick`: format, actionlint, GCC 15, clang 22, clang-tidy 22 | about 10 min |
+| Before a push or a pull request | `tools/ci-local.sh`: every leg | an hour or more |
+| On the pull request | CI: all of it, on every platform | CI's queue |
+
+Push only what the full run reports green: CI is there to confirm, not to discover.
 
 Never build with whatever `g++` or `clang++` happen to resolve to. Ubuntu 24.04 ships GCC 13, which rejects
 `-std=c++2c` outright, so the default compiler cannot build this library at all, and a check that quietly falls
 back to a cut-down reproduction proves less than it appears to. What `ci-local.sh` cannot cover, MSVC, clang-cl,
-MinGW, Apple Clang and Emscripten, is CI's alone; say so rather than claim it was checked.
+MinGW, Apple Clang, Emscripten, CodeQL and the sanitizer ladder's other rungs, is CI's alone; say so rather than
+claim it was checked.
 
 Run anything that takes more than a minute in the background: a build, a `ci-local.sh` leg, a sweep, a proof, a
 fuzz run. The conversation then stays free for questions asked in the meantime. Report the result when it lands,

@@ -40,7 +40,7 @@ The library itself has no dependencies outside `<xstd/ext/>`, whose headers each
 | [Boost.Int128](https://github.com/cppalliance/int128) | testing the integer-class extension points against a type from outside the library, and the `<xstd/ext/boost/int128.hpp>` associations that pair it | Optional, and resolved without a manual step: `test/CMakeLists.txt` uses an installed copy where `find_package(boost_int128 CONFIG)` finds one and otherwise fetches a pinned commit from GitHub, as CI does: it is a pre-release library, in no Boost release yet. Configure with `-DXSTD_INTS_TEST_FETCH_BOOST_INT128=OFF` to build offline without it; the affected cases then run over xstd's own types alone |
 | [Abseil](https://github.com/abseil/abseil-cpp) | testing the same extension points against a type that declares no `noexcept` anywhere, and the `<xstd/ext/absl/int128.hpp>` associations that pair it | Optional, and resolved the same way: an installed copy where `find_package(absl CONFIG)` finds one, and otherwise a pinned release tag, of which only `absl/numeric/int128.cc` is compiled. Configure with `-DXSTD_INTS_TEST_FETCH_ABSL_INT128=OFF` to build offline without it; the affected cases then do not run, no other type in the suite leaving `noexcept` off |
 | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) | testing `<xstd/ints/ext/boost/hash2.hpp>`, and the `<xstd/ints/ext/boost.hpp>` umbrella that exports it | Optional: `test/CMakeLists.txt` uses an installed copy where `find_package(boost_hash2 CONFIG)` finds one - Boost ships it from 1.88, and the `test` feature of [`vcpkg.json`](vcpkg.json) names it - and fetches nothing otherwise, its own Boost dependencies being too many to fetch alone; the hashing cases then do not run |
-| [gcovr](https://gcovr.com/) | reproducing the coverage gate | Only for the workflow below; `pip install gcovr` |
+| [gcovr](https://gcovr.com/) | reproducing the coverage gate | Pinned by hash in [`tools/gcovr-requirements.txt`](tools/gcovr-requirements.txt) as the coverage job pins it; `setup-toolchain.sh` installs it, and `tools/ci-local.sh coverage` runs the gate |
 | `clang-tidy` and `run-clang-tidy` | reproducing the clang-tidy gate | Only for the workflow below |
 | `clang-format` 22+ | the formatting gate | Run `clang-format -i` on changed files before pushing; older versions rewrite the requires-expressions in `concepts/` |
 | [FileCheck](https://pypi.org/project/filecheck/) | the codegen tests | The pure-Python port of LLVM's, pinned by hash in [`tools/filecheck-requirements.txt`](tools/filecheck-requirements.txt), which `setup-toolchain.sh` installs; LLVM's own `FileCheck` reads the same directives |
@@ -57,7 +57,8 @@ ladders as an Ubuntu box gets, every rung of [README.md](README.md)'s matrix and
 - GCC 15 and 16 from the Ubuntu toolchain PPA, and the GCC trunk snapshot the development rung uses, as `g++-17`;
 - clang 22, 23 and trunk, as `clang++-24`, each with its clang-tidy, and clang-format 22 and libc++ 22, from apt.llvm.org;
 - GCC 15's 32-bit multilib, for the i686 leg;
-- the same clang-format 22 as an unversioned `clang-format`, FileCheck and CMake, from PyPI, pinned by hash;
+- the same clang-format 22 as an unversioned `clang-format`, FileCheck, gcovr and CMake, from PyPI, pinned by hash;
+- actionlint at the release the actionlint job installs, checked against its published SHA-256;
 - Boost 1.92's Align, Hash2 and Test, built by GCC 15 from Boost's CMake release tarball, checked against the SHA-256
   Boost publishes, into `/usr/local`.
 
@@ -153,20 +154,25 @@ cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 run-clang-tidy -quiet -p build "$PWD/build/test/header_self_sufficiency/.*"
 ```
 
-Before a push, [`tools/ci-local.sh`](tools/ci-local.sh) runs the GitHub Actions ladders' Linux legs on what `setup-toolchain.sh` installs, so a change is green here before it waits on CI's runners:
+[`tools/ci-local.sh`](tools/ci-local.sh) runs the CI jobs' Linux legs on what `setup-toolchain.sh` installs, so a change fails here, fast, rather than after hours in CI's queue:
+- the format gate and actionlint;
 - the suite on GCC 15, 16 and 17-SVN, and on clang 22, 23 and 24-SVN, each clang on its own rung's libstdc++;
-- the libc++ 22 leg, the i686 leg, and the two BMI2 legs at `-march=x86-64-v3`;
+- the libc++ 22, i686 and BMI2 legs;
 - clang-tidy 22, 23 and 24-SVN, with the clang-tidy job's passes;
-- the format gate.
+- the codegen tests on GCC 15 and clang 22, and the three consumption models;
+- the coverage gate, gcovr over GCC 15's instrumented suite at 100% of lines and branches;
+- the sanitizer ladder's five kinds on the stable rung: ASan and LSan, and UBSan, on GCC 15; UBSan and implicit conversions on clang 22.
 
-It takes a list of legs, or runs them all, one after another, with every core each; `--list` names them. Each leg logs to `build/ci-local/<leg>.log`, and the run ends in one line per leg. The suite legs build in Debug, or in `CI_LOCAL_BUILD_TYPE`; CI builds both.
+Legs run cheapest first, so a formatting slip fails in seconds, and the run stops at the first failure; `--keep-going` runs them all regardless. `--quick` is the set to pass before a commit, and a full run is the one to pass before a push or a pull request. Each leg logs to `build/ci-local/<leg>.log`, and the run ends in one line per leg. The suite legs build in Debug, or in `CI_LOCAL_BUILD_TYPE`; CI builds both.
 
 ```sh
-tools/ci-local.sh                  # every leg
-tools/ci-local.sh gcc-17 tidy-24   # the ones a change is likeliest to break
+tools/ci-local.sh --quick          # before a commit
+tools/ci-local.sh                  # before a push or a pull request
+tools/ci-local.sh gcc-17 tidy-24   # the legs named
+tools/ci-local.sh --list           # every leg, in the order a full run takes them
 ```
 
-MSVC, clang-cl, MinGW, Apple Clang and Emscripten have no Linux equivalent. The sanitizer, coverage, codegen, CodeQL and consumption jobs are not in it either; their own commands are in the sections below.
+MSVC, clang-cl, MinGW and Apple Clang have no Linux equivalent, and Emscripten, CodeQL and the sanitizer ladder's other rungs stay CI's.
 
 ## Fuzzing
 

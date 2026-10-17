@@ -13,8 +13,8 @@
 # Installed, matching the three rungs of the README's matrix and the Boost CI resolves:
 #
 #   GCC 15, 16 and the trunk snapshot as g++-17; clang 22, 23 and trunk as clang++-24, with clang-tidy for each;
-#   clang-format 22, the format gate's one rung; libc++ 22; GCC 15's 32-bit multilib for the i686 leg; CMake and
-#   FileCheck from PyPI; and Boost 1.92's Align, Hash2 and Test, built from Boost's release tarball by
+#   clang-format 22, the format gate's one rung; libc++ 22; GCC 15's 32-bit multilib for the i686 leg; CMake,
+#   FileCheck and gcovr from PyPI; actionlint at the release the actionlint job installs; and Boost 1.92's Align, Hash2 and Test, built from Boost's release tarball by
 #   GCC 15 into /usr/local.
 #
 # A compiler on libc++ or on the trunk snapshot's libstdc++ links a Boost.Test of its own, which boost-test.sh beside
@@ -45,6 +45,10 @@ readonly CLANG_TRUNK_VERSION=24
 readonly BOOST_VERSION=1.92.0
 readonly BOOST_SHA256=9bed76128d4e46755dbe818487788c6fceb6f72b378f4daa49b7e1e600d9088d
 readonly BOOST_PREFIX=/usr/local
+
+# The actionlint job's release, pinned by the SHA-256 in that release's checksums file.
+readonly ACTIONLINT_VERSION=1.7.11
+readonly ACTIONLINT_SHA256=900919a84f2229bac68ca9cd4103ea297abc35e9689ebb842c6e34a3d1b01b0a
 
 # apt.llvm.org for clang, the toolchain PPA for a GCC newer than noble's. The PPA signs with RSA-1024, so apt
 # warns about a weak algorithm on every update; that is the archive's key, not a fault in this script.
@@ -110,6 +114,24 @@ readonly FILECHECK_REQUIREMENTS
 pip install --quiet --user --break-system-packages --require-hashes -r "${FILECHECK_REQUIREMENTS}" \
         || pip3 install --quiet --user --require-hashes -r "${FILECHECK_REQUIREMENTS}"
 
+# gcovr for the coverage gate, from PyPI, pinned by hash as the coverage job pins it.
+GCOVR_REQUIREMENTS="$(dirname "${BASH_SOURCE[0]}")/gcovr-requirements.txt"
+readonly GCOVR_REQUIREMENTS
+pip install --quiet --user --break-system-packages --require-hashes -r "${GCOVR_REQUIREMENTS}" \
+        || pip3 install --quiet --user --require-hashes -r "${GCOVR_REQUIREMENTS}"
+
+# actionlint from its GitHub release into ~/.local/bin; the job builds the same release with go install.
+if ! "${HOME:-/root}/.local/bin/actionlint" --version 2>/dev/null | grep -qx "${ACTIONLINT_VERSION}"; then
+        actionlint_dir="$(mktemp -d)"
+        curl -fsSL --retry 3 "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" \
+                -o "${actionlint_dir}/actionlint.tar.gz"
+        echo "${ACTIONLINT_SHA256}  ${actionlint_dir}/actionlint.tar.gz" | sha256sum --check --quiet
+        tar -xzf "${actionlint_dir}/actionlint.tar.gz" -C "${actionlint_dir}" actionlint
+        mkdir -p "${HOME:-/root}/.local/bin"
+        install -m 755 "${actionlint_dir}/actionlint" "${HOME:-/root}/.local/bin/actionlint"
+        rm -rf "${actionlint_dir}"
+fi
+
 # CMake from PyPI, pinned by hash as the workflows pin it: noble's 3.28 is older than the 3.30 CMakeLists.txt asks for.
 CMAKE_REQUIREMENTS="$(dirname "${BASH_SOURCE[0]}")/cmake-requirements.txt"
 readonly CMAKE_REQUIREMENTS
@@ -139,6 +161,8 @@ fi
 "clang++-${CLANG_VERSION}" --version | head -1 || true
 "${HOME:-/root}/.local/bin/clang-format" --version || true
 "${CMAKE}" --version | head -1 || true
+"${HOME:-/root}/.local/bin/gcovr" --version | head -1 || true
+echo "actionlint $("${HOME:-/root}/.local/bin/actionlint" --version | head -1)" || true
 echo "Boost ${BOOST_VERSION} in ${BOOST_PREFIX}"
 for compiler in "g++-${GCC_QUALIFICATION_VERSION}" "g++-${GCC_TRUNK_VERSION}" "clang++-${CLANG_QUALIFICATION_VERSION}" "clang++-${CLANG_TRUNK_VERSION}"; do
         "${compiler}" --version | head -1 || true
