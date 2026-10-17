@@ -30,17 +30,18 @@ struct decimal
 
 namespace std {
 
+// No [[nodiscard]] on either member: the Microsoft STL's tuple formatter discards what each element's returns.
 template<class CharT>
 struct formatter<xstd::ints::detail::decimal, CharT>
 {
         // The tuple formatter hands each element an empty spec: there is nothing to parse.
-        [[nodiscard]] constexpr auto parse(basic_format_parse_context<CharT>& ctx)
+        constexpr auto parse(basic_format_parse_context<CharT>& ctx)
                 -> basic_format_parse_context<CharT>::iterator
         {
                 return ctx.begin();
         }
 
-        [[nodiscard]] XSTD_CONSTEXPR_FORMAT auto format(xstd::ints::detail::decimal const& d, auto& ctx) const
+        XSTD_CONSTEXPR_FORMAT auto format(xstd::ints::detail::decimal const& d, auto& ctx) const
                 -> decltype(ctx.out())
         {
                 auto out = ctx.out();
