@@ -1,0 +1,16 @@
+#          Copyright Rein Halbersma 2014-2026.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+# Read by Mull's compiler plugin, which decides where mutants go, and by mull-runner. The paths are what the unit tests
+# are meant to pin down to the last operator: the portable bit kernels, the shift every shl and shr reaches, and the
+# cstdlib arithmetic. An equivalent mutant is suppressed at its line with a mull-ignore comment and the reason above it.
+mutators:
+  - cxx_all
+  - cxx_logical
+includePaths:
+  - '.*/include/xstd/ints/bit/detail/portable/.*'
+  - '.*/include/xstd/ints/bit/detail/shift\.hpp'
+  - '.*/include/xstd/ints/cstdlib/.*'
+quiet: true

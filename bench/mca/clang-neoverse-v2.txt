@@ -1,0 +1,564 @@
+# Ubuntu clang version 22.1.8 (++20260714014902+ca7933e47d3a-1~exp1~20260714135019.80), --target=aarch64-linux-gnu -mcpu=neoverse-v2 -O3, analysed by llvm-mca -mcpu=neoverse-v2
+
+## reverse_by_swaps, whole function
+
+	rbit x0, x0
+
+Iterations:        1000
+Instructions:      1000
+Total Cycles:      1003
+Total uOps:        1000
+
+Dispatch Width:    6
+uOps Per Cycle:    1.00
+IPC:               1.00
+Block RThroughput: 0.2
+
+## reverse_intrinsic, whole function
+
+	rbit x0, x0
+
+Iterations:        1000
+Instructions:      1000
+Total Cycles:      1003
+Total uOps:        1000
+
+Dispatch Width:    6
+uOps Per Cycle:    1.00
+IPC:               1.00
+Block RThroughput: 0.2
+
+## compress_by_rank, loop body
+
+	sub x10, x8, #1
+	bic x11, x1, x8
+	and x11, x11, x10
+	ands x8, x10, x8
+	fmov d0, x11
+	cnt z0.d, p0/m, z0.d
+	fmov x11, d0
+	lsl x11, x9, x11
+	orr x0, x11, x0
+	b.ne .LBB8_2
+
+Iterations:        1000
+Instructions:      10000
+Total Cycles:      2012
+Total uOps:        11000
+
+Dispatch Width:    6
+uOps Per Cycle:    5.47
+IPC:               4.97
+Block RThroughput: 1.8
+
+## compress_by_walk_with_if, loop body
+
+	neg x10, x1
+	and x10, x8, x10
+	tst x10, x1
+	csel x10, xzr, x9, eq
+	lsl x9, x9, #1
+	orr x0, x10, x0
+	sub x10, x1, #1
+	ands x1, x10, x1
+	b.ne .LBB9_2
+
+Iterations:        1000
+Instructions:      9000
+Total Cycles:      2007
+Total uOps:        9000
+
+Dispatch Width:    6
+uOps Per Cycle:    4.48
+IPC:               4.48
+Block RThroughput: 1.5
+
+## compress_by_parallel_suffix, whole function
+
+	mvn x9, x1
+	and x8, x1, x0
+	lsl x11, x9, #2
+	lsl x10, x9, #1
+	eor x11, x11, x9, lsl #1
+	eon x11, x1, x11
+	lsl x11, x11, #2
+	eor x9, x11, x9, lsl #1
+	eor x9, x9, x9, lsl #4
+	eor x9, x9, x9, lsl #8
+	eor x9, x9, x9, lsl #16
+	eor x9, x9, x9, lsl #32
+	and x11, x9, x1
+	eor x12, x11, x1
+	orr x11, x12, x11, lsr #1
+	and x12, x9, x8
+	bic x9, x10, x9
+	eor x10, x9, x9, lsl #1
+	eor x8, x12, x8
+	eor x10, x10, x10, lsl #2
+	orr x8, x8, x12, lsr #1
+	eor x10, x10, x10, lsl #4
+	eor x10, x10, x10, lsl #8
+	eor x10, x10, x10, lsl #16
+	eor x10, x10, x10, lsl #32
+	bic x9, x9, x10
+	and x12, x10, x11
+	eor x10, x9, x9, lsl #1
+	eor x11, x12, x11
+	eor x10, x10, x10, lsl #2
+	orr x11, x11, x12, lsr #2
+	and x12, x12, x8
+	eor x10, x10, x10, lsl #4
+	eor x8, x12, x8
+	eor x10, x10, x10, lsl #8
+	orr x8, x8, x12, lsr #2
+	eor x10, x10, x10, lsl #16
+	eor x10, x10, x10, lsl #32
+	bic x9, x9, x10
+	and x12, x10, x11
+	eor x10, x9, x9, lsl #1
+	eor x11, x12, x11
+	eor x10, x10, x10, lsl #2
+	orr x11, x11, x12, lsr #4
+	and x12, x12, x8
+	eor x10, x10, x10, lsl #4
+	eor x8, x12, x8
+	eor x10, x10, x10, lsl #8
+	orr x8, x8, x12, lsr #4
+	eor x10, x10, x10, lsl #16
+	eor x10, x10, x10, lsl #32
+	bic x9, x9, x10
+	and x12, x10, x11
+	eor x10, x9, x9, lsl #1
+	eor x11, x12, x11
+	eor x10, x10, x10, lsl #2
+	orr x11, x11, x12, lsr #8
+	and x12, x12, x8
+	eor x10, x10, x10, lsl #4
+	eor x8, x12, x8
+	eor x10, x10, x10, lsl #8
+	orr x8, x8, x12, lsr #8
+	eor x10, x10, x10, lsl #16
+	eor x10, x10, x10, lsl #32
+	bic x9, x9, x10
+	and x12, x10, x11
+	eor x9, x9, x9, lsl #1
+	eor x11, x12, x11
+	eor x9, x9, x9, lsl #2
+	orr x11, x11, x12, lsr #16
+	and x12, x12, x8
+	eor x9, x9, x9, lsl #4
+	eor x8, x12, x8
+	eor x9, x9, x9, lsl #8
+	orr x8, x8, x12, lsr #16
+	eor x9, x9, x9, lsl #16
+	and x10, x11, x8
+	eor x9, x9, x9, lsl #32
+	and x9, x9, x10
+	eor x8, x9, x8
+	orr x0, x8, x9, lsr #32
+
+Iterations:        1000
+Instructions:      81000
+Total Cycles:      20031
+Total uOps:        81000
+
+Dispatch Width:    6
+uOps Per Cycle:    4.04
+IPC:               4.04
+Block RThroughput: 13.5
+
+## compress_by_zp7, whole function
+
+	mvn x8, x1
+	and x15, x1, x0
+	eon x9, x1, x8, lsl #2
+	eor x9, x9, x8, lsl #1
+	lsl x9, x9, #2
+	eor x8, x9, x8, lsl #1
+	eor x8, x8, x8, lsl #4
+	eor x8, x8, x8, lsl #8
+	eor x8, x8, x8, lsl #16
+	eor x8, x8, x8, lsl #32
+	bic x9, x8, x1
+	bic x16, x15, x8
+	and x8, x8, x15
+	eor x10, x9, x9, lsl #2
+	orr x8, x16, x8, lsr #1
+	eor x10, x10, x9, lsl #1
+	lsl x10, x10, #2
+	eor x10, x10, x9, lsl #1
+	eor x10, x10, x10, lsl #4
+	eor x10, x10, x10, lsl #8
+	eor x10, x10, x10, lsl #16
+	eor x10, x10, x10, lsl #32
+	and x9, x10, x9
+	bic x15, x8, x10
+	and x8, x10, x8
+	eor x11, x9, x9, lsl #2
+	orr x8, x15, x8, lsr #2
+	eor x11, x11, x9, lsl #1
+	lsl x11, x11, #2
+	eor x11, x11, x9, lsl #1
+	eor x11, x11, x11, lsl #4
+	eor x11, x11, x11, lsl #8
+	eor x11, x11, x11, lsl #16
+	eor x11, x11, x11, lsl #32
+	and x9, x11, x9
+	bic x10, x8, x11
+	and x8, x11, x8
+	eor x12, x9, x9, lsl #2
+	orr x8, x10, x8, lsr #4
+	eor x12, x12, x9, lsl #1
+	lsl x12, x12, #2
+	eor x12, x12, x9, lsl #1
+	eor x12, x12, x12, lsl #4
+	eor x12, x12, x12, lsl #8
+	eor x12, x12, x12, lsl #16
+	eor x12, x12, x12, lsl #32
+	and x9, x12, x9
+	bic x10, x8, x12
+	and x8, x12, x8
+	eor x13, x9, x9, lsl #2
+	orr x8, x10, x8, lsr #8
+	eor x13, x13, x9, lsl #1
+	lsl x13, x13, #2
+	eor x13, x13, x9, lsl #1
+	eor x13, x13, x13, lsl #4
+	eor x13, x13, x13, lsl #8
+	eor x13, x13, x13, lsl #16
+	eor x13, x13, x13, lsl #32
+	and x9, x13, x9
+	bic x10, x8, x13
+	and x8, x13, x8
+	neg x14, x9, lsl #1
+	lsl x9, x9, #1
+	orr x8, x10, x8, lsr #16
+	sub x9, x9, #1
+	and x9, x8, x9
+	and x8, x8, x14
+	orr x0, x9, x8, lsr #32
+
+Iterations:        1000
+Instructions:      68000
+Total Cycles:      13040
+Total uOps:        68000
+
+Dispatch Width:    6
+uOps Per Cycle:    5.21
+IPC:               5.21
+Block RThroughput: 11.3
+
+## expand_by_walk, loop body
+
+	neg x10, x1
+	sbfx x11, x0, #0, #1
+	sub x9, x1, #1
+	lsr x0, x0, #1
+	and x10, x1, x10
+	ands x1, x9, x1
+	and x10, x11, x10
+	orr x8, x10, x8
+	b.ne .LBB12_1
+
+Iterations:        1000
+Instructions:      9000
+Total Cycles:      2005
+Total uOps:        9000
+
+Dispatch Width:    6
+uOps Per Cycle:    4.49
+IPC:               4.49
+Block RThroughput: 1.5
+
+## expand_by_select, loop body
+
+	rbit x14, x8
+	clz x14, x14
+	mul x15, x14, x11
+	orr x15, x15, #0x8080808080808080
+	add x15, x15, x9
+	and x15, x15, #0x8080808080808080
+	fmov d0, x15
+	cnt z0.d, p0/m, z0.d
+	fmov w15, s0
+	lsl w16, w15, #3
+	lsr x17, x10, x16
+	lsr x16, x1, x16
+	sub w14, w14, w17, uxtb
+	add x16, x12, w16, uxtb
+	lsl w14, w14, #8
+	ldrb w14, [x16, w14, uxtw]
+	add w14, w14, w15, lsl #3
+	lsl x14, x13, x14
+	orr x0, x14, x0
+	sub x14, x8, #1
+	ands x8, x14, x8
+	b.ne .LBB13_2
+
+Iterations:        1000
+Instructions:      22000
+Total Cycles:      4030
+Total uOps:        23000
+
+Dispatch Width:    6
+uOps Per Cycle:    5.71
+IPC:               5.46
+Block RThroughput: 3.8
+
+## expand_by_walk_with_if, loop body
+
+	neg x10, x1
+	sbfx x9, x0, #0, #1
+	lsr x0, x0, #1
+	and x10, x1, x10
+	and x9, x9, x10
+	orr x8, x9, x8
+	sub x9, x1, #1
+	ands x1, x9, x1
+	b.ne .LBB14_1
+
+Iterations:        1000
+Instructions:      9000
+Total Cycles:      2006
+Total uOps:        9000
+
+Dispatch Width:    6
+uOps Per Cycle:    4.49
+IPC:               4.49
+Block RThroughput: 1.5
+
+## expand_by_parallel_suffix, whole function
+
+	mvn x8, x1
+	lsl x9, x8, #2
+	lsl x10, x8, #1
+	eor x9, x9, x8, lsl #1
+	eon x9, x1, x9
+	lsl x9, x9, #2
+	eor x8, x9, x8, lsl #1
+	eor x8, x8, x8, lsl #4
+	eor x8, x8, x8, lsl #8
+	eor x8, x8, x8, lsl #16
+	eor x8, x8, x8, lsl #32
+	bic x10, x10, x8
+	and x9, x8, x1
+	eor x12, x10, x10, lsl #1
+	eor x11, x9, x1
+	eor x12, x12, x12, lsl #2
+	orr x11, x11, x9, lsr #1
+	eor x12, x12, x12, lsl #4
+	eor x12, x12, x12, lsl #8
+	eor x12, x12, x12, lsl #16
+	eor x12, x12, x12, lsl #32
+	bic x10, x10, x12
+	and x13, x12, x11
+	eor x12, x10, x10, lsl #1
+	eor x11, x13, x11
+	eor x12, x12, x12, lsl #2
+	orr x11, x11, x13, lsr #2
+	eor x12, x12, x12, lsl #4
+	eor x12, x12, x12, lsl #8
+	eor x12, x12, x12, lsl #16
+	eor x12, x12, x12, lsl #32
+	bic x10, x10, x12
+	and x14, x12, x11
+	eor x12, x10, x10, lsl #1
+	eor x11, x14, x11
+	eor x12, x12, x12, lsl #2
+	orr x11, x11, x14, lsr #4
+	eor x12, x12, x12, lsl #4
+	eor x12, x12, x12, lsl #8
+	eor x12, x12, x12, lsl #16
+	eor x12, x12, x12, lsl #32
+	bic x10, x10, x12
+	and x15, x12, x11
+	eor x12, x10, x10, lsl #1
+	eor x11, x15, x11
+	eor x12, x12, x12, lsl #2
+	orr x11, x11, x15, lsr #8
+	eor x12, x12, x12, lsl #4
+	eor x12, x12, x12, lsl #8
+	eor x12, x12, x12, lsl #16
+	eor x12, x12, x12, lsl #32
+	bic x10, x10, x12
+	and x16, x12, x11
+	eor x10, x10, x10, lsl #1
+	eor x11, x16, x11
+	eor x10, x10, x10, lsl #2
+	orr x11, x11, x16, lsr #16
+	eor x10, x10, x10, lsl #4
+	eor x10, x10, x10, lsl #8
+	eor x10, x10, x10, lsl #16
+	eor x10, x10, x10, lsl #32
+	and x10, x10, x11
+	bic x11, x0, x10
+	and x10, x10, x0, lsl #32
+	orr x10, x11, x10
+	bic x11, x10, x16
+	and x10, x16, x10, lsl #16
+	orr x10, x11, x10
+	bic x11, x10, x15
+	and x10, x15, x10, lsl #8
+	orr x10, x11, x10
+	bic x11, x10, x14
+	and x10, x14, x10, lsl #4
+	orr x10, x11, x10
+	bic x11, x10, x13
+	and x10, x13, x10, lsl #2
+	orr x10, x11, x10
+	bic x9, x10, x9
+	and x8, x8, x10, lsl #1
+	orr x8, x9, x8
+	and x0, x8, x1
+
+Iterations:        1000
+Instructions:      81000
+Total Cycles:      14052
+Total uOps:        81000
+
+Dispatch Width:    6
+uOps Per Cycle:    5.76
+IPC:               5.76
+Block RThroughput: 13.5
+
+## expand_by_zp7, whole function
+
+	mvn x8, x1
+	fmov d0, x1
+	ptrue p0.d
+	cmn x1, #1
+	mov w15, #1
+	eon x9, x1, x8, lsl #2
+	eor x9, x9, x8, lsl #1
+	lsl x9, x9, #2
+	cnt z0.d, p0/m, z0.d
+	eor x8, x9, x8, lsl #1
+	eor x8, x8, x8, lsl #4
+	eor x8, x8, x8, lsl #8
+	fmov x14, d0
+	eor x8, x8, x8, lsl #16
+	lsl x14, x15, x14
+	cset w15, eq
+	eor x8, x8, x8, lsl #32
+	bic x14, x14, x15
+	bic x10, x8, x1
+	sub x14, x14, #1
+	lsr x8, x8, #1
+	eor x9, x10, x10, lsl #2
+	and x14, x14, x0
+	eor x9, x9, x10, lsl #1
+	lsl x9, x9, #2
+	eor x9, x9, x10, lsl #1
+	eor x9, x9, x9, lsl #4
+	eor x9, x9, x9, lsl #8
+	eor x9, x9, x9, lsl #16
+	eor x9, x9, x9, lsl #32
+	and x10, x9, x10
+	lsr x9, x9, #2
+	eor x11, x10, x10, lsl #2
+	eor x11, x11, x10, lsl #1
+	lsl x11, x11, #2
+	eor x11, x11, x10, lsl #1
+	eor x11, x11, x11, lsl #4
+	eor x11, x11, x11, lsl #8
+	eor x11, x11, x11, lsl #16
+	eor x11, x11, x11, lsl #32
+	and x10, x11, x10
+	lsr x11, x11, #4
+	eor x12, x10, x10, lsl #2
+	eor x12, x12, x10, lsl #1
+	lsl x12, x12, #2
+	eor x12, x12, x10, lsl #1
+	eor x12, x12, x12, lsl #4
+	eor x12, x12, x12, lsl #8
+	eor x12, x12, x12, lsl #16
+	eor x12, x12, x12, lsl #32
+	and x10, x12, x10
+	lsr x12, x12, #8
+	eor x13, x10, x10, lsl #2
+	eor x13, x13, x10, lsl #1
+	lsl x13, x13, #2
+	eor x13, x13, x10, lsl #1
+	eor x13, x13, x13, lsl #4
+	eor x13, x13, x13, lsl #8
+	eor x13, x13, x13, lsl #16
+	eor x13, x13, x13, lsl #32
+	and x10, x13, x10
+	lsr x13, x13, #16
+	neg x10, x10, lsl #1
+	lsr x10, x10, #32
+	bic x15, x14, x10
+	and w10, w10, w14
+	add x10, x15, x10, lsl #32
+	bic x14, x10, x13
+	and x10, x10, x13
+	add x10, x14, x10, lsl #16
+	bic x13, x10, x12
+	and x10, x10, x12
+	add x10, x13, x10, lsl #8
+	bic x12, x10, x11
+	and x10, x10, x11
+	add x10, x12, x10, lsl #4
+	bic x11, x10, x9
+	and x9, x10, x9
+	add x9, x11, x9, lsl #2
+	bic x10, x9, x8
+	and x8, x9, x8
+	add x0, x10, x8, lsl #1
+
+Iterations:        1000
+Instructions:      82000
+Total Cycles:      16050
+Total uOps:        83000
+
+Dispatch Width:    6
+uOps Per Cycle:    5.17
+IPC:               5.11
+Block RThroughput: 13.8
+
+## select_by_broadword, whole function
+
+	lsr x8, x0, #1
+	mov x11, #72340172838076673
+	mov w10, w1
+	ptrue p0.d
+	and x8, x8, #0x5555555555555555
+	mul x10, x10, x11
+	mov x11, #72340172838076673
+	sub x8, x0, x8
+	movk x11, #256
+	and x9, x8, #0x3333333333333333
+	lsr x8, x8, #2
+	orr x10, x10, #0x8080808080808080
+	and x8, x8, #0x3333333333333333
+	add x8, x8, x9
+	mov x9, #-72340172838076674
+	add x8, x8, x8, lsr #4
+	movk x9, #65279
+	and x8, x8, #0xf0f0f0f0f0f0f0f
+	madd x9, x8, x9, x10
+	mul x8, x8, x11
+	adrp x11, _ZN4xstd4ints6detail8portable14select_in_byteE
+	add x11, x11, :lo12:_ZN4xstd4ints6detail8portable14select_in_byteE
+	and x9, x9, #0x8080808080808080
+	fmov d0, x9
+	cnt z0.d, p0/m, z0.d
+	fmov w9, s0
+	lsl w10, w9, #3
+	lsr x8, x8, x10
+	lsr x10, x0, x10
+	sub w8, w1, w8, uxtb
+	add x10, x11, w10, uxtb
+	lsl w8, w8, #8
+	ldrb w8, [x10, w8, uxtw]
+	add w0, w8, w9, lsl #3
+
+Iterations:        1000
+Instructions:      34000
+Total Cycles:      29003
+Total uOps:        35000
+
+Dispatch Width:    6
+uOps Per Cycle:    1.21
+IPC:               1.17
+Block RThroughput: 5.8
