@@ -224,6 +224,23 @@ ctest --test-dir build-proofs --output-on-failure --verbose
 
 `python3 proofs/prove.py --widths 16 --jobs 4` runs every claim at 16 bits in seconds, which is the quick check while editing a kernel or its model. The [Proofs workflow](.github/workflows/proofs.yml) runs both widths weekly, by hand, and on a pull request touching the portable kernels or the proofs. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
 
+## Constant-time checks
+
+"Branch-free" is a claim about control flow, and a constant-time engineer asks a sharper one: does a kernel's time depend on secret data? [`constant_time/`](constant_time) answers it per kernel and per secret argument, with that field's two tools, over the cases in [`cases.hpp`](constant_time/cases.hpp), each named `kernel.secret`:
+
+- **Memcheck, ctgrind's way.** `constant_time_memcheck` marks the secret argument undefined and runs the kernel under Valgrind, which then reports every branch and every memory address computed from it. A case that should be clean is a test that passes; a case that branches on its secret or indexes memory by it is a test expected to fail, so a change either way breaks the suite.
+- **dudect.** `constant_time_dudect` times each case with [dudect](https://github.com/oreparaz/dudect), fetched pinned by commit, against two classes of input, the secret held at one value or drawn at random, and applies Welch's t-test. It is statistical, finds nothing rather than proving anything, and times with `RDTSC`, so it is an x86-64 program run by hand rather than a test.
+
+```sh
+sudo apt-get install valgrind
+cmake -S . -B build-ct -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_CXX_FLAGS=-march=x86-64-v3 -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_CONSTANT_TIME_TESTS=ON
+cmake --build build-ct
+ctest --test-dir build-ct --output-on-failure
+build-ct/constant_time/constant_time_dudect 60
+```
+
+The last runs each case for up to 60 seconds. The [Constant time workflow](.github/workflows/constant-time.yml) runs the memcheck tests with GCC 15 and Clang 22, with and without `-march=x86-64-v3`, weekly, by hand, and on a pull request that touches the portable kernels or `constant_time/`. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
+
 ## Standards-paper tracking
 
 Implementation-relevant proposals must record the paper number, the revision-pinned wording reviewed by xstd, the corresponding live `cplusplus/papers` tracking issue, the last-reviewed date, and a short statement saying whether xstd implements, partially follows, extends, or merely references the paper. Unversioned `wg21.link/P####` links are reserved for links explicitly described as the latest revision; implementation and conformance claims use pinned `P####R#` links. Durable prose does not copy volatile WG21 status labels.

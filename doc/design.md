@@ -167,6 +167,29 @@ target is excluded. Beyond what tests can sample, Z3 proves each portable kernel
 specification for every input at 32 and 64 bits: PEXT and PDEP as the Intel SDM's pseudocode
 gives them, RBIT as the Arm ARM's ASL does, and select by its defining property, each shift
 within the width and the select's precondition met at every call.
+Branch-free is a claim about control flow; whether a kernel's time depends on secret data was checked
+separately, per kernel and per secret argument, with that field's tools
+([`constant_time/`](../constant_time), [results](../constant_time/results.md)). Valgrind's memcheck,
+with the secret marked undefined, reports every branch and address computed from it, the same for
+GCC 15 and Clang 22 with and without `-march=x86-64-v3`; dudect compares the time of a fixed secret
+with a random one by Welch's t-test, on the Cascade Lake run:
+
+| Kernel | Secret | Memcheck | dudect, max t |
+| :-- | :-- | :-- | :-- |
+| `block_reverse_by_swaps` | the word | clean | 2.3 over 41 M measurements, nothing found |
+| `block_expand_by_walk` | the source, the mask public | clean | 1.8 over 42 M, nothing found |
+| `block_expand_by_walk` | the mask | a branch: one trip per mask one | 889, leaks |
+| `block_compress_by_rank` | the source | a branch: one trip per selected bit | 1555, leaks |
+| `block_expand_by_select` | the source | a branch, and the table lookup | 1517, leaks |
+| `block_select_by_broadword` | the word and the rank | no branch, but one address from them: `select_in_byte` | 10.1 to 10.4, leaks |
+| `PEXT`, `PDEP` | the source or the mask | clean | 1.7 to 2.5 over 40 M, nothing found |
+
+So only the byte reversal and the walk over a public mask take the same time whatever the secret, as
+far as either tool can see. The select never branches, yet its table lookup leaks through the cache,
+and the loops branch on no bit of the value but run a number of times that depends on it. The
+instructions are constant-time on this Intel core only: uops.info's measurements of
+[`PEXT (R64, R64, R64)`](https://uops.info/html-instr/PEXT_R64_R64_R64.html) on Zen 2 vary with the
+operands.
 Wider types compose the blocks: reversal sends each mirrored block to the mirror of its offset,
 compression packs each block's result above the bits the lower blocks selected, expansion
 draws each block's bits from where the lower blocks stopped, and selection skips whole blocks,

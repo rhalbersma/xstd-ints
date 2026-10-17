@@ -1,0 +1,71 @@
+#          Copyright Rein Halbersma 2014-2026.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+name: Constant time
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Weekly, by hand, and on a pull request that touches the portable kernels or the checks. Not a required check: a path
+# filter would leave it pending on every pull request that does not. dudect is statistical and stays a local run.
+on:
+  schedule:
+    - cron: '53 3 * * 1'
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'include/xstd/ints/bit/detail/portable/**'
+      - 'constant_time/**'
+      - '.github/workflows/constant-time.yml'
+
+jobs:
+  memcheck:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: GCC 15, x86-64
+            compiler: g++-15
+            flags: ''
+          - name: GCC 15, x86-64-v3
+            compiler: g++-15
+            flags: '-march=x86-64-v3'
+          - name: Clang 22, x86-64
+            compiler: clang++-22
+            flags: ''
+          - name: Clang 22, x86-64-v3
+            compiler: clang++-22
+            flags: '-march=x86-64-v3'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install the stable rung, CMake and Valgrind
+        run: |
+          tools/setup-toolchain.sh
+          sudo apt-get install -y -qq valgrind
+          pip install --quiet --user --break-system-packages --require-hashes -r tools/cmake-requirements.txt
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+
+      - name: Configure
+        env:
+          CXX: ${{ matrix.compiler }}
+          FLAGS: ${{ matrix.flags }}
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER="${CXX}" -DCMAKE_CXX_FLAGS="${FLAGS}" -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_CONSTANT_TIME_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --target constant_time_memcheck --parallel
+
+      - name: Check
+        run: ctest --test-dir build --output-on-failure

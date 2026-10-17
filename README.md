@@ -231,9 +231,11 @@ All four are `constexpr`, portable in a constant expression and fast at run time
 at compile time, with no run-time CPU dispatch. AMD processors before Zen 3 implement both
 instructions in microcode at roughly six times the latency of Zen 3 and Intel since Haswell, so
 a build targeting them (`-march=bdver4`, `znver1` or `znver2`) keeps the portable kernels even
-though it enables BMI2. Those kernels are branch-free where it counts: `bit_compress` places
+though it enables BMI2. Those kernels never branch on a bit of the value: `bit_compress` places
 each selected bit by one `popcount` of the mask below it, and `bit_expand` walks the mask's
-one-bits without branching on the value. `bit_repeat` alone has a precondition, a length above
+one-bits. Neither is constant-time in every argument, since `bit_compress` runs once per selected
+bit and `bit_expand` once per mask bit; design.md records, kernel by kernel, what memcheck and
+dudect found. `bit_repeat` alone has a precondition, a length above
 zero, and is not `noexcept`, as the paper specifies.
 
 `bit_select(x, k)` is an xstd extension beside them, not a standard function and not part of

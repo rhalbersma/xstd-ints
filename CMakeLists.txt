@@ -214,6 +214,15 @@ if(PROJECT_IS_TOP_LEVEL)
         enable_testing()
         add_subdirectory(proofs)
     endif()
+
+    # Off by default, and outside BUILD_TESTING: the constant-time checks run the kernels under Valgrind, and their
+    # dudect harness under no test at all. enable_testing() stays here for the reason given above.
+    option(${project_option_prefix}_BUILD_CONSTANT_TIME_TESTS "Check the portable bit kernels for secret-dependent branches and timing, under constant_time/" OFF)
+
+    if(${project_option_prefix}_BUILD_CONSTANT_TIME_TESTS)
+        enable_testing()
+        add_subdirectory(constant_time)
+    endif()
 endif()
 
 install(
