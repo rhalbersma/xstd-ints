@@ -53,7 +53,7 @@ jobs:
 
       - name: Install the stable rung, CMake and Valgrind
         run: |
-          tools/setup-toolchain.sh
+          tools/setup-toolchain.sh --stable
           sudo apt-get install -y -qq valgrind
           pip install --quiet --user --break-system-packages --require-hashes -r tools/cmake-requirements.txt
           echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
