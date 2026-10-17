@@ -5,6 +5,12 @@ a kernel marked *loop* is one trip of its innermost loop, so one selected bit fo
 one mask bit for the walks, and one source bit for `expand_by_select`. A blank cell is a kernel the
 target does not have. Each summary, with the assembly it read, is beside this file.
 
+A cell is the model's, not the hardware's. The Zen 2 model issues `PEXT` and `PDEP` as one fast uop
+and gives `PCLMULQDQ` a latency of 100 cycles, where uops.info measures
+[`PEXT`](https://uops.info/html-instr/PEXT_R64_R64_R64.html) and
+[`PCLMULQDQ`](https://uops.info/html-instr/PCLMULQDQ_XMM_XMM_I8.html) on Zen 2 otherwise, so the
+`znver2` cells of the kernels built on them follow the model.
+
 Analysed by Ubuntu LLVM version 22.1.8.
 
 ## Ubuntu clang version 22.1.8 (++20260714014902+ca7933e47d3a-1~exp1~20260714135019.80), x86_64

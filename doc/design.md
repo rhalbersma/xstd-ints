@@ -125,15 +125,19 @@ kernel:
   brings GCC on AArch64 the instruction Clang reaches through its builtin; or, where
   `XSTD_INTS_HAS_GFNI` says the target is x86-64 with `__GFNI__`, one `GF2P8AFFINEQB` against the
   matrix `0x8040201008040201`, which mirrors the bits of every byte, and a byte swap. llvm-mca puts
-  that at 1.7 cycles a block on Ice Lake against 5.5 for GCC's code for the portable kernel; Clang
-  emits the same two instructions for the portable kernel unasked, with the same matrix. MSVC
+  that at 1.4 cycles a block on Ice Lake against 9.0 for GCC 15's code for the portable kernel, as
+  [`bench/mca`](../bench/mca/README.md) records; Clang emits the same two instructions for the
+  portable kernel unasked, with the same matrix. MSVC
   exposes no `RBIT` intrinsic and defines no `__GFNI__`, so it keeps the portable kernel. It also holds `block_compress` and
   `block_expand`, which are `_pext_u64` and `_pdep_u64`,
   and `block_select`, which is `std::countr_zero(_pdep_u64(1 << k, x))`, all three declared only
   where `XSTD_INTS_HAS_FAST_BMI2` says the target makes them fast: x86-64 with `__BMI2__`, or
   MSVC with `/arch:AVX2`, which implies BMI2 but never defines the macro. A target of `bdver4`,
   `znver1` or `znver2` is excluded even though it enables BMI2, since `PEXT` and `PDEP` are
-  microcoded there, with an 18-cycle latency against 3 on Zen 3 and Intel since Haswell.
+  microcoded there, as uops.info's measurements of
+  [`PEXT (R64, R64, R64)`](https://uops.info/html-instr/PEXT_R64_R64_R64.html) and
+  [`PDEP (R64, R64, R64)`](https://uops.info/html-instr/PDEP_R64_R64_R64.html) on Zen+ and Zen 2
+  show against Zen 3 and Haswell.
 - `detail::portable` holds the `constexpr` kernels, which a constant expression always takes
   and a run-time call takes wherever the intrinsics are absent. `block_reverse_by_swaps` mirrors
   the bytes by `std::byteswap`, then each byte's nibbles, pairs and single bits by three masked
@@ -152,13 +156,32 @@ kernel:
 `block_reverse`, `block_compress`, `block_expand` and `block_select`, each in a header of its own, pick between the two:
 `block_reverse` takes the builtin wherever it is declared, in a constant expression too, and `RBIT` or `GFNI` outside a constant expression
 where those are; the other three take the intrinsic outside a constant
-expression where it is declared, the portable kernel otherwise. Benchmarked on a Haswell-class
-Xeon, per call: `PEXT` and `PDEP` take about 0.45 ns; `block_compress_by_rank` about 0.4 ns per
-selected bit; `block_expand_by_walk` about 0.8 ns per mask bit; and `block_expand_by_select` about 3.6 ns
-per source bit, which beats the walk from about ten mask bits up when the value is sparse. The
-alternatives measured and left out are the bit-at-a-time mask walk with a branch, four to five
-times slower; Hacker's Delight's parallel suffix, a flat 21 to 23 ns; and Wegner's zp7, a flat
-6 to 8 ns with `PCLMULQDQ` and 17 to 20 ns without. Tests check every portable kernel against a
+expression where it is declared, the portable kernel otherwise. [`bench/`](../bench) times each
+kernel and the alternatives it beat, in cycles per independent call on a 64-bit block of stated
+density, the harness that feeds each call included. [`bench/results/`](../bench/results) keeps
+each run with the machine, compiler, flags and commit it names, and
+[CONTRIBUTING.md](../CONTRIBUTING.md#benchmarks) gives the command. From the
+[Cascade Lake run](../bench/results/cascade-lake.md), at `-march=native -O3`, with a cost per bit
+taken as the slope from the sparsest row of its table to the densest:
+
+| Kernel | Cost | GCC 15 | Clang 22 |
+| :-- | :-- | --: | --: |
+| `PEXT`, `PDEP` | per call | 1.7 | 1.7 to 2.0 |
+| `block_compress_by_rank` | per selected bit | 3.2 | 2.5 |
+| `block_expand_by_walk` | per mask bit | 3.0 | 2.5 |
+| `block_expand_by_select` | per source bit | 7.4 | 7.0 |
+| `std::countr_zero` of `PDEP` | per call | 3.0 | 2.0 |
+| `block_select_by_broadword` | per call | 12.1 | 11.7 |
+| the harness alone | per call | 2.1 | 1.8 |
+
+With two source ones, `block_expand_by_select` beats the walk from about nine mask ones up. The
+alternatives measured and left out cost, on the same run: the mask walk with an `if` on each bit,
+which both compilers turn into a conditional move rather than a branch, 1.75 times the rank kernel
+to compress at half density, since it pays for every mask bit rather than every selected one, and
+to expand as much as the masked walk with Clang and less with GCC, 2.1 cycles a mask bit against
+3.0; Hacker's Delight's parallel suffix, a flat 70 cycles to compress and 77 to expand; and
+Wegner's zp7, a flat 52 to 58 and 61 to 66 without `PCLMULQDQ`, and 25 to 26 and 34 with it.
+Tests check every portable kernel against a
 bit-at-a-time oracle at compile time and at run time, and the run-time block kernels against
 the portable ones, so a build with BMI2 checks the instructions too. Agreement cannot show which
 kernel ran, so codegen tests compile the public functions to assembly for each target that
@@ -737,23 +760,27 @@ first concrete and the other three waiting on a measurement:
    build does. CI would add a `-march=x86-64-v3 -DXSTD_INTS_BIT_PERMUTATION=bmi2`
    leg for GCC and for Clang, and a compile-time test that each value reaches its
    kernel.
-2. **Dense masks without fast BMI2.** Compressing 64 selected bits by rank costs
-   about 25 ns, where zp7 is a flat 6 to 8 ns with `PCLMULQDQ`, which Zen 1 and 2
-   have though their `PEXT` is microcoded. Choosing by `popcount(mask)` needs the
-   crossover measured with and without `PCLMULQDQ`; the earlier numbers put it at
-   15 to 20 selected bits.
+2. **Dense masks without fast BMI2.** Compressing by rank costs 2.5 to 3.2 cycles
+   a selected bit on the Cascade Lake run, where zp7 is a flat 25 with `PCLMULQDQ`,
+   so the two cross at eight or nine selected bits. Zen 1 and 2 have `PCLMULQDQ`
+   though their `PEXT` is microcoded, so choosing by `popcount(mask)` needs the
+   crossover measured on them, with and without it.
 3. **Expand by select.** The one-block expand always walks the mask, though
-   `block_expand_by_select` wins on a sparse value. Choosing by `popcount(src)`
-   against `popcount(mask)`, in the portable path only, needs its break-even
-   measured, so that the check pays for itself on dense values.
+   `block_expand_by_select` wins on a sparse value: on the Cascade Lake run it takes
+   a flat 24 to 25 cycles for two source ones, against 2.5 to 3.0 a mask bit for the
+   walk, while at half density the walk wins at every width. Choosing by
+   `popcount(src)` against `popcount(mask)`, in the portable path only, needs that
+   break-even measured on the targets the portable path serves, so that the check
+   pays for itself on dense values.
 4. **SVE2 BITPERM.** AArch64's optional `BEXT` and `BDEP`, under
    `__ARM_FEATURE_SVE2_BITPERM`, are the counterparts of `PEXT` and `PDEP`, and need
    their latency measured on a core that implements them.
 
 Each new kernel joins the agreement checks against the portable kernels and the
-oracle, fuzzing included. One mask applied to many values, where Hacker's
-Delight's precomputed compress costs about six operations per value, needs a batch
-interface that the per-call signature cannot amortize, and belongs in xstd-bits.
+oracle, fuzzing included. One mask applied to many values, where Hacker's Delight's
+compress and zp7 both compute their shift masks once and apply them to each value,
+needs a batch interface that the per-call signature cannot amortize, and belongs in
+xstd-bits.
 wasm32 has no bit-permute instruction, so the portable kernels are already its
 answer.
 

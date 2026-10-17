@@ -145,6 +145,11 @@ def main():
              "a kernel marked *loop* is one trip of its innermost loop, so one selected bit for `compress_by_rank`,",
              "one mask bit for the walks, and one source bit for `expand_by_select`. A blank cell is a kernel the",
              "target does not have. Each summary, with the assembly it read, is beside this file.", "",
+             "A cell is the model's, not the hardware's. The Zen 2 model issues `PEXT` and `PDEP` as one fast uop",
+             "and gives `PCLMULQDQ` a latency of 100 cycles, where uops.info measures",
+             "[`PEXT`](https://uops.info/html-instr/PEXT_R64_R64_R64.html) and",
+             "[`PCLMULQDQ`](https://uops.info/html-instr/PCLMULQDQ_XMM_XMM_I8.html) on Zen 2 otherwise, so the",
+             "`znver2` cells of the kernels built on them follow the model.", "",
              f"Analysed by {mca_version}.", ""]
     for (family, triple), kernels in tables.items():
         cpus = X86 if triple.startswith("x86") else AARCH64
