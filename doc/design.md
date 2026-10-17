@@ -89,7 +89,7 @@ signed `_BitInt(1)`.
 
 The `<bit>` counterparts follow the same split. Where the standard library's `<bit>` takes a
 type, xstd forwards to it. Every other `unsigned_integer` — an integer class, or an
-`unsigned _BitInt(N)` that libstdc++ refuses — is answered by one template per function
+`unsigned _BitInt(N)`, which neither standard library's counting functions take — is answered by one template per function
 that works a `std::size_t` block at a time, the block being `std::size_t` because
 [iterator.concept.winc] promises every integer-class type an explicit conversion to and from
 it, and each block goes to the standard function, which knows its own instructions. The
