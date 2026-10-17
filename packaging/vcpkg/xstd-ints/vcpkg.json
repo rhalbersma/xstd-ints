@@ -1,0 +1,17 @@
+{
+  "name": "xstd-ints",
+  "version-semver": "0.1.0",
+  "description": "Do as the ints do: <bit>, <cstdlib>, <charconv> and <memory> integer functions for every integer type, the 128-bit and bit-precise ones included.",
+  "homepage": "https://github.com/rhalbersma/xstd-ints",
+  "license": "BSL-1.0",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    }
+  ]
+}

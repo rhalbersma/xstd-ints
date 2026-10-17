@@ -1,0 +1,100 @@
+#          Copyright Rein Halbersma 2014-2026.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+name: Packaging
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+      - 'include/**'
+      - 'LICENSE_1_0.txt'
+      - 'packaging/**'
+      - '.github/workflows/packaging.yml'
+  workflow_dispatch:
+
+env:
+  # The vcpkg the port was written against, pinned so that a registry change cannot move the test.
+  VCPKG_COMMIT: a5f736224e85b32e25a8ffc52562333180396642
+
+jobs:
+  # The vcpkg port and the Conan recipe as each registry would build them, from the GitHub archive of the commit under
+  # test, consumed by a clean project that knows xstd-ints only through the package manager.
+  packaging:
+    name: ${{ matrix.runner }} ${{ matrix.manager }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ ubuntu-24.04, macos-15, windows-2025 ]
+        manager: [ vcpkg, conan ]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      # Ubuntu's own GCC 13 cannot compile the library; macOS keeps its default Xcode and Windows its default MSVC.
+      - name: Install the stable rung
+        if: runner.os == 'Linux'
+        run: |
+          tools/setup-toolchain.sh
+          {
+            echo "CC=gcc-15"
+            echo "CXX=g++-15"
+          } >> "${GITHUB_ENV}"
+
+      - name: Pin both recipes to this commit's archive
+        env:
+          REF: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if [ "${RUNNER_OS}" = Windows ]; then python=python; else python=python3; fi
+          "${python}" packaging/pin.py "${REF}" "${RUNNER_TEMP}/pinned"
+
+      - name: Install the port into a clean project, then build and run it
+        if: matrix.manager == 'vcpkg'
+        run: |
+          git clone --quiet https://github.com/microsoft/vcpkg.git "${RUNNER_TEMP}/vcpkg"
+          git -C "${RUNNER_TEMP}/vcpkg" checkout --quiet "${VCPKG_COMMIT}"
+          if [ "${RUNNER_OS}" = Windows ]; then "${RUNNER_TEMP}/vcpkg/bootstrap-vcpkg.bat" -disableMetrics; else "${RUNNER_TEMP}/vcpkg/bootstrap-vcpkg.sh" -disableMetrics; fi
+          cmake -S packaging/vcpkg/test -B "${RUNNER_TEMP}/build" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${RUNNER_TEMP}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_OVERLAY_PORTS="${RUNNER_TEMP}/pinned/vcpkg"
+          cmake --build "${RUNNER_TEMP}/build" --config Release
+          ctest --test-dir "${RUNNER_TEMP}/build" --build-config Release --output-on-failure
+
+      - name: Create the Conan package and run its test package
+        if: matrix.manager == 'conan'
+        run: |
+          if [ "${RUNNER_OS}" = Windows ]; then python=python; bin=Scripts; else python=python3; bin=bin; fi
+          "${python}" -m venv "${RUNNER_TEMP}/conan"
+          "${RUNNER_TEMP}/conan/${bin}/pip" install --quiet --require-hashes --only-binary :all: -r packaging/conan-requirements.txt
+          conan="${RUNNER_TEMP}/conan/${bin}/conan"
+          "${conan}" profile detect
+          if [ "${RUNNER_OS}" = Linux ]; then executables=(-c 'tools.build:compiler_executables={"c": "gcc-15", "cpp": "g++-15"}'); else executables=(); fi
+          "${conan}" create "${RUNNER_TEMP}/pinned/conan" --version 0.1.0 -s compiler.cppstd=23 "${executables[@]}"
+
+  # The one name to require, red unless every leg above succeeded.
+  all:
+    name: packaging / all
+    if: always()
+    needs: packaging
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Every leg succeeded
+        env:
+          RESULT: ${{ needs.packaging.result }}
+        run: test "${RESULT}" = success
