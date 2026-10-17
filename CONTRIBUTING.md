@@ -273,9 +273,19 @@ Implementation-relevant proposals must record the paper number, the revision-pin
 
 A new paper revision or a change on its tracking issue triggers a review, not an automatic code change. Update the review date only after inspecting the relevant revision and reconsidering xstd's stated relationship.
 
+The table records reviews; the [Upstream watch workflow](.github/workflows/upstream-watch.yml) records changes. Every Monday it runs [`tools/upstream_watch.py`](tools/upstream_watch.py), which compares upstream with what was last reviewed and opens or updates one issue, "Upstream changes to review", naming each difference:
+
+- a paper revision on wg21.link newer than its row's, or a change of state, labels or milestone on its tracking issue;
+- a change to `[bit]`, `[bitmask.types]`, `[charconv.to.chars]` or `[iterator.concept.winc]` in [cplusplus/draft](https://github.com/cplusplus/draft) since the reviewed commit, shown as a diff of the clause;
+- a value of `__cpp_lib_bitops` in libstdc++ or libc++ trunk other than the reviewed one, with the forwarding overloads it makes live, read from the thresholds in `include/xstd/ints/bit/detail/std_*.hpp`, and the tests that then exercise them;
+- an LWG issue against those clauses that is new, or whose status has changed.
+
+Everything but the table's revisions is recorded in [`tools/upstream-watch.json`](tools/upstream-watch.json). After a review, update the paper's row by hand, run `tools/upstream_watch.py --record` with a `GITHUB_TOKEN` for the rest, and close the issue. `tools/upstream_watch.py` alone prints the report without touching anything, and `python3 -m unittest tools/test_upstream_watch.py` checks it offline against a seeded change.
+
 | Paper | Reviewed wording | Tracking issue | Last reviewed | Relationship |
 |---|---|---|---|---|
 | P3104R6 | [P3104R6](https://wg21.link/P3104R6) | [cplusplus/papers#1768](https://github.com/cplusplus/papers/issues/1768) | 2026-10-10 | Supplies `bit_reverse`, `bit_repeat`, `bit_compress` and `bit_expand`. xstd implements the wording, R5's plus R6's constant-evaluation remark on `bit_repeat`, forwards to `<bit>` once `__cpp_lib_bitops` reaches `202607L`, and extends the domain to every xstd unsigned integer. |
+| P3793R2 | [P3793R2](https://wg21.link/P3793R2) | [cplusplus/papers#2399](https://github.com/cplusplus/papers/issues/2399) | 2026-10-17 | Supplies `shl` and `shr`. xstd implements the wording, forwards to `<bit>` once `__cpp_lib_bitops` reaches `202606L`, and extends the domain to every pair of xstd integers, a count of any `integer` type included. |
 | P3666R0 | [P3666R0](https://wg21.link/P3666R0) | [cplusplus/papers#2420](https://github.com/cplusplus/papers/issues/2420) | 2026-08-19 | Supplies the proposed native bit-precise aliases and library integration direction. xstd exposes Clang's existing `_BitInt` types through equivalent aliases and its open traits, without implementing the paper's core-language changes. |
 | P3701R0 | [P3701R0](https://wg21.link/P3701R0) | [cplusplus/papers#2330](https://github.com/cplusplus/papers/issues/2330) | 2026-08-18 | Supplies arithmetic-integer vocabulary and the built-in type boundary. xstd additionally admits paired integer-class types, requires valid signed/unsigned transformations, and is cv-transparent where the paper excludes cv-qualified types. |
 | P3724R4 | [P3724R4](https://wg21.link/P3724R4) | [cplusplus/papers#2354](https://github.com/cplusplus/papers/issues/2354) | 2026-08-18 | Supplies division-result vocabulary and relevant rounding semantics. xstd intentionally supports only truncating, Euclidean, and floored quotient/remainder operations over its broader integer domain. |
