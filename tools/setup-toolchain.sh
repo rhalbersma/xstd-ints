@@ -50,21 +50,35 @@ readonly BOOST_PREFIX=/usr/local
 readonly ACTIONLINT_VERSION=1.7.11
 readonly ACTIONLINT_SHA256=900919a84f2229bac68ca9cd4103ea297abc35e9689ebb842c6e34a3d1b01b0a
 
+# Each step below checks before it acts, so a second run installs nothing and finishes in seconds.
+
+# Writes the file only when its content would change, and reports whether it did.
+write_if_changed() {
+        local file="$1" content="$2"
+        if [ "$($SUDO cat "${file}" 2>/dev/null)" = "${content}" ]; then
+                return 1
+        fi
+        printf '%s\n' "${content}" | $SUDO tee "${file}" > /dev/null
+}
+
 # apt.llvm.org for clang, the toolchain PPA for a GCC newer than noble's. The PPA signs with RSA-1024, so apt
 # warns about a weak algorithm on every update; that is the archive's key, not a fault in this script.
-curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO gpg --batch --yes --dearmor -o /usr/share/keyrings/llvm.gpg
-{
+sources_changed=0
+if [ ! -s /usr/share/keyrings/llvm.gpg ]; then
+        curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO gpg --batch --yes --dearmor -o /usr/share/keyrings/llvm.gpg
+fi
+if [ ! -s /usr/share/keyrings/ubuntu-toolchain.gpg ]; then
+        curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x60c317803a41ba51845e371a1e9377a2ba9ef27f" \
+                | $SUDO gpg --batch --yes --dearmor -o /usr/share/keyrings/ubuntu-toolchain.gpg
+fi
+write_if_changed /etc/apt/sources.list.d/llvm.list "$(
         echo "deb [signed-by=/usr/share/keyrings/llvm.gpg] https://apt.llvm.org/noble/ llvm-toolchain-noble-${CLANG_VERSION} main"
         echo "deb [signed-by=/usr/share/keyrings/llvm.gpg] https://apt.llvm.org/noble/ llvm-toolchain-noble-${CLANG_QUALIFICATION_VERSION} main"
         echo "deb [signed-by=/usr/share/keyrings/llvm.gpg] https://apt.llvm.org/noble/ llvm-toolchain-noble main"
-} | $SUDO tee /etc/apt/sources.list.d/llvm.list > /dev/null
-
-curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x60c317803a41ba51845e371a1e9377a2ba9ef27f" \
-        | $SUDO gpg --batch --yes --dearmor -o /usr/share/keyrings/ubuntu-toolchain.gpg
-echo "deb [signed-by=/usr/share/keyrings/ubuntu-toolchain.gpg] https://ppa.launchpadcontent.net/ubuntu-toolchain-r/test/ubuntu noble main" \
-        | $SUDO tee /etc/apt/sources.list.d/ubuntu-toolchain.list > /dev/null
-
-$SUDO apt-get update -qq
+)" && sources_changed=1
+write_if_changed /etc/apt/sources.list.d/ubuntu-toolchain.list \
+        "deb [signed-by=/usr/share/keyrings/ubuntu-toolchain.gpg] https://ppa.launchpadcontent.net/ubuntu-toolchain-r/test/ubuntu noble main" \
+        && sources_changed=1
 
 packages=(
         "g++-${GCC_VERSION}"
@@ -83,21 +97,50 @@ for version in "${CLANG_QUALIFICATION_VERSION}" "${CLANG_TRUNK_VERSION}"; do
         packages+=("clang-${version}" "clang-tidy-${version}")
 done
 
-$SUDO apt-get install -y -qq "${packages[@]}"
+missing=()
+for package in "${packages[@]}"; do
+        dpkg-query -W -f='${Status}' "${package}" 2>/dev/null | grep -q "install ok installed" || missing+=("${package}")
+done
+if [ "${#missing[@]}" -gt 0 ] || [ "${sources_changed}" -eq 1 ]; then
+        $SUDO apt-get update -qq
+        $SUDO apt-get install -y -qq "${packages[@]}"
+fi
 
 # GCC trunk is Jonathan Wakely's weekly binary snapshot, the one the ladders' development rung installs, under the
-# same g++-17 name. Upstream publishes neither checksums nor signatures, so what arrived is recorded instead.
-snapshot="$(mktemp -d)"
-curl -fsSL --retry 3 https://kayari.org/gcc-latest/gcc-latest.deb -o "${snapshot}/gcc-latest.deb"
-dpkg-deb -f "${snapshot}/gcc-latest.deb" Package Version
-sha256sum "${snapshot}/gcc-latest.deb"
-$SUDO dpkg -i "${snapshot}/gcc-latest.deb" > /dev/null || $SUDO apt-get install -f -y -qq
-rm -rf "${snapshot}"
+# same g++-17 name. Upstream publishes neither checksums nor signatures, so what arrived is recorded instead. Its
+# ETag is kept beside it, so a rerun downloads only a snapshot newer than the one installed.
+snapshot_url=https://kayari.org/gcc-latest/gcc-latest.deb
+snapshot_etag_file=/opt/gcc-latest/.etag
+snapshot_etag="$(curl -fsSIL "${snapshot_url}" | tr -d '\r' | sed -n 's/^[Ee][Tt]ag: //p' | tail -1 || true)"
+if [ ! -x /opt/gcc-latest/bin/g++ ] \
+        || { [ -n "${snapshot_etag}" ] && [ "$(cat "${snapshot_etag_file}" 2>/dev/null)" != "${snapshot_etag}" ]; }; then
+        snapshot="$(mktemp -d)"
+        curl -fsSL --retry 3 "${snapshot_url}" -o "${snapshot}/gcc-latest.deb"
+        dpkg-deb -f "${snapshot}/gcc-latest.deb" Package Version
+        sha256sum "${snapshot}/gcc-latest.deb"
+        $SUDO dpkg -i "${snapshot}/gcc-latest.deb" > /dev/null || $SUDO apt-get install -f -y -qq
+        rm -rf "${snapshot}"
+        [ -z "${snapshot_etag}" ] || printf '%s\n' "${snapshot_etag}" | $SUDO tee "${snapshot_etag_file}" > /dev/null
+fi
 for tool in gcc g++ gcov; do
-        $SUDO ln -sf "/opt/gcc-latest/bin/${tool}" "/usr/bin/${tool}-${GCC_TRUNK_VERSION}"
+        [ "$(readlink "/usr/bin/${tool}-${GCC_TRUNK_VERSION}")" = "/opt/gcc-latest/bin/${tool}" ] \
+                || $SUDO ln -sf "/opt/gcc-latest/bin/${tool}" "/usr/bin/${tool}-${GCC_TRUNK_VERSION}"
 done
-printf '%s\n' /opt/gcc-latest/lib /opt/gcc-latest/lib64 | $SUDO tee /etc/ld.so.conf.d/gcc-latest.conf > /dev/null
-$SUDO ldconfig
+if write_if_changed /etc/ld.so.conf.d/gcc-latest.conf "$(printf '%s\n' /opt/gcc-latest/lib /opt/gcc-latest/lib64)"; then
+        $SUDO ldconfig
+fi
+
+# Installs a hash-pinned requirements file into ~/.local unless every package it pins is already at its version.
+pip_install_pinned() {
+        local requirements="$1" name version
+        while read -r name version; do
+                [ "$(pip show "${name}" 2>/dev/null | sed -n 's/^Version: //p')" = "${version}" ] || {
+                        pip install --quiet --user --break-system-packages --require-hashes -r "${requirements}" \
+                                || pip3 install --quiet --user --require-hashes -r "${requirements}"
+                        return
+                }
+        done < <(sed -n 's/^\([A-Za-z0-9_.-]*\)==\([^ ;\\]*\).*/\1 \2/p' "${requirements}")
+}
 
 # The format gate runs clang-format-22 from apt.llvm.org, installed above, at the stable rung alone: a formatter
 # release reformats the code base. Before 22 it reads `{ a * b }` in a requires-expression as a pointer declaration.
@@ -105,20 +148,17 @@ $SUDO ldconfig
 # beside this script, and lands in ~/.local/bin for editors and hooks.
 CLANG_FORMAT_REQUIREMENTS="$(dirname "${BASH_SOURCE[0]}")/clang-format-requirements.txt"
 readonly CLANG_FORMAT_REQUIREMENTS
-pip install --quiet --user --break-system-packages --require-hashes -r "${CLANG_FORMAT_REQUIREMENTS}" \
-        || pip3 install --quiet --user --require-hashes -r "${CLANG_FORMAT_REQUIREMENTS}"
+pip_install_pinned "${CLANG_FORMAT_REQUIREMENTS}"
 
 # The codegen tests' FileCheck, a pure-Python port of LLVM's, from PyPI the same way and into the same directory.
 FILECHECK_REQUIREMENTS="$(dirname "${BASH_SOURCE[0]}")/filecheck-requirements.txt"
 readonly FILECHECK_REQUIREMENTS
-pip install --quiet --user --break-system-packages --require-hashes -r "${FILECHECK_REQUIREMENTS}" \
-        || pip3 install --quiet --user --require-hashes -r "${FILECHECK_REQUIREMENTS}"
+pip_install_pinned "${FILECHECK_REQUIREMENTS}"
 
 # gcovr for the coverage gate, from PyPI, pinned by hash as the coverage job pins it.
 GCOVR_REQUIREMENTS="$(dirname "${BASH_SOURCE[0]}")/gcovr-requirements.txt"
 readonly GCOVR_REQUIREMENTS
-pip install --quiet --user --break-system-packages --require-hashes -r "${GCOVR_REQUIREMENTS}" \
-        || pip3 install --quiet --user --require-hashes -r "${GCOVR_REQUIREMENTS}"
+pip_install_pinned "${GCOVR_REQUIREMENTS}"
 
 # actionlint from its GitHub release into ~/.local/bin; the job builds the same release with go install.
 if ! "${HOME:-/root}/.local/bin/actionlint" --version 2>/dev/null | grep -qx "${ACTIONLINT_VERSION}"; then
@@ -135,8 +175,7 @@ fi
 # CMake from PyPI, pinned by hash as the workflows pin it: noble's 3.28 is older than the 3.30 CMakeLists.txt asks for.
 CMAKE_REQUIREMENTS="$(dirname "${BASH_SOURCE[0]}")/cmake-requirements.txt"
 readonly CMAKE_REQUIREMENTS
-pip install --quiet --user --break-system-packages --require-hashes -r "${CMAKE_REQUIREMENTS}" \
-        || pip3 install --quiet --user --require-hashes -r "${CMAKE_REQUIREMENTS}"
+pip_install_pinned "${CMAKE_REQUIREMENTS}"
 readonly CMAKE="${HOME:-/root}/.local/bin/cmake"
 
 # Boost from its CMake release tarball, which installs a CMake package for every library, the header-only ones the
