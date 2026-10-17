@@ -229,7 +229,9 @@ All four are `constexpr`, portable in a constant expression and fast at run time
 `__builtin_bitreverse64` mirrors a word, and with BMI2 on x86-64 (`-mbmi2`, or MSVC's
 `/arch:AVX2`) `bit_compress` and `bit_expand` compile to `PEXT` and `PDEP`. That choice is made
 at compile time, with no run-time CPU dispatch. AMD processors before Zen 3 implement both
-instructions in microcode at roughly six times the latency of Zen 3 and Intel since Haswell, so
+instructions in microcode, as uops.info's measurements of
+[`PEXT`](https://uops.info/html-instr/PEXT_R64_R64_R64.html) and
+[`PDEP`](https://uops.info/html-instr/PDEP_R64_R64_R64.html) on Zen 2 show against Zen 3, so
 a build targeting them (`-march=bdver4`, `znver1` or `znver2`) keeps the portable kernels even
 though it enables BMI2. Those kernels are branch-free where it counts: `bit_compress` places
 each selected bit by one `popcount` of the mask below it, and `bit_expand` walks the mask's

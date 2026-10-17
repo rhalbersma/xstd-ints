@@ -224,6 +224,14 @@ if(PROJECT_IS_TOP_LEVEL)
         enable_testing()
         add_subdirectory(mutation)
     endif()
+
+    # Off by default, and outside BUILD_TESTING: a benchmark reports what a machine does rather than passing or failing,
+    # so it is an executable to run by hand, not a test, and it fetches nanobench, which nothing else needs.
+    option(${project_option_prefix}_BUILD_BENCHMARKS "Build the bit-kernel benchmarks under bench/" OFF)
+
+    if(${project_option_prefix}_BUILD_BENCHMARKS)
+        add_subdirectory(bench)
+    endif()
 endif()
 
 install(
