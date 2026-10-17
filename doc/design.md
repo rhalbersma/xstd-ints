@@ -160,7 +160,9 @@ expression where it is declared, the portable kernel otherwise. [`bench/`](../be
 kernel and the alternatives it beat, in cycles per independent call on a 64-bit block of stated
 density, the harness that feeds each call included. [`bench/results/`](../bench/results) keeps
 each run with the machine, compiler, flags and commit it names, and
-[CONTRIBUTING.md](../CONTRIBUTING.md#benchmarks) gives the command. From the
+[CONTRIBUTING.md](../CONTRIBUTING.md#benchmarks) gives the command; besides this container's
+run it holds the Bench workflow's on an [Emerald Rapids](../bench/results/emerald-rapids.md)
+and a [Neoverse N2](../bench/results/neoverse-n2.md) runner. From the
 [Cascade Lake run](../bench/results/cascade-lake.md), at `-march=native -O3`, with a cost per bit
 taken as the slope from the sparsest row of its table to the densest:
 
