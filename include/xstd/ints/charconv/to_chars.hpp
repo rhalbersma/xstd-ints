@@ -18,7 +18,7 @@
 #include <cstddef>                                 // ptrdiff_t, size_t
 #include <iterator>                                // distance, next
 #include <system_error>                            // errc
-#include <type_traits>                             // remove_cv_t
+#include <type_traits>                             // conditional_t, remove_cv_t
 
 namespace xstd {
 
@@ -54,8 +54,8 @@ template<integer I>
         // A pointer rather than a string_view: these are only ever subscripted.
         static constexpr auto* digits = "0123456789abcdefghijklmnopqrstuvwxyz";
 
-        // The unsigned counterpart holds |min()| and lets both loops stop at the radix.
-        using U          = make_unsigned_t<I>;
+        // The unsigned counterpart holds |min()|, widened to unsigned below 6 bits, where base 36 would wrap.
+        using U          = std::conditional_t<(numeric_limits<make_unsigned_t<I>>::digits < 6), unsigned, make_unsigned_t<I>>;
         auto const radix = static_cast<U>(base);
 
         // Reduced once here, not per digit; both are well-formed and branchless when unsigned.

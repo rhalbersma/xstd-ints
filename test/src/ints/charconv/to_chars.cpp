@@ -5,9 +5,9 @@
 
 #include <xstd/ints/charconv/to_chars.hpp> // to_chars, to_chars_max_size
 #include <xstd/ints/concepts/integer.hpp>  // integer
-#include <xstd/ints/cstdint.hpp>           // XSTD_HAS_INT128, int128, uint128
-#include <test/exact_width_types.hpp>      // std_signed_types, exact_width_signed_integer_types, exact_width_unsigned_integer_types
+#include <xstd/ints/cstdint.hpp>           // XSTD_HAS_BIT_INT, XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
 #include <xstd/ints/limits.hpp>            // numeric_limits
+#include <test/exact_width_types.hpp>      // std_signed_types, exact_width_signed_integer_types, exact_width_unsigned_integer_types
 #include <boost/test/unit_test.hpp>        // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <array>                           // array
 #include <charconv>                        // to_chars, to_chars_result
@@ -179,6 +179,17 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(HexBoundariesMatchGroundTruthUnsigned, T, test::ex
         BOOST_CHECK_EQUAL(rendered(T{1}, 16), "1");
         BOOST_CHECK_EQUAL(rendered(T{2}, 16), "2");
 }
+
+#ifdef XSTD_HAS_BIT_INT
+// A nibble in hex: a base past the type's own maximum leaves one digit, where a radix of that type would wrap.
+BOOST_AUTO_TEST_CASE(NarrowBitPreciseTakesEveryBase)
+{
+        BOOST_CHECK_EQUAL(rendered(xstd::bit_uint<4>{15}, 16), "f");
+        BOOST_CHECK_EQUAL(rendered(xstd::bit_int<4>{-8}, 16), "-8");
+        BOOST_CHECK_EQUAL(rendered(xstd::bit_uint<5>{31}, 36), "v");
+        BOOST_CHECK_EQUAL(rendered(xstd::bit_uint<2>{3}, 36), "3");
+}
+#endif
 
 BOOST_AUTO_TEST_CASE(Int128Boundaries)
 {
