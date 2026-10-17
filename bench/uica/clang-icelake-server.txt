@@ -1,0 +1,1933 @@
+# Ubuntu clang version 22.1.8 (++20260714014902+ca7933e47d3a-1~exp1~20260714135019.80), -march=icelake-server -O3, simulated by uiCA -arch ICL
+
+## reverse_by_swaps, whole function
+
+	vmovq %rdi, %xmm0
+	vgf2p8affineqb $0, .LCPI10_1(%rip){1to2}, %xmm0, %xmm0
+	vmovq %xmm0, %rax
+	bswapq %rax
+
+Throughput (in cycles per iteration): 2.02
+Bottleneck: Decoder
+
+The following throughputs could be achieved if the given property were the only bottleneck:
+
+  - Predecoder: 1.50
+  - Decoder: 2.00
+  - Issue: 1.20
+  - Ports: 1.33
+
+┌───────────────────────┬────────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+│ MITE   MS   DSB   LSD │ Issued │ Exec. │ Port 0   Port 1   Port 2   Port 3   Port 4   Port 5   Port 6   Port 7   Port 8   Port 9 │
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  1                    │   1    │   1   │                                                1                                        │ vmovq xmm0, rdi
+│  2                    │   2    │   2   │  0.18     0.82     0.5      0.5                                                         │ vgf2p8affineqb xmm0, xmm0, qword ptr [rip]{1to2}, 0x0
+│  1                    │   1    │   1   │   1                                                                                     │ vmovq rax, xmm0
+│  2                    │   2    │   2   │  0.09     0.43                                0.57     0.91                             │ bswap rax
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  6                    │   6    │   6   │  1.28     1.24     0.5      0.5               1.57     0.91                             │ Total
+└───────────────────────┴────────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+## reverse_intrinsic, whole function
+
+	vmovq %rdi, %xmm0
+	vgf2p8affineqb $0, .LCPI11_1(%rip){1to2}, %xmm0, %xmm0
+	vmovq %xmm0, %rax
+	bswapq %rax
+
+Throughput (in cycles per iteration): 2.02
+Bottleneck: Decoder
+
+The following throughputs could be achieved if the given property were the only bottleneck:
+
+  - Predecoder: 1.50
+  - Decoder: 2.00
+  - Issue: 1.20
+  - Ports: 1.33
+
+┌───────────────────────┬────────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+│ MITE   MS   DSB   LSD │ Issued │ Exec. │ Port 0   Port 1   Port 2   Port 3   Port 4   Port 5   Port 6   Port 7   Port 8   Port 9 │
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  1                    │   1    │   1   │                                                1                                        │ vmovq xmm0, rdi
+│  2                    │   2    │   2   │  0.18     0.82     0.5      0.5                                                         │ vgf2p8affineqb xmm0, xmm0, qword ptr [rip]{1to2}, 0x0
+│  1                    │   1    │   1   │   1                                                                                     │ vmovq rax, xmm0
+│  2                    │   2    │   2   │  0.09     0.43                                0.57     0.91                             │ bswap rax
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  6                    │   6    │   6   │  1.28     1.24     0.5      0.5               1.57     0.91                             │ Total
+└───────────────────────┴────────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+## compress_by_rank, loop body
+
+	movq %rdi, %rcx
+	decq %rdi
+	andnq %rsi, %rcx, %rdx
+	andq %rdi, %rdx
+	popcntq %rdx, %rdx
+	btsq %rdx, %rax
+	andq %rcx, %rdi
+	jne .LBB12_1
+
+Throughput (in cycles per iteration): 3.08
+Bottleneck: unknown
+
+The following throughputs could be achieved if the given property were the only bottleneck:
+
+  - LSD: 1.50
+  - Issue: 1.40
+  - Ports: 1.75
+  - Dependencies: 2.00
+
+M - Macro-fused with previous instruction
+
+┌───────────────────────┬────────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────┬───────┐
+│ MITE   MS   DSB   LSD │ Issued │ Exec. │ Port 0   Port 1   Port 2   Port 3   Port 4   Port 5   Port 6   Port 7   Port 8   Port 9 │ Notes │
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┼───────┤
+│                    1  │   1    │   1   │  0.14     0.04                                0.53     0.29                             │       │ mov rcx, rdi
+│                    1  │   1    │   1   │  0.32     0.17                                0.27     0.24                             │       │ dec rdi
+│                    1  │   1    │   1   │           0.42                                0.58                                      │       │ andn rdx, rcx, rsi
+│                    1  │   1    │   1   │  0.23     0.12                                0.4      0.26                             │       │ and rdx, rdi
+│                    1  │   1    │   1   │            1                                                                            │       │ popcnt rdx, rdx
+│                    1  │   1    │   1   │  0.51                                                  0.49                             │       │ bts rax, rdx
+│                    1  │   1    │   1   │  0.54                                                  0.46                             │       │ and rdi, rcx
+│                       │        │       │                                                                                         │   M   │ jnz 0x6
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┼───────┤
+│                    7  │   7    │   7   │  1.74     1.74                                1.77     1.74                             │       │ Total
+└───────────────────────┴────────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────┴───────┘
+
+
+## compress_pext, whole function
+
+	pextq %rsi, %rdi, %rax
+
+Throughput (in cycles per iteration): 1.00
+Bottleneck: Ports
+
+The following throughputs could be achieved if the given property were the only bottleneck:
+
+  - Predecoder: 0.31
+  - Decoder: 0.25
+  - Issue: 0.20
+  - Ports: 1.00
+
+┌───────────────────────┬────────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+│ MITE   MS   DSB   LSD │ Issued │ Exec. │ Port 0   Port 1   Port 2   Port 3   Port 4   Port 5   Port 6   Port 7   Port 8   Port 9 │
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  1                    │   1    │   1   │            1                                                                            │ pext rax, rdi, rsi
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  1                    │   1    │   1   │            1                                                                            │ Total
+└───────────────────────┴────────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+## compress_by_walk_with_if, loop body
+
+	blsiq %rsi, %rdx
+	andq %rdi, %rdx
+	cmovneq %rcx, %rdx
+	orq %rdx, %rax
+	addq %rcx, %rcx
+	blsrq %rsi, %rsi
+	jne .LBB13_3
+
+Throughput (in cycles per iteration): 2.30
+Bottleneck: unknown
+
+The following throughputs could be achieved if the given property were the only bottleneck:
+
+  - LSD: 1.50
+  - Issue: 1.40
+  - Ports: 1.75
+  - Dependencies: 1.00
+
+┌───────────────────────┬────────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+│ MITE   MS   DSB   LSD │ Issued │ Exec. │ Port 0   Port 1   Port 2   Port 3   Port 4   Port 5   Port 6   Port 7   Port 8   Port 9 │
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│                    1  │   1    │   1   │           0.5                                 0.5                                       │ blsi rdx, rsi
+│                    1  │   1    │   1   │  0.23     0.33                                0.15     0.29                             │ and rdx, rdi
+│                    1  │   1    │   1   │  0.52                                                  0.48                             │ cmovnz rdx, rcx
+│                    1  │   1    │   1   │  0.2      0.26                                0.26     0.27                             │ or rax, rdx
+│                    1  │   1    │   1   │  0.21     0.26                                0.29     0.23                             │ add rcx, rcx
+│                    1  │   1    │   1   │           0.44                                0.56                                      │ blsr rsi, rsi
+│                    1  │   1    │   1   │  0.54                                                  0.46                             │ jnz 0x6
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│                    7  │   7    │   7   │  1.72     1.79                                1.77     1.73                             │ Total
+└───────────────────────┴────────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+## compress_by_parallel_suffix, whole function
+
+	andq %rsi, %rdi
+	movq %rsi, %rax
+	notq %rax
+	leaq (%rax,%rax), %rcx
+	leaq (,%rax,4), %rdx
+	xorq %rcx, %rdx
+	xorq %rax, %rdx
+	shlq $2, %rdx
+	xorq %rcx, %rdx
+	movq %rdx, %rax
+	shlq $4, %rax
+	xorq %rdx, %rax
+	movq %rax, %rdx
+	shlq $8, %rdx
+	xorq %rax, %rdx
+	movq %rdx, %r8
+	shlq $16, %r8
+	xorq %rdx, %r8
+	movq %r8, %rax
+	shlq $32, %rax
+	xorq %r8, %rax
+	movq %rax, %rdx
+	andq %rsi, %rdx
+	xorq %rdx, %rsi
+	shrq %rdx
+	orq %rsi, %rdx
+	andnq %rcx, %rax, %rsi
+	andq %rdi, %rax
+	xorq %rax, %rdi
+	shrq %rax
+	orq %rdi, %rax
+	leaq (%rsi,%rsi), %rcx
+	xorq %rsi, %rcx
+	leaq (,%rcx,4), %rdi
+	xorq %rcx, %rdi
+	movq %rdi, %rcx
+	shlq $4, %rcx
+	xorq %rdi, %rcx
+	movq %rcx, %rdi
+	shlq $8, %rdi
+	xorq %rcx, %rdi
+	movq %rdi, %r8
+	shlq $16, %r8
+	xorq %rdi, %r8
+	movq %r8, %rcx
+	shlq $32, %rcx
+	xorq %r8, %rcx
+	andnq %rsi, %rcx, %rdi
+	andq %rdx, %rcx
+	xorq %rcx, %rdx
+	movq %rcx, %rsi
+	shrq $2, %rsi
+	orq %rdx, %rsi
+	andq %rax, %rcx
+	xorq %rcx, %rax
+	shrq $2, %rcx
+	orq %rax, %rcx
+	leaq (%rdi,%rdi), %rax
+	xorq %rdi, %rax
+	leaq (,%rax,4), %rdx
+	xorq %rax, %rdx
+	movq %rdx, %rax
+	shlq $4, %rax
+	xorq %rdx, %rax
+	movq %rax, %rdx
+	shlq $8, %rdx
+	xorq %rax, %rdx
+	movq %rdx, %r8
+	shlq $16, %r8
+	xorq %rdx, %r8
+	movq %r8, %rax
+	shlq $32, %rax
+	xorq %r8, %rax
+	andnq %rdi, %rax, %rdi
+	andq %rsi, %rax
+	xorq %rax, %rsi
+	movq %rax, %rdx
+	shrq $4, %rdx
+	orq %rsi, %rdx
+	andq %rcx, %rax
+	xorq %rax, %rcx
+	shrq $4, %rax
+	orq %rcx, %rax
+	leaq (%rdi,%rdi), %rcx
+	xorq %rdi, %rcx
+	leaq (,%rcx,4), %rsi
+	xorq %rcx, %rsi
+	movq %rsi, %rcx
+	shlq $4, %rcx
+	xorq %rsi, %rcx
+	movq %rcx, %rsi
+	shlq $8, %rsi
+	xorq %rcx, %rsi
+	movq %rsi, %r8
+	shlq $16, %r8
+	xorq %rsi, %r8
+	movq %r8, %rcx
+	shlq $32, %rcx
+	xorq %r8, %rcx
+	andnq %rdi, %rcx, %rdi
+	andq %rdx, %rcx
+	xorq %rcx, %rdx
+	movq %rcx, %rsi
+	shrq $8, %rsi
+	orq %rdx, %rsi
+	andq %rax, %rcx
+	xorq %rcx, %rax
+	shrq $8, %rcx
+	orq %rax, %rcx
+	leaq (%rdi,%rdi), %rax
+	xorq %rdi, %rax
+	leaq (,%rax,4), %rdx
+	xorq %rax, %rdx
+	movq %rdx, %rax
+	shlq $4, %rax
+	xorq %rdx, %rax
+	movq %rax, %rdx
+	shlq $8, %rdx
+	xorq %rax, %rdx
+	movq %rdx, %rax
+	shlq $16, %rax
+	xorq %rdx, %rax
+	movq %rax, %rdx
+	shlq $32, %rdx
+	xorq %rax, %rdx
+	andnq %rdi, %rdx, %rdi
+	andq %rsi, %rdx
+	xorq %rdx, %rsi
+	movq %rdx, %rax
+	shrq $16, %rax
+	orq %rsi, %rax
+	andq %rcx, %rdx
+	xorq %rdx, %rcx
+	shrq $16, %rdx
+	orq %rcx, %rdx
+	leaq (%rdi,%rdi), %rcx
+	xorq %rdi, %rcx
+	leaq (,%rcx,4), %rsi
+	xorq %rcx, %rsi
+	movq %rsi, %rcx
+	shlq $4, %rcx
+	xorq %rsi, %rcx
+	movq %rcx, %rsi
+	shlq $8, %rsi
+	xorq %rcx, %rsi
+	movq %rsi, %rcx
+	shlq $16, %rcx
+	xorq %rsi, %rcx
+	movq %rcx, %rsi
+	shlq $32, %rsi
+	xorq %rcx, %rsi
+	andq %rdx, %rax
+	andq %rsi, %rax
+	xorq %rax, %rdx
+	shrq $32, %rax
+	orq %rdx, %rax
+
+Throughput (in cycles per iteration): 116.25
+Bottleneck: unknown
+
+The following throughputs could be achieved if the given property were the only bottleneck:
+
+  - Predecoder: 41.25
+  - Decoder: 39.00
+  - Issue: 31.20
+  - Ports: 39.00
+  - Dependencies: 104.00
+
+┌───────────────────────┬────────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+│ MITE   MS   DSB   LSD │ Issued │ Exec. │ Port 0   Port 1   Port 2   Port 3   Port 4   Port 5   Port 6   Port 7   Port 8   Port 9 │
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  1                    │   1    │   1   │  0.2      0.2                                 0.2      0.4                              │ and rdi, rsi
+│  1                    │   1    │   1   │           0.2                                 0.6      0.2                              │ mov rax, rsi
+│  1                    │   1    │   1   │           0.2                                 0.4      0.4                              │ not rax
+│  1                    │   1    │   1   │  0.2      0.6                                          0.2                              │ lea rcx, ptr [rax+rax*1]
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ lea rdx, ptr [rax*4]
+│  1                    │   1    │   1   │  0.2      0.4                                 0.4                                       │ xor rdx, rcx
+│  1                    │   1    │   1   │  0.4                                          0.4      0.2                              │ xor rdx, rax
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rdx, 0x2
+│  1                    │   1    │   1   │           0.4                                          0.6                              │ xor rdx, rcx
+│  1                    │   1    │   1   │  0.4      0.4                                 0.2                                       │ mov rax, rdx
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl rax, 0x4
+│  1                    │   1    │   1   │                                               0.6      0.4                              │ xor rax, rdx
+│  1                    │   1    │   1   │  0.2      0.6                                          0.2                              │ mov rdx, rax
+│  1                    │   1    │   1   │   1                                                                                     │ shl rdx, 0x8
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ xor rdx, rax
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ mov r8, rdx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl r8, 0x10
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ xor r8, rdx
+│  1                    │   1    │   1   │                                               0.4      0.6                              │ mov rax, r8
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shl rax, 0x20
+│  1                    │   1    │   1   │  0.2      0.2                                 0.6                                       │ xor rax, r8
+│  1                    │   1    │   1   │  0.4      0.4                                          0.2                              │ mov rdx, rax
+│  1                    │   1    │   1   │           0.6                                 0.2      0.2                              │ and rdx, rsi
+│  1                    │   1    │   1   │  0.2                                          0.6      0.2                              │ xor rsi, rdx
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shr rdx, 0x1
+│  1                    │   1    │   1   │           0.2                                 0.6      0.2                              │ or rdx, rsi
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ andn rsi, rax, rcx
+│  1                    │   1    │   1   │           0.6                                          0.4                              │ and rax, rdi
+│  1                    │   1    │   1   │  0.2                                          0.2      0.6                              │ xor rdi, rax
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shr rax, 0x1
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ or rax, rdi
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ lea rcx, ptr [rsi+rsi*1]
+│  1                    │   1    │   1   │  0.2                                          0.4      0.4                              │ xor rcx, rsi
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ lea rdi, ptr [rcx*4]
+│  1                    │   1    │   1   │  0.2      0.2                                 0.2      0.4                              │ xor rdi, rcx
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ mov rcx, rdi
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rcx, 0x4
+│  1                    │   1    │   1   │           0.2                                 0.2      0.6                              │ xor rcx, rdi
+│  1                    │   1    │   1   │  0.4                                          0.4      0.2                              │ mov rdi, rcx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rdi, 0x8
+│  1                    │   1    │   1   │           0.8                                 0.2                                       │ xor rdi, rcx
+│  1                    │   1    │   1   │  0.2                                          0.2      0.6                              │ mov r8, rdi
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r8, 0x10
+│  1                    │   1    │   1   │  0.2      0.4                                 0.4                                       │ xor r8, rdi
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ mov rcx, r8
+│  1                    │   1    │   1   │                                                         1                               │ shl rcx, 0x20
+│  1                    │   1    │   1   │  0.2      0.2                                 0.2      0.4                              │ xor rcx, r8
+│  1                    │   1    │   1   │           0.2                                 0.8                                       │ andn rdi, rcx, rsi
+│  1                    │   1    │   1   │  0.2                                          0.6      0.2                              │ and rcx, rdx
+│  1                    │   1    │   1   │           0.4                                          0.6                              │ xor rdx, rcx
+│  1                    │   1    │   1   │  0.4      0.4                                 0.2                                       │ mov rsi, rcx
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shr rsi, 0x2
+│  1                    │   1    │   1   │  0.2                                          0.6      0.2                              │ or rsi, rdx
+│  1                    │   1    │   1   │  0.2      0.4                                          0.4                              │ and rcx, rax
+│  1                    │   1    │   1   │  0.2      0.2                                 0.6                                       │ xor rax, rcx
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shr rcx, 0x2
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ or rcx, rax
+│  1                    │   1    │   1   │  0.2      0.4                                          0.4                              │ lea rax, ptr [rdi+rdi*1]
+│  1                    │   1    │   1   │           0.2                                 0.6      0.2                              │ xor rax, rdi
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ lea rdx, ptr [rax*4]
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ xor rdx, rax
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ mov rax, rdx
+│  1                    │   1    │   1   │   1                                                                                     │ shl rax, 0x4
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ xor rax, rdx
+│  1                    │   1    │   1   │  0.2      0.2                                 0.2      0.4                              │ mov rdx, rax
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl rdx, 0x8
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ xor rdx, rax
+│  1                    │   1    │   1   │  0.2                                          0.6      0.2                              │ mov r8, rdx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl r8, 0x10
+│  1                    │   1    │   1   │           0.2                                 0.6      0.2                              │ xor r8, rdx
+│  1                    │   1    │   1   │           0.2                                 0.2      0.6                              │ mov rax, r8
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shl rax, 0x20
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ xor rax, r8
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ andn rdi, rax, rdi
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ and rax, rsi
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ xor rsi, rax
+│  1                    │   1    │   1   │  0.4      0.2                                 0.2      0.2                              │ mov rdx, rax
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shr rdx, 0x4
+│  1                    │   1    │   1   │                                               0.6      0.4                              │ or rdx, rsi
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ and rax, rcx
+│  1                    │   1    │   1   │  0.4      0.2                                 0.2      0.2                              │ xor rcx, rax
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shr rax, 0x4
+│  1                    │   1    │   1   │  0.2      0.2                                 0.6                                       │ or rax, rcx
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ lea rcx, ptr [rdi+rdi*1]
+│  1                    │   1    │   1   │  0.2                                          0.2      0.6                              │ xor rcx, rdi
+│  1                    │   1    │   1   │                                                1                                        │ lea rsi, ptr [rcx*4]
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ xor rsi, rcx
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ mov rcx, rsi
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl rcx, 0x4
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ xor rcx, rsi
+│  1                    │   1    │   1   │  0.2      0.2                                 0.6                                       │ mov rsi, rcx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rsi, 0x8
+│  1                    │   1    │   1   │  0.4      0.6                                                                           │ xor rsi, rcx
+│  1                    │   1    │   1   │  0.2                                          0.4      0.4                              │ mov r8, rsi
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r8, 0x10
+│  1                    │   1    │   1   │           0.2                                 0.6      0.2                              │ xor r8, rsi
+│  1                    │   1    │   1   │  0.6      0.4                                                                           │ mov rcx, r8
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shl rcx, 0x20
+│  1                    │   1    │   1   │  0.2                                          0.8                                       │ xor rcx, r8
+│  1                    │   1    │   1   │           0.2                                 0.8                                       │ andn rdi, rcx, rdi
+│  1                    │   1    │   1   │  0.2      0.6                                          0.2                              │ and rcx, rdx
+│  1                    │   1    │   1   │  0.4                                          0.6                                       │ xor rdx, rcx
+│  1                    │   1    │   1   │  0.2      0.4                                 0.4                                       │ mov rsi, rcx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shr rsi, 0x8
+│  1                    │   1    │   1   │  0.2      0.6                                          0.2                              │ or rsi, rdx
+│  1                    │   1    │   1   │  0.6                                          0.2      0.2                              │ and rcx, rax
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ xor rax, rcx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shr rcx, 0x8
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ or rcx, rax
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ lea rax, ptr [rdi+rdi*1]
+│  1                    │   1    │   1   │  0.6                                          0.4                                       │ xor rax, rdi
+│  1                    │   1    │   1   │           0.2                                 0.8                                       │ lea rdx, ptr [rax*4]
+│  1                    │   1    │   1   │  0.2      0.2                                          0.6                              │ xor rdx, rax
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ mov rax, rdx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rax, 0x4
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ xor rax, rdx
+│  1                    │   1    │   1   │  0.2                                          0.6      0.2                              │ mov rdx, rax
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl rdx, 0x8
+│  1                    │   1    │   1   │  0.4      0.2                                 0.2      0.2                              │ xor rdx, rax
+│  1                    │   1    │   1   │           0.8                                          0.2                              │ mov rax, rdx
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shl rax, 0x10
+│  1                    │   1    │   1   │  0.2      0.2                                 0.2      0.4                              │ xor rax, rdx
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ mov rdx, rax
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rdx, 0x20
+│  1                    │   1    │   1   │  0.2      0.8                                                                           │ xor rdx, rax
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ andn rdi, rdx, rdi
+│  1                    │   1    │   1   │  0.2      0.2                                          0.6                              │ and rdx, rsi
+│  1                    │   1    │   1   │  0.2      0.2                                 0.6                                       │ xor rsi, rdx
+│  1                    │   1    │   1   │  0.4      0.6                                                                           │ mov rax, rdx
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shr rax, 0x10
+│  1                    │   1    │   1   │  0.2      0.4                                          0.4                              │ or rax, rsi
+│  1                    │   1    │   1   │  0.2      0.2                                 0.2      0.4                              │ and rdx, rcx
+│  1                    │   1    │   1   │           0.6                                 0.2      0.2                              │ xor rcx, rdx
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shr rdx, 0x10
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ or rdx, rcx
+│  1                    │   1    │   1   │  0.4                                          0.2      0.4                              │ lea rcx, ptr [rdi+rdi*1]
+│  1                    │   1    │   1   │  0.2      0.4                                          0.4                              │ xor rcx, rdi
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ lea rsi, ptr [rcx*4]
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ xor rsi, rcx
+│  1                    │   1    │   1   │           0.2                                          0.8                              │ mov rcx, rsi
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rcx, 0x4
+│  1                    │   1    │   1   │           0.6                                 0.2      0.2                              │ xor rcx, rsi
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ mov rsi, rcx
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shl rsi, 0x8
+│  1                    │   1    │   1   │  0.4      0.4                                 0.2                                       │ xor rsi, rcx
+│  1                    │   1    │   1   │           0.6                                          0.4                              │ mov rcx, rsi
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rcx, 0x10
+│  1                    │   1    │   1   │  0.2      0.2                                 0.6                                       │ xor rcx, rsi
+│  1                    │   1    │   1   │  0.2      0.4                                          0.4                              │ mov rsi, rcx
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shl rsi, 0x20
+│  1                    │   1    │   1   │           0.6                                 0.2      0.2                              │ xor rsi, rcx
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ and rax, rdx
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ and rax, rsi
+│  1                    │   1    │   1   │  0.4      0.2                                 0.4                                       │ xor rdx, rax
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shr rax, 0x20
+│  1                    │   1    │   1   │  0.4      0.6                                                                           │ or rax, rdx
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│ 156                   │  156   │  156  │  39.4     38.2                                38.8     39.6                             │ Total
+└───────────────────────┴────────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+## compress_by_zp7, whole function
+
+	movq %rsi, %rax
+	notq %rax
+	leaq (%rax,%rax), %rcx
+	leaq (,%rax,4), %rdx
+	xorq %rax, %rdx
+	xorq %rcx, %rdx
+	shlq $2, %rdx
+	xorq %rcx, %rdx
+	movq %rdx, %rax
+	shlq $4, %rax
+	xorq %rdx, %rax
+	movq %rax, %rcx
+	shlq $8, %rcx
+	xorq %rax, %rcx
+	movq %rcx, %rdx
+	shlq $16, %rdx
+	xorq %rcx, %rdx
+	movq %rdx, %rax
+	shlq $32, %rax
+	xorq %rdx, %rax
+	andnq %rax, %rsi, %rcx
+	leaq (%rcx,%rcx), %rdx
+	leaq (,%rcx,4), %r8
+	xorq %rcx, %r8
+	xorq %rdx, %r8
+	shlq $2, %r8
+	xorq %rdx, %r8
+	movq %r8, %rdx
+	shlq $4, %rdx
+	xorq %r8, %rdx
+	movq %rdx, %r8
+	shlq $8, %r8
+	xorq %rdx, %r8
+	movq %r8, %r9
+	shlq $16, %r9
+	xorq %r8, %r9
+	movq %r9, %rdx
+	shlq $32, %rdx
+	xorq %r9, %rdx
+	andq %rdx, %rcx
+	leaq (%rcx,%rcx), %r8
+	leaq (,%rcx,4), %r9
+	xorq %rcx, %r9
+	xorq %r8, %r9
+	shlq $2, %r9
+	xorq %r8, %r9
+	movq %r9, %r8
+	shlq $4, %r8
+	xorq %r9, %r8
+	movq %r8, %r9
+	shlq $8, %r9
+	xorq %r8, %r9
+	movq %r9, %r10
+	shlq $16, %r10
+	xorq %r9, %r10
+	movq %r10, %r8
+	shlq $32, %r8
+	xorq %r10, %r8
+	andq %r8, %rcx
+	leaq (%rcx,%rcx), %r9
+	leaq (,%rcx,4), %r10
+	xorq %rcx, %r10
+	xorq %r9, %r10
+	shlq $2, %r10
+	xorq %r9, %r10
+	movq %r10, %r9
+	shlq $4, %r9
+	xorq %r10, %r9
+	movq %r9, %r10
+	shlq $8, %r10
+	xorq %r9, %r10
+	movq %r10, %r11
+	shlq $16, %r11
+	xorq %r10, %r11
+	movq %r11, %r9
+	shlq $32, %r9
+	xorq %r11, %r9
+	andq %r9, %rcx
+	leaq (%rcx,%rcx), %r10
+	leaq (,%rcx,4), %r11
+	xorq %rcx, %r11
+	xorq %r10, %r11
+	shlq $2, %r11
+	xorq %r10, %r11
+	movq %r11, %r10
+	shlq $4, %r10
+	xorq %r11, %r10
+	movq %r10, %r11
+	shlq $8, %r11
+	xorq %r10, %r11
+	movq %r11, %r10
+	shlq $16, %r10
+	xorq %r11, %r10
+	movq %r10, %r11
+	shlq $32, %r11
+	xorq %r10, %r11
+	andq %r11, %rcx
+	leaq (%rcx,%rcx), %r10
+	negq %r10
+	andq %rsi, %rdi
+	andnq %rdi, %rax, %rsi
+	andq %rdi, %rax
+	shrq %rax
+	orq %rsi, %rax
+	andnq %rax, %rdx, %rsi
+	andq %rdx, %rax
+	shrq $2, %rax
+	orq %rsi, %rax
+	andnq %rax, %r8, %rdx
+	andq %r8, %rax
+	shrq $4, %rax
+	orq %rdx, %rax
+	andnq %rax, %r9, %rdx
+	andq %r9, %rax
+	shrq $8, %rax
+	orq %rdx, %rax
+	andnq %rax, %r11, %rdx
+	andq %r11, %rax
+	shrq $16, %rax
+	orq %rdx, %rax
+	leaq -1(%rcx,%rcx), %rcx
+	andq %rax, %rcx
+	andq %r10, %rax
+	shrq $32, %rax
+	orq %rcx, %rax
+
+Throughput (in cycles per iteration): 59.25
+Bottleneck: unknown
+
+The following throughputs could be achieved if the given property were the only bottleneck:
+
+  - Predecoder: 31.50
+  - Decoder: 31.25
+  - Issue: 25.00
+  - Ports: 31.25
+  - Dependencies: 38.00
+
+┌───────────────────────┬────────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+│ MITE   MS   DSB   LSD │ Issued │ Exec. │ Port 0   Port 1   Port 2   Port 3   Port 4   Port 5   Port 6   Port 7   Port 8   Port 9 │
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ mov rax, rsi
+│  1                    │   1    │   1   │  0.2                                          0.2      0.6                              │ not rax
+│  1                    │   1    │   1   │           0.4                                 0.2      0.4                              │ lea rcx, ptr [rax+rax*1]
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ lea rdx, ptr [rax*4]
+│  1                    │   1    │   1   │  0.4      0.2                                 0.2      0.2                              │ xor rdx, rax
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ xor rdx, rcx
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shl rdx, 0x2
+│  1                    │   1    │   1   │  0.2      0.4                                          0.4                              │ xor rdx, rcx
+│  1                    │   1    │   1   │  0.4      0.2                                          0.4                              │ mov rax, rdx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rax, 0x4
+│  1                    │   1    │   1   │  0.2                                          0.6      0.2                              │ xor rax, rdx
+│  1                    │   1    │   1   │  0.2      0.4                                          0.4                              │ mov rcx, rax
+│  1                    │   1    │   1   │                                                         1                               │ shl rcx, 0x8
+│  1                    │   1    │   1   │           0.4                                          0.6                              │ xor rcx, rax
+│  1                    │   1    │   1   │  0.2      0.2                                 0.2      0.4                              │ mov rdx, rcx
+│  1                    │   1    │   1   │   1                                                                                     │ shl rdx, 0x10
+│  1                    │   1    │   1   │           0.4                                          0.6                              │ xor rdx, rcx
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ mov rax, rdx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rax, 0x20
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ xor rax, rdx
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ andn rcx, rsi, rax
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ lea rdx, ptr [rcx+rcx*1]
+│  1                    │   1    │   1   │                                                1                                        │ lea r8, ptr [rcx*4]
+│  1                    │   1    │   1   │                                                1                                        │ xor r8, rcx
+│  1                    │   1    │   1   │  0.2      0.2                                          0.6                              │ xor r8, rdx
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shl r8, 0x2
+│  1                    │   1    │   1   │                                                1                                        │ xor r8, rdx
+│  1                    │   1    │   1   │  0.2      0.2                                 0.2      0.4                              │ mov rdx, r8
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shl rdx, 0x4
+│  1                    │   1    │   1   │           0.2                                 0.8                                       │ xor rdx, r8
+│  1                    │   1    │   1   │           0.6                                          0.4                              │ mov r8, rdx
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shl r8, 0x8
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ xor r8, rdx
+│  1                    │   1    │   1   │           0.2                                 0.6      0.2                              │ mov r9, r8
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl r9, 0x10
+│  1                    │   1    │   1   │  0.2      0.6                                          0.2                              │ xor r9, r8
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ mov rdx, r9
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shl rdx, 0x20
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ xor rdx, r9
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ and rcx, rdx
+│  1                    │   1    │   1   │  0.4      0.2                                 0.4                                       │ lea r8, ptr [rcx+rcx*1]
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ lea r9, ptr [rcx*4]
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ xor r9, rcx
+│  1                    │   1    │   1   │  0.4      0.2                                 0.2      0.2                              │ xor r9, r8
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r9, 0x2
+│  1                    │   1    │   1   │           0.2                                 0.4      0.4                              │ xor r9, r8
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ mov r8, r9
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shl r8, 0x4
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ xor r8, r9
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ mov r9, r8
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shl r9, 0x8
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ xor r9, r8
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ mov r10, r9
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r10, 0x10
+│  1                    │   1    │   1   │  0.4      0.4                                 0.2                                       │ xor r10, r9
+│  1                    │   1    │   1   │  0.2      0.2                                 0.2      0.4                              │ mov r8, r10
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r8, 0x20
+│  1                    │   1    │   1   │           0.2                                 0.6      0.2                              │ xor r8, r10
+│  1                    │   1    │   1   │  0.2      0.8                                                                           │ and rcx, r8
+│  1                    │   1    │   1   │  0.4                                          0.2      0.4                              │ lea r9, ptr [rcx+rcx*1]
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ lea r10, ptr [rcx*4]
+│  1                    │   1    │   1   │           0.2                                 0.6      0.2                              │ xor r10, rcx
+│  1                    │   1    │   1   │  0.4      0.4                                 0.2                                       │ xor r10, r9
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r10, 0x2
+│  1                    │   1    │   1   │  0.2                                          0.2      0.6                              │ xor r10, r9
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ mov r9, r10
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r9, 0x4
+│  1                    │   1    │   1   │  0.2      0.4                                 0.4                                       │ xor r9, r10
+│  1                    │   1    │   1   │                                               0.2      0.8                              │ mov r10, r9
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shl r10, 0x8
+│  1                    │   1    │   1   │  0.4      0.6                                                                           │ xor r10, r9
+│  1                    │   1    │   1   │  0.2      0.4                                 0.4                                       │ mov r11, r10
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r11, 0x10
+│  1                    │   1    │   1   │  0.4      0.2                                 0.4                                       │ xor r11, r10
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ mov r9, r11
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r9, 0x20
+│  1                    │   1    │   1   │  0.4      0.2                                 0.4                                       │ xor r9, r11
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ and rcx, r9
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ lea r10, ptr [rcx+rcx*1]
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ lea r11, ptr [rcx*4]
+│  1                    │   1    │   1   │  0.4      0.2                                          0.4                              │ xor r11, rcx
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ xor r11, r10
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shl r11, 0x2
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ xor r11, r10
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ mov r10, r11
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shl r10, 0x4
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ xor r10, r11
+│  1                    │   1    │   1   │           0.2                                 0.4      0.4                              │ mov r11, r10
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r11, 0x8
+│  1                    │   1    │   1   │  0.4      0.2                                 0.4                                       │ xor r11, r10
+│  1                    │   1    │   1   │  0.4      0.4                                 0.2                                       │ mov r10, r11
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r10, 0x10
+│  1                    │   1    │   1   │           0.4                                 0.2      0.4                              │ xor r10, r11
+│  1                    │   1    │   1   │  0.2                                          0.4      0.4                              │ mov r11, r10
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shl r11, 0x20
+│  1                    │   1    │   1   │  0.6      0.2                                 0.2                                       │ xor r11, r10
+│  1                    │   1    │   1   │           0.4                                 0.2      0.4                              │ and rcx, r11
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ lea r10, ptr [rcx+rcx*1]
+│  1                    │   1    │   1   │  0.6      0.2                                 0.2                                       │ neg r10
+│  1                    │   1    │   1   │  0.4      0.2                                          0.4                              │ and rdi, rsi
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ andn rsi, rax, rdi
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ and rax, rdi
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shr rax, 0x1
+│  1                    │   1    │   1   │  0.2                                          0.2      0.6                              │ or rax, rsi
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ andn rsi, rdx, rax
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ and rax, rdx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shr rax, 0x2
+│  1                    │   1    │   1   │  0.2      0.2                                          0.6                              │ or rax, rsi
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ andn rdx, r8, rax
+│  1                    │   1    │   1   │  0.4      0.4                                 0.2                                       │ and rax, r8
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shr rax, 0x4
+│  1                    │   1    │   1   │  0.2      0.2                                          0.6                              │ or rax, rdx
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ andn rdx, r9, rax
+│  1                    │   1    │   1   │  0.2                                          0.4      0.4                              │ and rax, r9
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shr rax, 0x8
+│  1                    │   1    │   1   │  0.2      0.6                                          0.2                              │ or rax, rdx
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ andn rdx, r11, rax
+│  1                    │   1    │   1   │  0.2                                          0.2      0.6                              │ and rax, r11
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shr rax, 0x10
+│  1                    │   1    │   1   │  0.2      0.2                                 0.6                                       │ or rax, rdx
+│  1                    │   1    │   1   │  0.2      0.4                                          0.4                              │ lea rcx, ptr [rcx+rcx*1-0x1]
+│  1                    │   1    │   1   │  0.2                                          0.2      0.6                              │ and rcx, rax
+│  1                    │   1    │   1   │  0.2                                          0.4      0.4                              │ and rax, r10
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shr rax, 0x20
+│  1                    │   1    │   1   │  0.4      0.4                                 0.2                                       │ or rax, rcx
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│ 125                   │  125   │  125  │  29.4     31.4                                30.6     33.6                             │ Total
+└───────────────────────┴────────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+## compress_by_zp7_clmul, whole function
+
+	andq %rsi, %rdi
+	notq %rsi
+	vmovq %rsi, %xmm0
+	movq $-2, %rax
+	vmovq %rax, %xmm1
+	vpclmulqdq $0, %xmm1, %xmm0, %xmm2
+	vmovq %xmm2, %rax
+	vpand %xmm0, %xmm2, %xmm0
+	vpclmulqdq $0, %xmm1, %xmm0, %xmm2
+	vmovq %xmm2, %r9
+	vpand %xmm0, %xmm2, %xmm0
+	vpclmulqdq $0, %xmm1, %xmm0, %xmm2
+	vmovq %xmm2, %r10
+	vpand %xmm0, %xmm2, %xmm0
+	vpclmulqdq $0, %xmm1, %xmm0, %xmm2
+	vmovq %xmm2, %r8
+	vpand %xmm0, %xmm2, %xmm0
+	vpclmulqdq $0, %xmm1, %xmm0, %xmm1
+	vmovq %xmm1, %rsi
+	vpand %xmm0, %xmm1, %xmm0
+	vmovq %xmm0, %rdx
+	leaq (%rdx,%rdx), %rcx
+	negq %rcx
+	andnq %rdi, %rax, %r11
+	andq %rdi, %rax
+	shrq %rax
+	orq %r11, %rax
+	andnq %rax, %r9, %rdi
+	andq %r9, %rax
+	shrq $2, %rax
+	orq %rdi, %rax
+	andnq %rax, %r10, %rdi
+	andq %r10, %rax
+	shrq $4, %rax
+	orq %rdi, %rax
+	andnq %rax, %r8, %rdi
+	andq %r8, %rax
+	shrq $8, %rax
+	orq %rdi, %rax
+	andnq %rax, %rsi, %rdi
+	andq %rsi, %rax
+	shrq $16, %rax
+	orq %rdi, %rax
+	leaq -1(%rdx,%rdx), %rdx
+	andq %rax, %rdx
+	andq %rcx, %rax
+	shrq $32, %rax
+	orq %rdx, %rax
+
+Throughput (in cycles per iteration): 43.50
+Bottleneck: unknown
+
+The following throughputs could be achieved if the given property were the only bottleneck:
+
+  - Predecoder: 12.75
+  - Decoder: 12.00
+  - Issue: 9.60
+  - Ports: 12.00
+  - Dependencies: 41.00
+
+┌───────────────────────┬────────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+│ MITE   MS   DSB   LSD │ Issued │ Exec. │ Port 0   Port 1   Port 2   Port 3   Port 4   Port 5   Port 6   Port 7   Port 8   Port 9 │
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  1                    │   1    │   1   │           0.6                                          0.4                              │ and rdi, rsi
+│  1                    │   1    │   1   │  0.2                                          0.6      0.2                              │ not rsi
+│  1                    │   1    │   1   │                                                1                                        │ vmovq xmm0, rsi
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ mov rax, 0xfffffffffffffffe
+│  1                    │   1    │   1   │                                                1                                        │ vmovq xmm1, rax
+│  1                    │   1    │   1   │                                                1                                        │ vpclmulqdq xmm2, xmm0, xmm1, 0x0
+│  1                    │   1    │   1   │   1                                                                                     │ vmovq rax, xmm2
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ vpand xmm0, xmm2, xmm0
+│  1                    │   1    │   1   │                                                1                                        │ vpclmulqdq xmm2, xmm0, xmm1, 0x0
+│  1                    │   1    │   1   │   1                                                                                     │ vmovq r9, xmm2
+│  1                    │   1    │   1   │            1                                                                            │ vpand xmm0, xmm2, xmm0
+│  1                    │   1    │   1   │                                                1                                        │ vpclmulqdq xmm2, xmm0, xmm1, 0x0
+│  1                    │   1    │   1   │   1                                                                                     │ vmovq r10, xmm2
+│  1                    │   1    │   1   │  0.4      0.6                                                                           │ vpand xmm0, xmm2, xmm0
+│  1                    │   1    │   1   │                                                1                                        │ vpclmulqdq xmm2, xmm0, xmm1, 0x0
+│  1                    │   1    │   1   │   1                                                                                     │ vmovq r8, xmm2
+│  1                    │   1    │   1   │  0.4      0.6                                                                           │ vpand xmm0, xmm2, xmm0
+│  1                    │   1    │   1   │                                                1                                        │ vpclmulqdq xmm1, xmm0, xmm1, 0x0
+│  1                    │   1    │   1   │   1                                                                                     │ vmovq rsi, xmm1
+│  1                    │   1    │   1   │  0.2      0.8                                                                           │ vpand xmm0, xmm1, xmm0
+│  1                    │   1    │   1   │   1                                                                                     │ vmovq rdx, xmm0
+│  1                    │   1    │   1   │                                                         1                               │ lea rcx, ptr [rdx+rdx*1]
+│  1                    │   1    │   1   │  0.2      0.6                                          0.2                              │ neg rcx
+│  1                    │   1    │   1   │           0.8                                 0.2                                       │ andn r11, rax, rdi
+│  1                    │   1    │   1   │           0.2                                 0.2      0.6                              │ and rax, rdi
+│  1                    │   1    │   1   │                                                         1                               │ shr rax, 0x1
+│  1                    │   1    │   1   │           0.4                                          0.6                              │ or rax, r11
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ andn rdi, r9, rax
+│  1                    │   1    │   1   │           0.2                                 0.4      0.4                              │ and rax, r9
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shr rax, 0x2
+│  1                    │   1    │   1   │           0.2                                 0.2      0.6                              │ or rax, rdi
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ andn rdi, r10, rax
+│  1                    │   1    │   1   │           0.4                                 0.2      0.4                              │ and rax, r10
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shr rax, 0x4
+│  1                    │   1    │   1   │           0.2                                 0.2      0.6                              │ or rax, rdi
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ andn rdi, r8, rax
+│  1                    │   1    │   1   │  0.2      0.4                                          0.4                              │ and rax, r8
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shr rax, 0x8
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ or rax, rdi
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ andn rdi, rsi, rax
+│  1                    │   1    │   1   │  0.2      0.2                                          0.6                              │ and rax, rsi
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shr rax, 0x10
+│  1                    │   1    │   1   │  0.4                                          0.6                                       │ or rax, rdi
+│  1                    │   1    │   1   │  0.4      0.2                                 0.2      0.2                              │ lea rdx, ptr [rdx+rdx*1-0x1]
+│  1                    │   1    │   1   │  0.2      0.4                                          0.4                              │ and rdx, rax
+│  1                    │   1    │   1   │  0.4                                          0.4      0.2                              │ and rax, rcx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shr rax, 0x20
+│  1                    │   1    │   1   │  0.2      0.2                                 0.2      0.4                              │ or rax, rdx
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  48                   │   48   │  48   │   11      11.6                                13.4      12                              │ Total
+└───────────────────────┴────────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+## expand_by_walk, loop body
+
+	blsiq %rsi, %rcx
+	movl %edi, %edx
+	andl $1, %edx
+	negq %rdx
+	andq %rcx, %rdx
+	orq %rdx, %rax
+	shrq %rdi
+	blsrq %rsi, %rsi
+	jne .LBB16_1
+
+Throughput (in cycles per iteration): 2.60
+Bottleneck: unknown
+
+The following throughputs could be achieved if the given property were the only bottleneck:
+
+  - LSD: 2.00
+  - Issue: 1.80
+  - Ports: 2.25
+  - Dependencies: 1.00
+
+┌───────────────────────┬────────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+│ MITE   MS   DSB   LSD │ Issued │ Exec. │ Port 0   Port 1   Port 2   Port 3   Port 4   Port 5   Port 6   Port 7   Port 8   Port 9 │
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│                    1  │   1    │   1   │           0.45                                0.55                                      │ blsi rcx, rsi
+│                    1  │   1    │   1   │  0.18     0.29                                0.27     0.26                             │ mov edx, edi
+│                    1  │   1    │   1   │  0.3      0.23                                0.2      0.27                             │ and edx, 0x1
+│                    1  │   1    │   1   │  0.32     0.25                                0.14     0.29                             │ neg rdx
+│                    1  │   1    │   1   │  0.18     0.32                                0.26     0.24                             │ and rdx, rcx
+│                    1  │   1    │   1   │  0.16     0.2                                 0.37     0.27                             │ or rax, rdx
+│                    1  │   1    │   1   │  0.61                                                  0.39                             │ shr rdi, 0x1
+│                    1  │   1    │   1   │           0.51                                0.49                                      │ blsr rsi, rsi
+│                    1  │   1    │   1   │  0.46                                                  0.54                             │ jnz 0x6
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│                    9  │   9    │   9   │  2.23     2.25                                2.28     2.25                             │ Total
+└───────────────────────┴────────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+## expand_by_select, loop body
+
+	tzcntq %rcx, %r11
+	movq %r11, %rbx
+	imulq %rdi, %rbx
+	orq %rdx, %rbx
+	addq %r9, %rbx
+	andq %rdx, %rbx
+	popcntq %rbx, %rbx
+	leal (,%rbx,8), %r14d
+	shrxq %r14, %r8, %r15
+	movzbl %r15b, %ebp
+	subl %ebp, %r11d
+	shrxq %r14, %rsi, %r14
+	movzbl %r14b, %r14d
+	shll $8, %r11d
+	addq %r10, %r14
+	movzbl (%r11,%r14), %r11d
+	leal (%r11,%rbx,8), %r11d
+	btsq %r11, %rax
+	blsrq %rcx, %rcx
+	jne .LBB17_4
+
+Throughput (in cycles per iteration): 6.41
+Bottleneck: unknown
+
+The following throughputs could be achieved if the given property were the only bottleneck:
+
+  - LSD: 4.00
+  - Issue: 4.00
+  - Ports: 4.75
+  - Dependencies: 1.00
+
+┌───────────────────────┬────────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+│ MITE   MS   DSB   LSD │ Issued │ Exec. │ Port 0   Port 1   Port 2   Port 3   Port 4   Port 5   Port 6   Port 7   Port 8   Port 9 │
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│                    1  │   1    │   1   │            1                                                                            │ tzcnt r11, rcx
+│                    1  │   1    │   1   │  0.13     0.39                                0.39     0.08                             │ mov rbx, r11
+│                    1  │   1    │   1   │            1                                                                            │ imul rbx, rdi
+│                    1  │   1    │   1   │  0.29     0.11                                0.32     0.29                             │ or rbx, rdx
+│                    1  │   1    │   1   │  0.13     0.39                                0.39     0.08                             │ add rbx, r9
+│                    1  │   1    │   1   │  0.18     0.18                                0.34     0.29                             │ and rbx, rdx
+│                    1  │   1    │   1   │            1                                                                            │ popcnt rbx, rbx
+│                    1  │   1    │   1   │           0.24                                0.76                                      │ lea r14d, ptr [rbx*8]
+│                    1  │   1    │   1   │  0.42                                                  0.58                             │ shrx r15, r8, r14
+│                    1  │   1    │   1   │  0.18     0.18                                0.34     0.29                             │ movzx ebp, r15b
+│                    1  │   1    │   1   │  0.29     0.03                                0.32     0.37                             │ sub r11d, ebp
+│                    1  │   1    │   1   │  0.53                                                  0.47                             │ shrx r14, rsi, r14
+│                    1  │   1    │   1   │  0.37     0.11                                0.26     0.26                             │ movzx r14d, r14b
+│                    1  │   1    │   1   │  0.45                                                  0.55                             │ shl r11d, 0x8
+│                    1  │   1    │   1   │  0.29     0.03                                0.32     0.37                             │ add r14, r10
+│                    1  │   1    │   1   │                    0.5      0.5                                                         │ movzx r11d, byte ptr [r11+r14*1]
+│                    1  │   1    │   1   │           0.37                                0.63                                      │ lea r11d, ptr [r11+rbx*8]
+│                    1  │   1    │   1   │  0.58                                                  0.42                             │ bts rax, r11
+│                    1  │   1    │   1   │           0.45                                0.55                                      │ blsr rcx, rcx
+│                    1  │   1    │   1   │  0.58                                                  0.42                             │ jnz 0x6
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│                   20  │   20   │  20   │  4.42     5.47     0.5      0.5               4.63     4.47                             │ Total
+└───────────────────────┴────────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+## expand_pdep, whole function
+
+	pdepq %rsi, %rdi, %rax
+
+Throughput (in cycles per iteration): 1.00
+Bottleneck: Ports
+
+The following throughputs could be achieved if the given property were the only bottleneck:
+
+  - Predecoder: 0.31
+  - Decoder: 0.25
+  - Issue: 0.20
+  - Ports: 1.00
+
+┌───────────────────────┬────────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+│ MITE   MS   DSB   LSD │ Issued │ Exec. │ Port 0   Port 1   Port 2   Port 3   Port 4   Port 5   Port 6   Port 7   Port 8   Port 9 │
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  1                    │   1    │   1   │            1                                                                            │ pdep rax, rdi, rsi
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  1                    │   1    │   1   │            1                                                                            │ Total
+└───────────────────────┴────────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+## expand_by_walk_with_if, loop body
+
+	movl %edi, %ecx
+	andl $1, %ecx
+	negq %rcx
+	blsiq %rsi, %rdx
+	andq %rcx, %rdx
+	orq %rdx, %rax
+	shrq %rdi
+	blsrq %rsi, %rsi
+	jne .LBB18_1
+
+Throughput (in cycles per iteration): 2.73
+Bottleneck: unknown
+
+The following throughputs could be achieved if the given property were the only bottleneck:
+
+  - LSD: 2.00
+  - Issue: 1.80
+  - Ports: 2.25
+  - Dependencies: 1.00
+
+┌───────────────────────┬────────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+│ MITE   MS   DSB   LSD │ Issued │ Exec. │ Port 0   Port 1   Port 2   Port 3   Port 4   Port 5   Port 6   Port 7   Port 8   Port 9 │
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│                    1  │   1    │   1   │  0.19     0.33                                0.26     0.22                             │ mov ecx, edi
+│                    1  │   1    │   1   │  0.25     0.22                                0.21     0.31                             │ and ecx, 0x1
+│                    1  │   1    │   1   │  0.19     0.28                                0.25     0.28                             │ neg rcx
+│                    1  │   1    │   1   │           0.46                                0.54                                      │ blsi rdx, rsi
+│                    1  │   1    │   1   │  0.31     0.22                                0.27     0.19                             │ and rdx, rcx
+│                    1  │   1    │   1   │  0.25     0.25                                0.22     0.28                             │ or rax, rdx
+│                    1  │   1    │   1   │  0.56                                                  0.44                             │ shr rdi, 0x1
+│                    1  │   1    │   1   │           0.47                                0.53                                      │ blsr rsi, rsi
+│                    1  │   1    │   1   │  0.47                                                  0.53                             │ jnz 0x6
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│                    9  │   9    │   9   │  2.22     2.24                                2.28     2.26                             │ Total
+└───────────────────────┴────────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+## expand_by_parallel_suffix, whole function
+
+	pushq %r15
+	pushq %r14
+	pushq %rbx
+	movq %rsi, %rax
+	notq %rax
+	leaq (%rax,%rax), %rdx
+	leaq (,%rax,4), %rcx
+	xorq %rdx, %rcx
+	xorq %rax, %rcx
+	shlq $2, %rcx
+	xorq %rdx, %rcx
+	movq %rcx, %rax
+	shlq $4, %rax
+	xorq %rcx, %rax
+	movq %rax, %rcx
+	shlq $8, %rcx
+	xorq %rax, %rcx
+	movq %rcx, %rax
+	shlq $16, %rax
+	xorq %rcx, %rax
+	movq %rax, %rcx
+	shlq $32, %rcx
+	xorq %rax, %rcx
+	movq %rcx, %rax
+	andq %rsi, %rax
+	movq %rax, %r9
+	xorq %rsi, %r9
+	movq %rax, %r8
+	shrq %r8
+	orq %r9, %r8
+	andnq %rdx, %rcx, %r9
+	leaq (%r9,%r9), %rdx
+	xorq %r9, %rdx
+	leaq (,%rdx,4), %r10
+	xorq %rdx, %r10
+	movq %r10, %rdx
+	shlq $4, %rdx
+	xorq %r10, %rdx
+	movq %rdx, %r10
+	shlq $8, %r10
+	xorq %rdx, %r10
+	movq %r10, %r11
+	shlq $16, %r11
+	xorq %r10, %r11
+	movq %r11, %rdx
+	shlq $32, %rdx
+	xorq %r11, %rdx
+	andnq %r9, %rdx, %r10
+	andq %r8, %rdx
+	xorq %rdx, %r8
+	movq %rdx, %r9
+	shrq $2, %r9
+	orq %r8, %r9
+	leaq (%r10,%r10), %r8
+	xorq %r10, %r8
+	leaq (,%r8,4), %r11
+	xorq %r8, %r11
+	movq %r11, %r8
+	shlq $4, %r8
+	xorq %r11, %r8
+	movq %r8, %r11
+	shlq $8, %r11
+	xorq %r8, %r11
+	movq %r11, %rbx
+	shlq $16, %rbx
+	xorq %r11, %rbx
+	movq %rbx, %r8
+	shlq $32, %r8
+	xorq %rbx, %r8
+	andnq %r10, %r8, %r11
+	andq %r9, %r8
+	xorq %r8, %r9
+	movq %r8, %r10
+	shrq $4, %r10
+	orq %r9, %r10
+	leaq (%r11,%r11), %r9
+	xorq %r11, %r9
+	leaq (,%r9,4), %rbx
+	xorq %r9, %rbx
+	movq %rbx, %r9
+	shlq $4, %r9
+	xorq %rbx, %r9
+	movq %r9, %rbx
+	shlq $8, %rbx
+	xorq %r9, %rbx
+	movq %rbx, %r14
+	shlq $16, %r14
+	xorq %rbx, %r14
+	movq %r14, %r9
+	shlq $32, %r9
+	xorq %r14, %r9
+	andnq %r11, %r9, %rbx
+	andq %r10, %r9
+	xorq %r9, %r10
+	movq %r9, %r11
+	shrq $8, %r11
+	orq %r10, %r11
+	leaq (%rbx,%rbx), %r10
+	xorq %rbx, %r10
+	leaq (,%r10,4), %r14
+	xorq %r10, %r14
+	movq %r14, %r10
+	shlq $4, %r10
+	xorq %r14, %r10
+	movq %r10, %r14
+	shlq $8, %r14
+	xorq %r10, %r14
+	movq %r14, %r15
+	shlq $16, %r15
+	xorq %r14, %r15
+	movq %r15, %r10
+	shlq $32, %r10
+	xorq %r15, %r10
+	andnq %rbx, %r10, %rbx
+	andq %r11, %r10
+	xorq %r10, %r11
+	movq %r10, %r14
+	shrq $16, %r14
+	orq %r11, %r14
+	leaq (%rbx,%rbx), %r11
+	xorq %rbx, %r11
+	leaq (,%r11,4), %rbx
+	xorq %r11, %rbx
+	movq %rbx, %r11
+	shlq $4, %r11
+	xorq %rbx, %r11
+	movq %r11, %rbx
+	shlq $8, %rbx
+	xorq %r11, %rbx
+	movq %rbx, %r11
+	shlq $16, %r11
+	xorq %rbx, %r11
+	movq %r11, %rbx
+	shlq $32, %rbx
+	xorq %r11, %rbx
+	andq %r14, %rbx
+	andnq %rdi, %rbx, %r11
+	shlq $32, %rdi
+	andq %rbx, %rdi
+	orq %r11, %rdi
+	andnq %rdi, %r10, %r11
+	shlq $16, %rdi
+	andq %r10, %rdi
+	orq %r11, %rdi
+	andnq %rdi, %r9, %r10
+	shlq $8, %rdi
+	andq %r9, %rdi
+	orq %r10, %rdi
+	andnq %rdi, %r8, %r9
+	shlq $4, %rdi
+	andq %r8, %rdi
+	orq %r9, %rdi
+	andnq %rdi, %rdx, %r8
+	shlq $2, %rdi
+	andq %rdx, %rdi
+	orq %r8, %rdi
+	andnq %rdi, %rax, %rdx
+	leaq (%rdi,%rdi), %rax
+	andq %rcx, %rax
+	orq %rdx, %rax
+	andq %rsi, %rax
+	popq %rbx
+	popq %r14
+	popq %r15
+
+Throughput (in cycles per iteration): 69.00
+Bottleneck: unknown
+
+The following throughputs could be achieved if the given property were the only bottleneck:
+
+  - Predecoder: 41.19
+  - Decoder: 41.00
+  - Issue: 32.80
+  - Ports: 39.50
+  - Dependencies: 15.00
+
+┌───────────────────────┬────────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+│ MITE   MS   DSB   LSD │ Issued │ Exec. │ Port 0   Port 1   Port 2   Port 3   Port 4   Port 5   Port 6   Port 7   Port 8   Port 9 │
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  1                    │   1    │   2   │                                      0.4                        0.4      0.6      0.6   │ push r15
+│  1                    │   1    │   2   │                                      0.6                        0.6      0.4      0.4   │ push r14
+│  1                    │   1    │   2   │                                      0.4                        0.4      0.6      0.6   │ push rbx
+│  1                    │   1    │   1   │  0.2      0.4                                          0.4                              │ mov rax, rsi
+│  1                    │   1    │   1   │           0.6                                 0.2      0.2                              │ not rax
+│  1                    │   1    │   1   │  0.4      0.2                                 0.2      0.2                              │ lea rdx, ptr [rax+rax*1]
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ lea rcx, ptr [rax*4]
+│  1                    │   1    │   1   │  0.4                                          0.2      0.4                              │ xor rcx, rdx
+│  1                    │   1    │   1   │           0.8                                          0.2                              │ xor rcx, rax
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rcx, 0x2
+│  1                    │   1    │   1   │  0.2      0.2                                 0.2      0.4                              │ xor rcx, rdx
+│  1                    │   1    │   1   │  0.8                                          0.2                                       │ mov rax, rcx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rax, 0x4
+│  1                    │   1    │   1   │           0.8                                          0.2                              │ xor rax, rcx
+│  1                    │   1    │   1   │  0.4      0.2                                 0.2      0.2                              │ mov rcx, rax
+│  1                    │   1    │   1   │   1                                                                                     │ shl rcx, 0x8
+│  1                    │   1    │   1   │  0.4      0.4                                          0.2                              │ xor rcx, rax
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ mov rax, rcx
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl rax, 0x10
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ xor rax, rcx
+│  1                    │   1    │   1   │  0.6                                          0.2      0.2                              │ mov rcx, rax
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl rcx, 0x20
+│  1                    │   1    │   1   │           0.4                                 0.2      0.4                              │ xor rcx, rax
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ mov rax, rcx
+│  1                    │   1    │   1   │  0.4      0.4                                 0.2                                       │ and rax, rsi
+│  1                    │   1    │   1   │           0.2                                 0.2      0.6                              │ mov r9, rax
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ xor r9, rsi
+│  1                    │   1    │   1   │  0.6      0.2                                 0.2                                       │ mov r8, rax
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shr r8, 0x1
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ or r8, r9
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ andn r9, rcx, rdx
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ lea rdx, ptr [r9+r9*1]
+│  1                    │   1    │   1   │  0.2      0.4                                          0.4                              │ xor rdx, r9
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ lea r10, ptr [rdx*4]
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ xor r10, rdx
+│  1                    │   1    │   1   │           0.2                                 0.4      0.4                              │ mov rdx, r10
+│  1                    │   1    │   1   │                                                         1                               │ shl rdx, 0x4
+│  1                    │   1    │   1   │           0.4                                 0.2      0.4                              │ xor rdx, r10
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ mov r10, rdx
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r10, 0x8
+│  1                    │   1    │   1   │  0.4      0.4                                          0.2                              │ xor r10, rdx
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ mov r11, r10
+│  1                    │   1    │   1   │   1                                                                                     │ shl r11, 0x10
+│  1                    │   1    │   1   │           0.2                                 0.6      0.2                              │ xor r11, r10
+│  1                    │   1    │   1   │  0.4      0.6                                                                           │ mov rdx, r11
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shl rdx, 0x20
+│  1                    │   1    │   1   │           0.2                                 0.6      0.2                              │ xor rdx, r11
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ andn r10, rdx, r9
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ and rdx, r8
+│  1                    │   1    │   1   │           0.6                                 0.2      0.2                              │ xor r8, rdx
+│  1                    │   1    │   1   │  0.4      0.4                                          0.2                              │ mov r9, rdx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shr r9, 0x2
+│  1                    │   1    │   1   │           0.4                                 0.2      0.4                              │ or r9, r8
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ lea r8, ptr [r10+r10*1]
+│  1                    │   1    │   1   │           0.6                                 0.2      0.2                              │ xor r8, r10
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ lea r11, ptr [r8*4]
+│  1                    │   1    │   1   │  0.4      0.6                                                                           │ xor r11, r8
+│  1                    │   1    │   1   │  0.2                                          0.4      0.4                              │ mov r8, r11
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl r8, 0x4
+│  1                    │   1    │   1   │  0.4      0.2                                          0.4                              │ xor r8, r11
+│  1                    │   1    │   1   │  0.2      0.4                                 0.4                                       │ mov r11, r8
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl r11, 0x8
+│  1                    │   1    │   1   │           0.2                                          0.8                              │ xor r11, r8
+│  1                    │   1    │   1   │  0.4      0.2                                 0.4                                       │ mov rbx, r11
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rbx, 0x10
+│  1                    │   1    │   1   │  0.2      0.2                                 0.2      0.4                              │ xor rbx, r11
+│  1                    │   1    │   1   │           0.2                                 0.6      0.2                              │ mov r8, rbx
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shl r8, 0x20
+│  1                    │   1    │   1   │  0.2                                          0.4      0.4                              │ xor r8, rbx
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ andn r11, r8, r10
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ and r8, r9
+│  1                    │   1    │   1   │  0.2                                          0.6      0.2                              │ xor r9, r8
+│  1                    │   1    │   1   │  0.6      0.2                                 0.2                                       │ mov r10, r8
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shr r10, 0x4
+│  1                    │   1    │   1   │           0.2                                 0.2      0.6                              │ or r10, r9
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ lea r9, ptr [r11+r11*1]
+│  1                    │   1    │   1   │  0.6      0.4                                                                           │ xor r9, r11
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ lea rbx, ptr [r9*4]
+│  1                    │   1    │   1   │           0.2                                 0.2      0.6                              │ xor rbx, r9
+│  1                    │   1    │   1   │           0.4                                 0.2      0.4                              │ mov r9, rbx
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shl r9, 0x4
+│  1                    │   1    │   1   │  0.4      0.2                                 0.2      0.2                              │ xor r9, rbx
+│  1                    │   1    │   1   │  0.4      0.2                                 0.2      0.2                              │ mov rbx, r9
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shl rbx, 0x8
+│  1                    │   1    │   1   │  0.2      0.6                                          0.2                              │ xor rbx, r9
+│  1                    │   1    │   1   │  0.4                                          0.6                                       │ mov r14, rbx
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r14, 0x10
+│  1                    │   1    │   1   │  0.4      0.6                                                                           │ xor r14, rbx
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ mov r9, r14
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r9, 0x20
+│  1                    │   1    │   1   │  0.4      0.2                                 0.4                                       │ xor r9, r14
+│  1                    │   1    │   1   │           0.2                                 0.8                                       │ andn rbx, r9, r11
+│  1                    │   1    │   1   │           0.8                                          0.2                              │ and r9, r10
+│  1                    │   1    │   1   │  0.2                                          0.6      0.2                              │ xor r10, r9
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ mov r11, r9
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shr r11, 0x8
+│  1                    │   1    │   1   │  0.2      0.4                                          0.4                              │ or r11, r10
+│  1                    │   1    │   1   │           0.2                                 0.4      0.4                              │ lea r10, ptr [rbx+rbx*1]
+│  1                    │   1    │   1   │  0.2      0.4                                          0.4                              │ xor r10, rbx
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ lea r14, ptr [r10*4]
+│  1                    │   1    │   1   │  0.4                                          0.4      0.2                              │ xor r14, r10
+│  1                    │   1    │   1   │           0.4                                 0.2      0.4                              │ mov r10, r14
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shl r10, 0x4
+│  1                    │   1    │   1   │  0.2      0.4                                 0.4                                       │ xor r10, r14
+│  1                    │   1    │   1   │  0.4      0.2                                 0.2      0.2                              │ mov r14, r10
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shl r14, 0x8
+│  1                    │   1    │   1   │  0.4      0.4                                          0.2                              │ xor r14, r10
+│  1                    │   1    │   1   │  0.4                                          0.4      0.2                              │ mov r15, r14
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r15, 0x10
+│  1                    │   1    │   1   │  0.2      0.4                                 0.4                                       │ xor r15, r14
+│  1                    │   1    │   1   │           0.4                                 0.2      0.4                              │ mov r10, r15
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl r10, 0x20
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ xor r10, r15
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ andn rbx, r10, rbx
+│  1                    │   1    │   1   │           0.2                                 0.6      0.2                              │ and r10, r11
+│  1                    │   1    │   1   │           0.2                                 0.4      0.4                              │ xor r11, r10
+│  1                    │   1    │   1   │  0.4      0.4                                 0.2                                       │ mov r14, r10
+│  1                    │   1    │   1   │   1                                                                                     │ shr r14, 0x10
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ or r14, r11
+│  1                    │   1    │   1   │  0.2                                          0.2      0.6                              │ lea r11, ptr [rbx+rbx*1]
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ xor r11, rbx
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ lea rbx, ptr [r11*4]
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ xor rbx, r11
+│  1                    │   1    │   1   │  0.2                                          0.2      0.6                              │ mov r11, rbx
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shl r11, 0x4
+│  1                    │   1    │   1   │  0.2      0.4                                 0.4                                       │ xor r11, rbx
+│  1                    │   1    │   1   │  0.2      0.2                                 0.6                                       │ mov rbx, r11
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rbx, 0x8
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ xor rbx, r11
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ mov r11, rbx
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r11, 0x10
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ xor r11, rbx
+│  1                    │   1    │   1   │  0.2      0.2                                 0.2      0.4                              │ mov rbx, r11
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shl rbx, 0x20
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ xor rbx, r11
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ and rbx, r14
+│  1                    │   1    │   1   │           0.2                                 0.8                                       │ andn r11, rbx, rdi
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rdi, 0x20
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ and rdi, rbx
+│  1                    │   1    │   1   │           0.2                                 0.4      0.4                              │ or rdi, r11
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ andn r11, r10, rdi
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rdi, 0x10
+│  1                    │   1    │   1   │  0.2      0.6                                          0.2                              │ and rdi, r10
+│  1                    │   1    │   1   │  0.4      0.4                                 0.2                                       │ or rdi, r11
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ andn r10, r9, rdi
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl rdi, 0x8
+│  1                    │   1    │   1   │           0.6                                          0.4                              │ and rdi, r9
+│  1                    │   1    │   1   │  0.4      0.2                                 0.4                                       │ or rdi, r10
+│  1                    │   1    │   1   │           0.8                                 0.2                                       │ andn r9, r8, rdi
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl rdi, 0x4
+│  1                    │   1    │   1   │  0.2                                          0.2      0.6                              │ and rdi, r8
+│  1                    │   1    │   1   │  0.4      0.2                                          0.4                              │ or rdi, r9
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ andn r8, rdx, rdi
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rdi, 0x2
+│  1                    │   1    │   1   │  0.2                                          0.6      0.2                              │ and rdi, rdx
+│  1                    │   1    │   1   │  0.2                                          0.4      0.4                              │ or rdi, r8
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ andn rdx, rax, rdi
+│  1                    │   1    │   1   │  0.4      0.2                                          0.4                              │ lea rax, ptr [rdi+rdi*1]
+│  1                    │   1    │   1   │           0.4                                 0.2      0.4                              │ and rax, rcx
+│  1                    │   1    │   1   │  0.2      0.2                                 0.6                                       │ or rax, rdx
+│  1                    │   1    │   1   │  0.6      0.4                                                                           │ and rax, rsi
+│  1                    │   1    │   1   │                    0.4      0.6                                                         │ pop rbx
+│  1                    │   1    │   1   │                    0.6      0.4                                                         │ pop r14
+│  1                    │   1    │   1   │                    0.4      0.6                                                         │ pop r15
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│ 164                   │  164   │  167  │  39.6     41.2     1.4      1.6      1.4      37.4     39.8     1.4      1.6      1.6   │ Total
+└───────────────────────┴────────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+## expand_by_zp7, whole function
+
+	pushq %rbx
+	movq %rsi, %rax
+	notq %rax
+	leaq (%rax,%rax), %rcx
+	leaq (,%rax,4), %rdx
+	xorq %rax, %rdx
+	xorq %rcx, %rdx
+	shlq $2, %rdx
+	xorq %rcx, %rdx
+	movq %rdx, %rax
+	shlq $4, %rax
+	xorq %rdx, %rax
+	movq %rax, %rcx
+	shlq $8, %rcx
+	xorq %rax, %rcx
+	movq %rcx, %rdx
+	shlq $16, %rdx
+	xorq %rcx, %rdx
+	movq %rdx, %rax
+	shlq $32, %rax
+	xorq %rdx, %rax
+	andnq %rax, %rsi, %rdx
+	leaq (%rdx,%rdx), %rcx
+	leaq (,%rdx,4), %r8
+	xorq %rdx, %r8
+	xorq %rcx, %r8
+	shlq $2, %r8
+	xorq %rcx, %r8
+	movq %r8, %rcx
+	shlq $4, %rcx
+	xorq %r8, %rcx
+	movq %rcx, %r8
+	shlq $8, %r8
+	xorq %rcx, %r8
+	movq %r8, %r9
+	shlq $16, %r9
+	xorq %r8, %r9
+	movq %r9, %rcx
+	shlq $32, %rcx
+	xorq %r9, %rcx
+	andq %rcx, %rdx
+	leaq (%rdx,%rdx), %r8
+	leaq (,%rdx,4), %r9
+	xorq %rdx, %r9
+	xorq %r8, %r9
+	shlq $2, %r9
+	xorq %r8, %r9
+	movq %r9, %r8
+	shlq $4, %r8
+	xorq %r9, %r8
+	movq %r8, %r9
+	shlq $8, %r9
+	xorq %r8, %r9
+	movq %r9, %r10
+	shlq $16, %r10
+	xorq %r9, %r10
+	movq %r10, %r8
+	shlq $32, %r8
+	xorq %r10, %r8
+	andq %r8, %rdx
+	leaq (%rdx,%rdx), %r9
+	leaq (,%rdx,4), %r10
+	xorq %rdx, %r10
+	xorq %r9, %r10
+	shlq $2, %r10
+	xorq %r9, %r10
+	movq %r10, %r9
+	shlq $4, %r9
+	xorq %r10, %r9
+	movq %r9, %r10
+	shlq $8, %r10
+	xorq %r9, %r10
+	movq %r10, %r11
+	shlq $16, %r11
+	xorq %r10, %r11
+	movq %r11, %r9
+	shlq $32, %r9
+	xorq %r11, %r9
+	andq %r9, %rdx
+	leaq (%rdx,%rdx), %r10
+	leaq (,%rdx,4), %r11
+	xorq %rdx, %r11
+	xorq %r10, %r11
+	shlq $2, %r11
+	xorq %r10, %r11
+	movq %r11, %r10
+	shlq $4, %r10
+	xorq %r11, %r10
+	movq %r10, %r11
+	shlq $8, %r11
+	xorq %r10, %r11
+	movq %r11, %rbx
+	shlq $16, %rbx
+	xorq %r11, %rbx
+	movq %rbx, %r10
+	shlq $32, %r10
+	xorq %rbx, %r10
+	andq %r10, %rdx
+	addq %rdx, %rdx
+	negq %rdx
+	popcntq %rsi, %rsi
+	bzhiq %rsi, %rdi, %rsi
+	shrq $32, %rdx
+	andnq %rsi, %rdx, %rdi
+	andl %edx, %esi
+	shlq $32, %rsi
+	addq %rdi, %rsi
+	shrq $16, %r10
+	andnq %rsi, %r10, %rdx
+	andq %rsi, %r10
+	shlq $16, %r10
+	addq %rdx, %r10
+	shrq $8, %r9
+	andnq %r10, %r9, %rdx
+	andq %r10, %r9
+	shlq $8, %r9
+	addq %rdx, %r9
+	shrq $4, %r8
+	andnq %r9, %r8, %rdx
+	andq %r9, %r8
+	shlq $4, %r8
+	addq %rdx, %r8
+	shrq $2, %rcx
+	andnq %r8, %rcx, %rdx
+	andq %r8, %rcx
+	leaq (%rdx,%rcx,4), %rcx
+	shrq %rax
+	andnq %rcx, %rax, %rdx
+	andq %rcx, %rax
+	leaq (%rdx,%rax,2), %rax
+	popq %rbx
+
+Throughput (in cycles per iteration): 103.00
+Bottleneck: unknown
+
+The following throughputs could be achieved if the given property were the only bottleneck:
+
+  - Predecoder: 33.50
+  - Decoder: 33.00
+  - Issue: 26.20
+  - Ports: 32.25
+  - Dependencies: 98.00
+
+┌───────────────────────┬────────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+│ MITE   MS   DSB   LSD │ Issued │ Exec. │ Port 0   Port 1   Port 2   Port 3   Port 4   Port 5   Port 6   Port 7   Port 8   Port 9 │
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  1                    │   1    │   2   │                                      0.4                        0.4      0.6      0.6   │ push rbx
+│  1                    │   1    │   1   │  0.2                                          0.4      0.4                              │ mov rax, rsi
+│  1                    │   1    │   1   │  0.6                                          0.4                                       │ not rax
+│  1                    │   1    │   1   │  0.2      0.4                                          0.4                              │ lea rcx, ptr [rax+rax*1]
+│  1                    │   1    │   1   │           0.8                                 0.2                                       │ lea rdx, ptr [rax*4]
+│  1                    │   1    │   1   │  0.2      0.2                                 0.2      0.4                              │ xor rdx, rax
+│  1                    │   1    │   1   │  0.6      0.4                                                                           │ xor rdx, rcx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rdx, 0x2
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ xor rdx, rcx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ mov rax, rdx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rax, 0x4
+│  1                    │   1    │   1   │  0.2      0.4                                 0.4                                       │ xor rax, rdx
+│  1                    │   1    │   1   │  0.4                                          0.2      0.4                              │ mov rcx, rax
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rcx, 0x8
+│  1                    │   1    │   1   │  0.2      0.2                                 0.6                                       │ xor rcx, rax
+│  1                    │   1    │   1   │  0.2      0.4                                 0.4                                       │ mov rdx, rcx
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl rdx, 0x10
+│  1                    │   1    │   1   │  0.2      0.2                                 0.6                                       │ xor rdx, rcx
+│  1                    │   1    │   1   │  0.6                                          0.2      0.2                              │ mov rax, rdx
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl rax, 0x20
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ xor rax, rdx
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ andn rdx, rsi, rax
+│  1                    │   1    │   1   │  0.2      0.2                                 0.2      0.4                              │ lea rcx, ptr [rdx+rdx*1]
+│  1                    │   1    │   1   │                                                1                                        │ lea r8, ptr [rdx*4]
+│  1                    │   1    │   1   │  0.4      0.4                                 0.2                                       │ xor r8, rdx
+│  1                    │   1    │   1   │           0.4                                 0.2      0.4                              │ xor r8, rcx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl r8, 0x2
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ xor r8, rcx
+│  1                    │   1    │   1   │  0.2      0.6                                          0.2                              │ mov rcx, r8
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl rcx, 0x4
+│  1                    │   1    │   1   │           0.2                                 0.4      0.4                              │ xor rcx, r8
+│  1                    │   1    │   1   │  0.4      0.2                                 0.2      0.2                              │ mov r8, rcx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl r8, 0x8
+│  1                    │   1    │   1   │           0.8                                 0.2                                       │ xor r8, rcx
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ mov r9, r8
+│  1                    │   1    │   1   │                                                         1                               │ shl r9, 0x10
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ xor r9, r8
+│  1                    │   1    │   1   │  0.2      0.4                                          0.4                              │ mov rcx, r9
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl rcx, 0x20
+│  1                    │   1    │   1   │           0.2                                 0.8                                       │ xor rcx, r9
+│  1                    │   1    │   1   │  0.4      0.2                                 0.2      0.2                              │ and rdx, rcx
+│  1                    │   1    │   1   │           0.8                                 0.2                                       │ lea r8, ptr [rdx+rdx*1]
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ lea r9, ptr [rdx*4]
+│  1                    │   1    │   1   │  0.2      0.2                                 0.6                                       │ xor r9, rdx
+│  1                    │   1    │   1   │           0.2                                 0.6      0.2                              │ xor r9, r8
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r9, 0x2
+│  1                    │   1    │   1   │           0.6                                 0.2      0.2                              │ xor r9, r8
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ mov r8, r9
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl r8, 0x4
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ xor r8, r9
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ mov r9, r8
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shl r9, 0x8
+│  1                    │   1    │   1   │  0.4                                          0.2      0.4                              │ xor r9, r8
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ mov r10, r9
+│  1                    │   1    │   1   │   1                                                                                     │ shl r10, 0x10
+│  1                    │   1    │   1   │                                               0.8      0.2                              │ xor r10, r9
+│  1                    │   1    │   1   │  0.4      0.4                                 0.2                                       │ mov r8, r10
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r8, 0x20
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ xor r8, r10
+│  1                    │   1    │   1   │  0.4      0.2                                 0.4                                       │ and rdx, r8
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ lea r9, ptr [rdx+rdx*1]
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ lea r10, ptr [rdx*4]
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ xor r10, rdx
+│  1                    │   1    │   1   │  0.4                                          0.4      0.2                              │ xor r10, r9
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl r10, 0x2
+│  1                    │   1    │   1   │  0.4      0.2                                 0.2      0.2                              │ xor r10, r9
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ mov r9, r10
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl r9, 0x4
+│  1                    │   1    │   1   │  0.6      0.2                                          0.2                              │ xor r9, r10
+│  1                    │   1    │   1   │           0.2                                 0.4      0.4                              │ mov r10, r9
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shl r10, 0x8
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ xor r10, r9
+│  1                    │   1    │   1   │  0.2      0.4                                 0.4                                       │ mov r11, r10
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r11, 0x10
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ xor r11, r10
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ mov r9, r11
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shl r9, 0x20
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ xor r9, r11
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ and rdx, r9
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ lea r10, ptr [rdx+rdx*1]
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ lea r11, ptr [rdx*4]
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ xor r11, rdx
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ xor r11, r10
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl r11, 0x2
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ xor r11, r10
+│  1                    │   1    │   1   │  0.2      0.2                                 0.2      0.4                              │ mov r10, r11
+│  1                    │   1    │   1   │                                                         1                               │ shl r10, 0x4
+│  1                    │   1    │   1   │           0.6                                 0.2      0.2                              │ xor r10, r11
+│  1                    │   1    │   1   │           0.2                                 0.4      0.4                              │ mov r11, r10
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shl r11, 0x8
+│  1                    │   1    │   1   │           0.2                                 0.2      0.6                              │ xor r11, r10
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ mov rbx, r11
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl rbx, 0x10
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ xor rbx, r11
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ mov r10, rbx
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shl r10, 0x20
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ xor r10, rbx
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ and rdx, r10
+│  1                    │   1    │   1   │  0.4      0.2                                 0.4                                       │ add rdx, rdx
+│  1                    │   1    │   1   │  0.4      0.2                                 0.2      0.2                              │ neg rdx
+│  1                    │   1    │   1   │            1                                                                            │ popcnt rsi, rsi
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ bzhi rsi, rdi, rsi
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shr rdx, 0x20
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ andn rdi, rdx, rsi
+│  1                    │   1    │   1   │  0.2                                          0.6      0.2                              │ and esi, edx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl rsi, 0x20
+│  1                    │   1    │   1   │  0.6                                          0.2      0.2                              │ add rsi, rdi
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shr r10, 0x10
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ andn rdx, r10, rsi
+│  1                    │   1    │   1   │  0.4      0.4                                          0.2                              │ and r10, rsi
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r10, 0x10
+│  1                    │   1    │   1   │  0.4      0.2                                 0.4                                       │ add r10, rdx
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shr r9, 0x8
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ andn rdx, r9, r10
+│  1                    │   1    │   1   │  0.4                                          0.2      0.4                              │ and r9, r10
+│  1                    │   1    │   1   │  0.8                                                   0.2                              │ shl r9, 0x8
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ add r9, rdx
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shr r8, 0x4
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ andn rdx, r8, r9
+│  1                    │   1    │   1   │           0.4                                 0.4      0.2                              │ and r8, r9
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl r8, 0x4
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ add r8, rdx
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shr rcx, 0x2
+│  1                    │   1    │   1   │           0.8                                 0.2                                       │ andn rdx, rcx, r8
+│  1                    │   1    │   1   │           0.8                                 0.2                                       │ and rcx, r8
+│  1                    │   1    │   1   │           0.2                                 0.8                                       │ lea rcx, ptr [rdx+rcx*4]
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shr rax, 0x1
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ andn rdx, rax, rcx
+│  1                    │   1    │   1   │                                               0.4      0.6                              │ and rax, rcx
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ lea rax, ptr [rdx+rax*2]
+│  1                    │   1    │   1   │                    0.4      0.6                                                         │ pop rbx
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│ 131                   │  131   │  132  │   33       32      0.4      0.6      0.4      31.6     32.4     0.4      0.6      0.6   │ Total
+└───────────────────────┴────────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+## expand_by_zp7_clmul, whole function
+
+	popcntq %rsi, %r9
+	notq %rsi
+	vmovq %rsi, %xmm0
+	movq $-2, %rax
+	vmovq %rax, %xmm1
+	vpclmulqdq $0, %xmm1, %xmm0, %xmm2
+	vmovq %xmm2, %rax
+	vpand %xmm0, %xmm2, %xmm0
+	vpclmulqdq $0, %xmm1, %xmm0, %xmm2
+	vmovq %xmm2, %rcx
+	vpand %xmm0, %xmm2, %xmm0
+	vpclmulqdq $0, %xmm1, %xmm0, %xmm2
+	vmovq %xmm2, %rdx
+	vpand %xmm0, %xmm2, %xmm0
+	vpclmulqdq $0, %xmm1, %xmm0, %xmm2
+	vmovq %xmm2, %rsi
+	vpand %xmm0, %xmm2, %xmm0
+	vpclmulqdq $0, %xmm1, %xmm0, %xmm1
+	vmovq %xmm1, %r8
+	vpand %xmm0, %xmm1, %xmm0
+	vmovq %xmm0, %r10
+	addq %r10, %r10
+	negq %r10
+	bzhiq %r9, %rdi, %rdi
+	shrq $32, %r10
+	andnq %rdi, %r10, %r9
+	andl %r10d, %edi
+	shlq $32, %rdi
+	addq %r9, %rdi
+	shrq $16, %r8
+	andnq %rdi, %r8, %r9
+	andq %rdi, %r8
+	shlq $16, %r8
+	addq %r9, %r8
+	shrq $8, %rsi
+	andnq %r8, %rsi, %rdi
+	andq %r8, %rsi
+	shlq $8, %rsi
+	addq %rdi, %rsi
+	shrq $4, %rdx
+	andnq %rsi, %rdx, %rdi
+	andq %rsi, %rdx
+	shlq $4, %rdx
+	addq %rdi, %rdx
+	shrq $2, %rcx
+	andnq %rdx, %rcx, %rsi
+	andq %rdx, %rcx
+	leaq (%rsi,%rcx,4), %rcx
+	shrq %rax
+	andnq %rcx, %rax, %rdx
+	andq %rcx, %rax
+	leaq (%rdx,%rax,2), %rax
+
+Throughput (in cycles per iteration): 61.25
+Bottleneck: unknown
+
+The following throughputs could be achieved if the given property were the only bottleneck:
+
+  - Predecoder: 13.94
+  - Decoder: 13.00
+  - Issue: 10.40
+  - Ports: 13.00
+  - Dependencies: 58.00
+
+┌───────────────────────┬────────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+│ MITE   MS   DSB   LSD │ Issued │ Exec. │ Port 0   Port 1   Port 2   Port 3   Port 4   Port 5   Port 6   Port 7   Port 8   Port 9 │
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  1                    │   1    │   1   │            1                                                                            │ popcnt r9, rsi
+│  1                    │   1    │   1   │  0.4      0.4                                          0.2                              │ not rsi
+│  1                    │   1    │   1   │                                                1                                        │ vmovq xmm0, rsi
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ mov rax, 0xfffffffffffffffe
+│  1                    │   1    │   1   │                                                1                                        │ vmovq xmm1, rax
+│  1                    │   1    │   1   │                                                1                                        │ vpclmulqdq xmm2, xmm0, xmm1, 0x0
+│  1                    │   1    │   1   │   1                                                                                     │ vmovq rax, xmm2
+│  1                    │   1    │   1   │  0.6      0.2                                 0.2                                       │ vpand xmm0, xmm2, xmm0
+│  1                    │   1    │   1   │                                                1                                        │ vpclmulqdq xmm2, xmm0, xmm1, 0x0
+│  1                    │   1    │   1   │   1                                                                                     │ vmovq rcx, xmm2
+│  1                    │   1    │   1   │  0.4      0.6                                                                           │ vpand xmm0, xmm2, xmm0
+│  1                    │   1    │   1   │                                                1                                        │ vpclmulqdq xmm2, xmm0, xmm1, 0x0
+│  1                    │   1    │   1   │   1                                                                                     │ vmovq rdx, xmm2
+│  1                    │   1    │   1   │  0.2      0.6                                 0.2                                       │ vpand xmm0, xmm2, xmm0
+│  1                    │   1    │   1   │                                                1                                        │ vpclmulqdq xmm2, xmm0, xmm1, 0x0
+│  1                    │   1    │   1   │   1                                                                                     │ vmovq rsi, xmm2
+│  1                    │   1    │   1   │            1                                                                            │ vpand xmm0, xmm2, xmm0
+│  1                    │   1    │   1   │                                                1                                        │ vpclmulqdq xmm1, xmm0, xmm1, 0x0
+│  1                    │   1    │   1   │   1                                                                                     │ vmovq r8, xmm1
+│  1                    │   1    │   1   │           0.8                                 0.2                                       │ vpand xmm0, xmm1, xmm0
+│  1                    │   1    │   1   │   1                                                                                     │ vmovq r10, xmm0
+│  1                    │   1    │   1   │           0.2                                          0.8                              │ add r10, r10
+│  1                    │   1    │   1   │           0.6                                          0.4                              │ neg r10
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ bzhi rdi, rdi, r9
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shr r10, 0x20
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ andn r9, r10, rdi
+│  1                    │   1    │   1   │  0.4                                          0.2      0.4                              │ and edi, r10d
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shl rdi, 0x20
+│  1                    │   1    │   1   │  0.2                                          0.4      0.4                              │ add rdi, r9
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shr r8, 0x10
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ andn r9, r8, rdi
+│  1                    │   1    │   1   │                                               0.2      0.8                              │ and r8, rdi
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shl r8, 0x10
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ add r8, r9
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shr rsi, 0x8
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ andn rdi, rsi, r8
+│  1                    │   1    │   1   │  0.4                                          0.2      0.4                              │ and rsi, r8
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shl rsi, 0x8
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ add rsi, rdi
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shr rdx, 0x4
+│  1                    │   1    │   1   │           0.6                                 0.4                                       │ andn rdi, rdx, rsi
+│  1                    │   1    │   1   │           0.4                                          0.6                              │ and rdx, rsi
+│  1                    │   1    │   1   │  0.2                                                   0.8                              │ shl rdx, 0x4
+│  1                    │   1    │   1   │           0.4                                          0.6                              │ add rdx, rdi
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shr rcx, 0x2
+│  1                    │   1    │   1   │           0.8                                 0.2                                       │ andn rsi, rcx, rdx
+│  1                    │   1    │   1   │           0.4                                 0.2      0.4                              │ and rcx, rdx
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ lea rcx, ptr [rsi+rcx*4]
+│  1                    │   1    │   1   │  0.4                                                   0.6                              │ shr rax, 0x1
+│  1                    │   1    │   1   │           0.8                                 0.2                                       │ andn rdx, rax, rcx
+│  1                    │   1    │   1   │           0.2                                          0.8                              │ and rax, rcx
+│  1                    │   1    │   1   │           0.4                                 0.6                                       │ lea rax, ptr [rdx+rax*2]
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  52                   │   52   │  52   │  13.6     12.2                                13.6     12.6                             │ Total
+└───────────────────────┴────────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+## select_by_broadword, whole function
+
+	movq %rdi, %rax
+	shrq %rax
+	movabsq $6148914691236517205, %rcx
+	andq %rax, %rcx
+	movq %rdi, %rax
+	subq %rcx, %rax
+	movabsq $3689348814741910323, %rcx
+	movq %rax, %rdx
+	andq %rcx, %rdx
+	shrq $2, %rax
+	andq %rcx, %rax
+	addq %rdx, %rax
+	movq %rax, %rcx
+	shrq $4, %rcx
+	addq %rax, %rcx
+	movabsq $1085102592571150095, %rax
+	andq %rcx, %rax
+	movabsq $-72340172838076673, %rcx
+	imulq %rax, %rcx
+	movl %esi, %edx
+	movabsq $72340172838076672, %r8
+	leaq 1(%r8), %r9
+	imulq %rdx, %r9
+	movabsq $-9187201950435737472, %rdx
+	orq %rdx, %r9
+	addq %rcx, %r9
+	andq %rdx, %r9
+	popcntq %r9, %rcx
+	leal (,%rcx,8), %edx
+	imulq %r8, %rax
+	shrxq %rdx, %rax, %rax
+	movzbl %al, %eax
+	subl %eax, %esi
+	shrxq %rdx, %rdi, %rax
+	movzbl %al, %eax
+	shll $8, %esi
+	leaq _ZN4xstd4ints6detail8portable14select_in_byteE(%rip), %rdx
+	addq %rax, %rdx
+	movzbl (%rsi,%rdx), %eax
+	leal (%rax,%rcx,8), %eax
+
+Throughput (in cycles per iteration): 15.50
+Bottleneck: unknown
+
+The following throughputs could be achieved if the given property were the only bottleneck:
+
+  - Predecoder: 12.00
+  - Decoder: 10.00
+  - Issue: 8.00
+  - Ports: 9.75
+  - Dependencies: 15.00
+
+┌───────────────────────┬────────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+│ MITE   MS   DSB   LSD │ Issued │ Exec. │ Port 0   Port 1   Port 2   Port 3   Port 4   Port 5   Port 6   Port 7   Port 8   Port 9 │
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  1                    │   1    │   1   │  0.27                                         0.27     0.47                             │ mov rax, rdi
+│  1                    │   1    │   1   │  0.47                                                  0.53                             │ shr rax, 0x1
+│  1                    │   1    │   1   │  0.27                                         0.27     0.47                             │ mov rcx, 0x5555555555555555
+│  1                    │   1    │   1   │  0.33                                         0.4      0.27                             │ and rcx, rax
+│  1                    │   1    │   1   │  0.2      0.2                                 0.4      0.2                              │ mov rax, rdi
+│  1                    │   1    │   1   │  0.27     0.2                                 0.07     0.47                             │ sub rax, rcx
+│  1                    │   1    │   1   │  0.2      0.47                                0.2      0.13                             │ mov rcx, 0x3333333333333333
+│  1                    │   1    │   1   │  0.33     0.07                                0.33     0.27                             │ mov rdx, rax
+│  1                    │   1    │   1   │  0.27     0.2                                 0.4      0.13                             │ and rdx, rcx
+│  1                    │   1    │   1   │  0.53                                                  0.47                             │ shr rax, 0x2
+│  1                    │   1    │   1   │  0.2      0.27                                0.2      0.33                             │ and rax, rcx
+│  1                    │   1    │   1   │  0.33     0.13                                0.33     0.2                              │ add rax, rdx
+│  1                    │   1    │   1   │  0.07     0.2                                 0.2      0.53                             │ mov rcx, rax
+│  1                    │   1    │   1   │  0.53                                                  0.47                             │ shr rcx, 0x4
+│  1                    │   1    │   1   │  0.4      0.2                                 0.13     0.27                             │ add rcx, rax
+│  1                    │   1    │   1   │  0.13     0.33                                0.27     0.27                             │ mov rax, 0xf0f0f0f0f0f0f0f
+│  1                    │   1    │   1   │  0.27     0.47                                0.07     0.2                              │ and rax, rcx
+│  1                    │   1    │   1   │  0.2      0.2                                 0.2      0.4                              │ mov rcx, 0xfefefefefefefeff
+│  1                    │   1    │   1   │            1                                                                            │ imul rcx, rax
+│  1                    │   1    │   1   │           0.4                                 0.53     0.07                             │ mov edx, esi
+│  1                    │   1    │   1   │  0.47     0.13                                0.13     0.27                             │ mov r8, 0x101010101010100
+│  1                    │   1    │   1   │  0.2      0.4                                 0.2      0.2                              │ lea r9, ptr [r8+0x1]
+│  1                    │   1    │   1   │            1                                                                            │ imul r9, rdx
+│  1                    │   1    │   1   │  0.47                                         0.27     0.27                             │ mov rdx, 0x8080808080808080
+│  1                    │   1    │   1   │  0.2      0.27                                0.27     0.27                             │ or r9, rdx
+│  1                    │   1    │   1   │  0.2      0.33                                0.27     0.2                              │ add r9, rcx
+│  1                    │   1    │   1   │  0.27     0.13                                0.13     0.47                             │ and r9, rdx
+│  1                    │   1    │   1   │            1                                                                            │ popcnt rcx, r9
+│  1                    │   1    │   1   │                                                1                                        │ lea edx, ptr [rcx*8]
+│  1                    │   1    │   1   │            1                                                                            │ imul rax, r8
+│  1                    │   1    │   1   │  0.6                                                   0.4                              │ shrx rax, rax, rdx
+│  1                    │   1    │   1   │  0.4                                          0.4      0.2                              │ movzx eax, al
+│  1                    │   1    │   1   │  0.13     0.07                                0.2      0.6                              │ sub esi, eax
+│  1                    │   1    │   1   │  0.53                                                  0.47                             │ shrx rax, rdi, rdx
+│  1                    │   1    │   1   │  0.2      0.33                                0.33     0.13                             │ movzx eax, al
+│  1                    │   1    │   1   │  0.47                                                  0.53                             │ shl esi, 0x8
+│  1                    │   1    │   1   │            1                                                                            │ lea rdx, ptr [rip]
+│  1                    │   1    │   1   │  0.47                                         0.13     0.4                              │ add rdx, rax
+│  1                    │   1    │   1   │                    0.47     0.53                                                        │ movzx eax, byte ptr [rsi+rdx*1]
+│  1                    │   1    │   1   │           0.2                                 0.8                                       │ lea eax, ptr [rax+rcx*8]
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  40                   │   40   │  40   │  9.87     10.2     0.47     0.53              8.4     10.53                             │ Total
+└───────────────────────┴────────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+## select_pdep, whole function
+
+	movl $1, %eax
+	shlxq %rsi, %rax, %rax
+	pdepq %rdi, %rax, %rax
+	tzcntq %rax, %rax
+
+Throughput (in cycles per iteration): 2.00
+Bottleneck: Ports
+
+The following throughputs could be achieved if the given property were the only bottleneck:
+
+  - Predecoder: 1.25
+  - Decoder: 1.00
+  - Issue: 0.80
+  - Ports: 2.00
+
+┌───────────────────────┬────────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+│ MITE   MS   DSB   LSD │ Issued │ Exec. │ Port 0   Port 1   Port 2   Port 3   Port 4   Port 5   Port 6   Port 7   Port 8   Port 9 │
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  1                    │   1    │   1   │  0.05                                         0.58     0.37                             │ mov eax, 0x1
+│  1                    │   1    │   1   │  0.59                                                  0.41                             │ shlx rax, rax, rsi
+│  1                    │   1    │   1   │            1                                                                            │ pdep rax, rax, rdi
+│  1                    │   1    │   1   │            1                                                                            │ tzcnt rax, rax
+├───────────────────────┼────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│  4                    │   4    │   4   │  0.64      2                                  0.58     0.79                             │ Total
+└───────────────────────┴────────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+

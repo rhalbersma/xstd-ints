@@ -25,7 +25,8 @@ template<integer I>
         } else {
                 auto const zero = static_cast<I>(0);
                 assert(x != numeric_limits<I>::min()); // -x would overflow
-                return static_cast<I>(x < zero ? -x : x);
+                // At zero both arms give zero, so < and <= are the same test.
+                return static_cast<I>(x < zero ? -x : x); // mull-ignore: cxx_lt_to_le
         }
 }
 

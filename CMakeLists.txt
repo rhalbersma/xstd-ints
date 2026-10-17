@@ -215,6 +215,23 @@ if(PROJECT_IS_TOP_LEVEL)
         add_subdirectory(proofs)
     endif()
 
+    # Off by default, and outside BUILD_TESTING: Mull's clang plugin builds its own copy of the unit tests, unoptimized and
+    # instrumented, and the run takes minutes. enable_testing() stays here for the reason given above.
+    option(${project_option_prefix}_BUILD_MUTATION_TESTS "Score the unit tests by the mutants they kill, under mutation/" OFF)
+
+    if(${project_option_prefix}_BUILD_MUTATION_TESTS)
+        enable_testing()
+        add_subdirectory(mutation)
+    endif()
+
+    # Off by default, and outside BUILD_TESTING: a benchmark reports what a machine does rather than passing or failing,
+    # so it is an executable to run by hand, not a test, and it fetches nanobench, which nothing else needs.
+    option(${project_option_prefix}_BUILD_BENCHMARKS "Build the bit-kernel benchmarks under bench/" OFF)
+
+    if(${project_option_prefix}_BUILD_BENCHMARKS)
+        add_subdirectory(bench)
+    endif()
+
     # Off by default, and outside BUILD_TESTING: the examples are programs that use the library the way its users do,
     # each checking its own output. enable_testing() stays here for the reason given above.
     option(${project_option_prefix}_BUILD_EXAMPLES "Build the example programs under examples/" OFF)

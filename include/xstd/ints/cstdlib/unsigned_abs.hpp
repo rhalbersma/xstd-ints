@@ -24,7 +24,8 @@ template<integer I>
                 using U         = make_unsigned_t<I>;
                 auto const zero = static_cast<U>(0);
                 auto const u    = static_cast<U>(x);
-                return static_cast<U>(x < static_cast<I>(0) ? zero - u : u);
+                // At zero both arms give zero, so < and <= are the same test.
+                return static_cast<U>(x < static_cast<I>(0) ? zero - u : u); // mull-ignore: cxx_lt_to_le
         }
 }
 
