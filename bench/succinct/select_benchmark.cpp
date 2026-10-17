@@ -58,6 +58,9 @@ struct splitmix
         return words;
 }
 
+// Every round's answers end up here, so that no compiler drops a round whose answers nothing else reads.
+volatile std::uint64_t answers_folded = 0;
+
 template<class F>
 [[nodiscard]] auto nanoseconds_per_query(std::vector<std::uint64_t> const& ranks, std::vector<std::uint64_t>& answers, F select)
         -> double
@@ -66,7 +69,13 @@ template<class F>
         for (auto i = std::size_t{0}; i < ranks.size(); ++i) {
                 answers[i] = select(ranks[i]);
         }
-        return std::chrono::duration<double, std::nano>(std::chrono::steady_clock::now() - start).count() / static_cast<double>(ranks.size());
+        auto const stop = std::chrono::steady_clock::now();
+        auto folded     = std::uint64_t{0};
+        for (auto const answer : answers) {
+                folded ^= answer;
+        }
+        answers_folded = folded;
+        return std::chrono::duration<double, std::nano>(stop - start).count() / static_cast<double>(ranks.size());
 }
 
 } // namespace
