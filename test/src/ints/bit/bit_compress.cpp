@@ -13,6 +13,7 @@
 #include <test/exact_width_types.hpp>                     // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>                       // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <array>                                          // array
+#include <bit>                                            // bit_compress
 #include <cstdint>                                        // int32_t, uint64_t
 #include <ranges>                                         // iota
 #include <tuple>                                          // tuple_cat
@@ -28,6 +29,13 @@ using permutable_types = decltype(std::tuple_cat(
 
 template<class T>
 concept xstd_answers = requires (T x) { xstd::bit_compress(x, x); };
+
+#if defined(__cpp_lib_bitops) and __cpp_lib_bitops >= 202607L
+
+template<class T>
+concept std_answers = requires (T x) { std::bit_compress(x, x); };
+
+#endif
 
 template<class T>
 constexpr auto agrees_at(int k)
@@ -141,6 +149,23 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheOracle, T, permutable_types)
         test::for_each_sweep_pair<T>([&](T x, T m) -> void { mismatches += xstd::bit_compress(x, m) == test::oracle_bit_compress(x, m) ? 0UZ : 1UZ; });
         BOOST_CHECK_EQUAL(mismatches, 0UZ);
 }
+
+#if defined(__cpp_lib_bitops) and __cpp_lib_bitops >= 202607L
+
+// Where <bit> answers, xstd either forwards to it or keeps its own faster kernels, and either way agrees with it.
+BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithStdWhereStdAnswers, T, permutable_types)
+{
+        if constexpr (std_answers<T>) {
+                static_assert(xstd::bit_compress(xstd::numeric_limits<T>::max(), test::alternating_ones<T>()) == std::bit_compress(xstd::numeric_limits<T>::max(), test::alternating_ones<T>()));
+                auto mismatches = 0UZ;
+                test::for_each_sweep_pair<T>([&](T x, T m) -> void { mismatches += xstd::bit_compress(x, m) == std::bit_compress(x, m) ? 0UZ : 1UZ; });
+                BOOST_CHECK_EQUAL(mismatches, 0UZ);
+        } else {
+                BOOST_CHECK(true);
+        }
+}
+
+#endif
 
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()
