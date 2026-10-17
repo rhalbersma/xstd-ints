@@ -253,7 +253,7 @@ cmake --build build-succinct
 build-succinct/bench/succinct/bench_select
 ```
 
-A run takes about six minutes and under a gigabyte of memory; a number of bits as its argument runs a smaller vector.
+A run takes five to eight minutes and under 600 MB of memory; a number of bits as its argument runs a smaller vector. [`bench/succinct/results.md`](bench/succinct/results.md) keeps a run with the machine it names.
 
 ## Standards-paper tracking
 
