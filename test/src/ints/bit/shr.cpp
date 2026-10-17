@@ -4,6 +4,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <xstd/ints/bit/shl.hpp>                          // shl
+#include <xstd/ints/bit/detail/shift.hpp>                 // shift, shift_direction
 #include <xstd/ints/bit/shr.hpp>                          // shr
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
@@ -70,6 +71,24 @@ BOOST_AUTO_TEST_CASE(EveryCountIsDefined)
 }
 
 #if defined(__cpp_lib_bitops) and __cpp_lib_bitops >= 202606L
+
+// The template every other type takes, called where <bit> answers too, so that the standard library is its oracle.
+BOOST_AUTO_TEST_CASE_TEMPLATE(TheFallbackAgreesWithStd, T, test::exact_width_integer_types)
+{
+        if constexpr (requires (T x, int s) { std::shr(x, s); }) {
+                using U         = xstd::make_unsigned_t<T>;
+                auto mismatches = 0UZ;
+                test::for_each_sweep_value<U>([&](U u) -> void {
+                        auto const& x = static_cast<T>(u);
+                        for (auto const c : counts<T>()) {
+                                mismatches += xstd::ints::detail::shift(x, c, xstd::ints::detail::shift_direction::right) == std::shr(x, c) ? 0UZ : 1UZ;
+                        }
+                });
+                BOOST_CHECK_EQUAL(mismatches, 0UZ);
+        } else {
+                BOOST_CHECK(true);
+        }
+}
 
 // Where <bit> answers, this IS <bit>: the overload forwards and must not drift from it.
 BOOST_AUTO_TEST_CASE(AgreesWithStdWhereStdAnswers)
