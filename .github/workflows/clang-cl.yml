@@ -22,10 +22,16 @@ on:
   workflow_call:
 
 jobs:
+  # Whether this pull request can reach what the ladders build; see changes.yml.
+  changes:
+    uses: ./.github/workflows/changes.yml
+
   # The same Visual Studio ladder as msvc.yml, with clang-cl in front of the
   # MSVC STL instead of cl. Its own cache prefix, since the two callers build
   # the dependencies with different compilers.
-  clang_cl:
+  clang_cl_ladder:
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
     uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
     with:
       toolset: ClangCL,host=x64
@@ -34,3 +40,17 @@ jobs:
       # Boost.Test, which vcpkg.json keeps out of its default features so that
       # consuming this library resolves no Boost at all.
       vcpkg_features: test
+
+  # The name branch protection requires: green when the ladder passed, or when
+  # the pull request changes nothing the ladder builds.
+  all:
+    name: clang_cl / all
+    needs: [ changes, clang_cl_ladder ]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Every leg succeeded, or none was needed
+        env:
+          BUILD: ${{ needs.changes.outputs.build }}
+          RESULT: ${{ needs.clang_cl_ladder.result }}
+        run: test "${BUILD}" = false || test "${RESULT}" = success
