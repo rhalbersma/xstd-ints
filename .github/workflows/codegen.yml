@@ -37,7 +37,7 @@ jobs:
 
       - name: Install the stable rung, CMake and FileCheck
         run: |
-          tools/setup-toolchain.sh
+          tools/setup-toolchain.sh --stable
           pip install --quiet --user --break-system-packages --require-hashes -r tools/cmake-requirements.txt
           echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
 

@@ -35,30 +35,43 @@ The library itself has no dependencies outside `<xstd/ext/>`, whose headers each
 | Tool | Needed for | Notes |
 | :--- | :--------- | :---- |
 | A conforming C++23 compiler | everything | Same requirement as the library; see the table in [README.md](README.md) for the versions under CI |
-| [CMake](https://cmake.org/) 3.28+ | configuring and building | `cmake_minimum_required` in [`CMakeLists.txt`](CMakeLists.txt); CTest ships with it |
+| [CMake](https://cmake.org/) 3.30+ | configuring and building | `cmake_minimum_required` in [`CMakeLists.txt`](CMakeLists.txt); CTest ships with it. Noble's is 3.28; `setup-toolchain.sh` installs the version the workflows pin, from [`tools/cmake-requirements.txt`](tools/cmake-requirements.txt) |
 | [Boost.Test](https://www.boost.org/doc/libs/release/libs/test/) 1.70+ | the unit tests under `test/src/` | 1.70 introduced arbitrary type-list support for `BOOST_AUTO_TEST_CASE_TEMPLATE`, which the tests use with `std::tuple`; declared under the opt-in `test` feature of the checked-in [`vcpkg.json`](vcpkg.json) manifest, which the `*-vcpkg` presets select from a `VCPKG_ROOT`-configured vcpkg, or install it with your system package manager |
-| [Boost.Int128](https://github.com/cppalliance/int128) | testing the integer-class extension points against a type from outside the library, and the `<xstd/ext/boost/int128.hpp>` associations that pair it | Optional, and resolved without a manual step: `test/CMakeLists.txt` uses an installed copy where `find_package(boost_int128 CONFIG)` finds one - Boost 1.92 ships it - and otherwise fetches a pinned upstream commit. Configure with `-DXSTD_INTS_TEST_FETCH_BOOST_INT128=OFF` to build offline without it; the affected cases then run over xstd's own types alone |
+| [Boost.Int128](https://github.com/cppalliance/int128) | testing the integer-class extension points against a type from outside the library, and the `<xstd/ext/boost/int128.hpp>` associations that pair it | Optional, and resolved without a manual step: `test/CMakeLists.txt` uses an installed copy where `find_package(boost_int128 CONFIG)` finds one and otherwise fetches a pinned commit from GitHub, as CI does: it is a pre-release library, in no Boost release yet. Configure with `-DXSTD_INTS_TEST_FETCH_BOOST_INT128=OFF` to build offline without it; the affected cases then run over xstd's own types alone |
 | [Abseil](https://github.com/abseil/abseil-cpp) | testing the same extension points against a type that declares no `noexcept` anywhere, and the `<xstd/ext/absl/int128.hpp>` associations that pair it | Optional, and resolved the same way: an installed copy where `find_package(absl CONFIG)` finds one, and otherwise a pinned release tag, of which only `absl/numeric/int128.cc` is compiled. Configure with `-DXSTD_INTS_TEST_FETCH_ABSL_INT128=OFF` to build offline without it; the affected cases then do not run, no other type in the suite leaving `noexcept` off |
 | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) | testing `<xstd/ints/ext/boost/hash2.hpp>`, and the `<xstd/ints/ext/boost.hpp>` umbrella that exports it | Optional: `test/CMakeLists.txt` uses an installed copy where `find_package(boost_hash2 CONFIG)` finds one - Boost ships it from 1.88, and the `test` feature of [`vcpkg.json`](vcpkg.json) names it - and fetches nothing otherwise, its own Boost dependencies being too many to fetch alone; the hashing cases then do not run |
-| [gcovr](https://gcovr.com/) | reproducing the coverage gate | Only for the workflow below; `pip install gcovr` |
+| [gcovr](https://gcovr.com/) | reproducing the coverage gate | Pinned by hash in [`tools/gcovr-requirements.txt`](tools/gcovr-requirements.txt) as the coverage job pins it; `setup-toolchain.sh` installs it, and `tools/ci-local.sh coverage` runs the gate |
 | `clang-tidy` and `run-clang-tidy` | reproducing the clang-tidy gate | Only for the workflow below |
 | `clang-format` 22+ | the formatting gate | Run `clang-format -i` on changed files before pushing; older versions rewrite the requires-expressions in `concepts/` |
 | [FileCheck](https://pypi.org/project/filecheck/) | the codegen tests | The pure-Python port of LLVM's, pinned by hash in [`tools/filecheck-requirements.txt`](tools/filecheck-requirements.txt), which `setup-toolchain.sh` installs; LLVM's own `FileCheck` reads the same directives |
 
 ## Getting a toolchain
 
-Ubuntu 24.04 ships GCC 13 and clang 18, neither of which can build this library: GCC 13 rejects `-std=c++2c`, and
-clang-format before 22 reads `{ a * b }` in a requires-expression as a pointer declaration, so it calls files dirty
-that are clean against [`.clang-format`](.clang-format). [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh)
-installs the `stable` column of [README.md](README.md)'s matrix — GCC 15, clang 22, libc++ 22, clang-format 22, and Boost with
-Boost.Test — from apt.llvm.org and the Ubuntu toolchain PPA:
+Ubuntu 24.04 ships GCC 13, clang 18, CMake 3.28 and Boost 1.83, and none of them is what CI builds with: GCC 13
+rejects `-std=c++2c`, `CMakeLists.txt` asks for CMake 3.30, clang-format before 22 reads `{ a * b }` in a
+requires-expression as a pointer declaration, so it calls files dirty that are clean against
+[`.clang-format`](.clang-format), and Boost 1.83 has neither the Boost.Align package the test suite asks for nor
+Boost.Hash2. [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) brings a container as close to the GitHub Actions
+ladders as an Ubuntu box gets, every rung of [README.md](README.md)'s matrix and the Boost CI resolves:
+
+- GCC 15 and 16 from the Ubuntu toolchain PPA, and the GCC trunk snapshot the development rung uses, as `g++-17`;
+- clang 22, 23 and trunk, as `clang++-24`, each with its clang-tidy, and clang-format 22 and libc++ 22, from apt.llvm.org;
+- GCC 15's 32-bit multilib, for the i686 leg;
+- the same clang-format 22 as an unversioned `clang-format`, FileCheck, gcovr and CMake, from PyPI, pinned by hash;
+- actionlint at the release the actionlint job installs, checked against its published SHA-256;
+- Boost 1.92's Align, Hash2 and Test, built by GCC 15 from Boost's CMake release tarball, checked against the SHA-256
+  Boost publishes, into `/usr/local`.
 
 ```sh
 tools/setup-toolchain.sh
 ```
 
-`XSTD_TOOLCHAIN_FULL=1` adds GCC 16, the qualification rung, whose libstdc++ is the oldest carrying
-`<inplace_vector>`. The script is idempotent, so re-running it on a warm container is safe.
+apt's libc++ packages exclude one another, so libc++ stays at 22; the script names the command that swaps in another
+for a libc++ leg of a newer rung. The script is idempotent, so re-running it on a warm container is safe.
+
+`tools/setup-toolchain.sh --stable` installs the stable rung alone: GCC 15, clang 22 with its clang-tidy and libc++,
+clang-format 22, FileCheck and CMake. The codegen, benchmark, exhaustive and proof workflows build on that rung and
+nothing else, so they call it that way rather than spend minutes on the rest.
 
 In a [Claude Code cloud](https://code.claude.com/docs/en/claude-code-on-the-web) environment, the environment's
 setup script runs it, so every session starts with the rung already in place. That field holds a script rather than
@@ -89,20 +102,27 @@ cmake --preset no-tests
 cmake --build --preset no-tests
 ```
 
-The full suite needs Boost.Test, from the table above:
+The full suite needs Boost.Test, from the table above, and a compiler from the ladders. Name it: on Ubuntu 24.04 the default `c++` is GCC 13, which rejects `-std=c++2c`. With what `setup-toolchain.sh` installs, no vcpkg is needed:
 
 ```sh
-cmake -S . -B build
-cmake --build build
-ctest --test-dir build --output-on-failure
+cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-15
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure --parallel
 ```
 
-The repository also provides CMake presets for common local configurations:
+The repository also provides CMake presets for common local configurations. They name no compiler, so `CXX` picks it on the first configure:
 
 ```sh
-cmake --preset dev
+CXX=g++-15 cmake --preset dev
 cmake --build --preset dev
 ctest --preset dev
+```
+
+The Boost.Test that `setup-toolchain.sh` builds is GCC 15's, and serves the released rungs, GCC 15 and 16 and clang 22 and 23. A compiler on another standard library, or on the trunk snapshot's libstdc++, needs a Boost.Test built against it: linked with libc++ or with GCC 17's libstdc++, GCC 15's fails before the first test, on a corrupted parameter. CI gets one from vcpkg, which builds Boost with the compiler under test. Locally, [`tools/boost-test.sh`](tools/boost-test.sh) builds the framework from the installed headers with the compiler and flags given, in about a minute, and prints the `-D` that makes the suite use it:
+
+```sh
+cmake -S . -B build-libcxx -DCMAKE_CXX_COMPILER=clang++-22 -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ \
+      "$(tools/boost-test.sh build-boost-test-libcxx clang++-22 -stdlib=libc++)"
 ```
 
 The `*-vcpkg` presets additionally resolve the Boost dependencies through vcpkg, using the toolchain at `VCPKG_ROOT`:
@@ -137,6 +157,26 @@ gcovr --root . --exclude 'test/.*' --exclude 'build/.*' \
 cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 run-clang-tidy -quiet -p build "$PWD/build/test/header_self_sufficiency/.*"
 ```
+
+[`tools/ci-local.sh`](tools/ci-local.sh) runs the CI jobs' Linux legs on what `setup-toolchain.sh` installs, so a change fails here, fast, rather than after hours in CI's queue:
+- the format gate and actionlint;
+- the suite on GCC 15, 16 and 17-SVN, and on clang 22, 23 and 24-SVN, each clang on its own rung's libstdc++;
+- the libc++ 22, i686 and BMI2 legs;
+- clang-tidy 22, 23 and 24-SVN, with the clang-tidy job's passes;
+- the codegen tests on GCC 15 and clang 22, and the three consumption models;
+- the coverage gate, gcovr over GCC 15's instrumented suite at 100% of lines and branches;
+- the sanitizer ladder's five kinds on the stable rung: ASan and LSan, and UBSan, on GCC 15; UBSan and implicit conversions on clang 22.
+
+Legs run cheapest first, so a formatting slip fails in seconds, and the run stops at the first failure; `--keep-going` runs them all regardless. `--quick` is the set to pass before a commit, and a full run is the one to pass before a push or a pull request. Each leg logs to `build/ci-local/<leg>.log`, and the run ends in one line per leg. The suite legs build in Debug, or in `CI_LOCAL_BUILD_TYPE`; CI builds both.
+
+```sh
+tools/ci-local.sh --quick          # before a commit
+tools/ci-local.sh                  # before a push or a pull request
+tools/ci-local.sh gcc-17 tidy-24   # the legs named
+tools/ci-local.sh --list           # every leg, in the order a full run takes them
+```
+
+MSVC, clang-cl, MinGW and Apple Clang have no Linux equivalent, and Emscripten, CodeQL and the sanitizer ladder's other rungs stay CI's.
 
 ## Fuzzing
 
