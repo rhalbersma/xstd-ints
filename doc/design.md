@@ -589,27 +589,31 @@ the strict dialect, `<charconv>` only outside it, and `<ostream>` in neither.
 
 ### Formatting
 
-`<xstd/ints/format.hpp>` formats a `div_result` as `(quotient, remainder)`, through two partial
+`<xstd/ints/format.hpp>` formats a `div_result` as `(quotient, remainder)`, through three partial
 specializations of `std::formatter`. `div_result` is tuple-like, so where the standard
 library can format a tuple of the element type the specialization to use inherits
 `std::formatter<std::tuple<I const&, I const&>>` and hands it `std::tie` — the
 standard's own rendering, with no intermediate string.
 
 That delegation can be missing in two ways that do not coincide: the element type
-may not be formattable, which is the Microsoft STL's 128-bit classes, or tuple
-formatting itself may be missing, p2286 having reached libstdc++ only in GCC 15.
-Testing `formattable` on the *tuple* covers both with one predicate. Where it
-does not hold, the other specialization renders the members through
-`xstd::to_chars` into an inherited string formatter, so `div_result` formats on every
-implementation and for either signedness — for every element type `xstd::to_chars`
-itself covers, which is to say every one with an unsigned counterpart.
+may not be formattable, which is Abseil's `int128` and the Microsoft STL's 128-bit
+classes, or tuple formatting itself may be missing, p2286 having reached libstdc++
+only in GCC 15. Where only the element type is missing, the second specialization
+renders each member through `xstd::to_chars` and hands the two digit strings to a
+tuple formatter of an exposition-only type, so the spec grammar stays the tuple's:
+`{:n}` and `{:m}` mean the same for `div_result<absl::int128>` as for
+`div_result<int>`, and a format string written for one element type compiles for the
+other. Where tuple formatting itself is missing, the third renders the same text into
+an inherited string formatter, so `div_result` formats on every implementation and
+for either signedness — for every element type `xstd::to_chars` itself covers, which
+is to say every one with an unsigned counterpart.
 
 The choice is left to partial ordering, on the same footing as `to_chars`'s
-overloads: the tuple one requires the base it inherits, spelled where it applies,
-on top of the counterpart the other asks for, so its constraints are a superset
-and it wins wherever both are viable. Both produce `(quotient, remainder)`, so which runs is
-not observable in the output — only in the spec grammar, `parse()` being
-inherited, which is why the README says so.
+overloads: each specialization's constraints are a superset of the next one's, the
+tuple-of-digits one adding that the library formats tuples, and the tuple-of-`I` one
+adding that it formats `I`. All three produce `(quotient, remainder)`. Which one runs
+shows only in the spec grammar, which is the tuple's wherever the library formats
+tuples, and the string's on a library that formats none.
 
 xstd specializes `std::formatter` only for `div_result`, which is program-defined. The
 128-bit types are not xstd's to specialize for: they are built-ins or

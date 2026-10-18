@@ -89,9 +89,9 @@ Character conversion delegates the standard integral domain directly to
 Euclidean `div_euclid`, floored `div_floor`, and ceiling `div_ceil`. Their vocabulary and relevant
 rounding semantics follow [P3724R4](https://wg21.link/P3724R4), but xstd
 intentionally implements only this established four-operation family.
-A `div_result` renders as `(quotient, remainder)` for every element type it accepts, but which
-format specs it accepts depends on that type: where the standard library can
-format a tuple of it the tuple grammar applies, and otherwise a string one.
+A `div_result` renders as `(quotient, remainder)` for every element type it accepts, and takes
+the tuple format specs, `{:n}` and `{:m}` among them, for every element type wherever the
+standard library formats tuples; on one that formats none, it takes a string's.
 
 ```cpp
 #include <xstd/ints/cstdlib.hpp>
@@ -320,7 +320,9 @@ where `size_t` is 32 bits but 64-bit integers keep their 8-byte alignment. The G
 adds a second 32-bit leg, i686 with GCC `-m32`, where `size_t` is 32 bits and there is no
 `__int128`. The MSVC workflow adds a third, x86 with VS 2026 in Debug and Release, where
 `xstd::uint128` is the MSVC STL's portable 128-bit class and the bit permutations take their
-portable kernels.
+portable kernels. One more GCC leg runs the trunk snapshot in C++29 mode,
+`-std=gnu++2d`, the one mode in which libstdc++ declares `shl` and `shr`: it is where the
+overloads forwarding to `<bit>` compile and their agreement tests run.
 
 ## License
 
