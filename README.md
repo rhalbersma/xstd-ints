@@ -89,9 +89,9 @@ Character conversion delegates the standard integral domain directly to
 Euclidean `div_euclid`, floored `div_floor`, and ceiling `div_ceil`. Their vocabulary and relevant
 rounding semantics follow [P3724R4](https://wg21.link/P3724R4), but xstd
 intentionally implements only this established four-operation family.
-A `div_result` renders as `(quotient, remainder)` for every element type it accepts, but which
-format specs it accepts depends on that type: where the standard library can
-format a tuple of it the tuple grammar applies, and otherwise a string one.
+A `div_result` renders as `(quotient, remainder)` for every element type it accepts, and takes
+the tuple format specs, `{:n}` and `{:m}` among them, for every element type wherever the
+standard library formats tuples; on one that formats none, it takes a string's.
 
 ```cpp
 #include <xstd/ints/cstdlib.hpp>

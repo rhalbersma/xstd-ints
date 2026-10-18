@@ -20,8 +20,8 @@ concept integer =
 
         // The pair exists, which already rejects an unpaired integer-class type.
         requires {
-                typename make_signed_t<T>;
-                typename make_unsigned_t<T>;
+                typename make_signed_t<T>;   // an integer-class type has one once make_signed is specialized, as its adaptor does
+                typename make_unsigned_t<T>; // an integer-class type has one once make_unsigned is specialized, as its adaptor does
         } and
 
         // Each transformation is settled by signedness alone, not by the road taken.
@@ -29,7 +29,7 @@ concept integer =
         std::same_as<make_unsigned_t<make_signed_t<T>>, make_unsigned_t<T>> and
 
         // T is one of its own pair rather than a third type beside it.
-        (std::same_as<T, make_signed_t<T>> or std::same_as<T, make_unsigned_t<T>>);
+        (std::same_as<T, make_signed_t<T>> or std::same_as<T, make_unsigned_t<T>>); // a character type is neither half of its pair: char is not signed char
 
 } // namespace xstd
 
