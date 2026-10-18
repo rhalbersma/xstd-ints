@@ -23,15 +23,15 @@
 
 namespace xstd {
 
-// Worst case is base 2: one character per value bit, and two more when signed.
+// Worst case is base 2: one character per value bit, and two more when signed; char and the integers, as to_chars.
 template<class I>
-        requires ((std::integral<I> and not std::same_as<std::remove_cv_t<I>, bool>) or integer<I>)
+        requires (std::same_as<std::remove_cv_t<I>, char> or integer<I>)
 inline constexpr auto to_chars_max_size =
         static_cast<std::size_t>(numeric_limits<I>::digits) + (is_signed_v<I> ? 2 : 0);
 
-// The standard's own integral domain, other than its deleted bool overload.
+// The integer types and char, where the standard library's own to_chars takes them.
 template<std::integral I>
-        requires (not std::same_as<std::remove_cv_t<I>, bool>) and ints::detail::std_writes_chars<I>
+        requires ints::detail::std_writes_chars<I>
 // NOLINTNEXTLINE(readability-magic-numbers): the standard's own default base, see above
 [[nodiscard]] constexpr auto to_chars(char* first, char* last, I value, int base = 10)
         -> std::to_chars_result
