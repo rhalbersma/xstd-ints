@@ -334,3 +334,44 @@ foreach(t ${targets})
 
     add_test(NAME ${target_id} COMMAND ${target_id} --log_level=all)
 endforeach()
+
+# Each source under death/ calls one function once with an argument its precondition refuses, and
+# passes only by failing that assert, which death/expect_assert.cmake checks as its test launcher.
+# They are registered only where assert is live, so where neither CMAKE_CXX_FLAGS nor the
+# build type's own flags define NDEBUG, and not under a multi-config generator, whose build type is
+# chosen after configuring. Not on Windows either, where a failed assert in the debug runtime opens a
+# dialog that no CI runner dismisses.
+get_property(${project_id}_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+string(TOUPPER "${CMAKE_BUILD_TYPE}" build_type_id)
+if(NOT WIN32 AND NOT ${project_id}_is_multi_config AND NOT "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${build_type_id}}" MATCHES "NDEBUG")
+    set(death_source_dir ${CMAKE_CURRENT_SOURCE_DIR}/death)
+    file(
+        GLOB_RECURSE death_sources
+        CONFIGURE_DEPENDS
+        RELATIVE ${death_source_dir}
+        ${death_source_dir}/*.cpp
+    )
+    foreach(d ${death_sources})
+        # A case over Boost.Int128, the one type outside <bit> and std::to_chars on every platform, needs it resolved.
+        file(STRINGS ${death_source_dir}/${d} death_needs_boost_int128 REGEX "#include[ \t]*<boost/int128")
+        if(death_needs_boost_int128 AND NOT TARGET Boost::int128)
+            continue()
+        endif()
+
+        # death/ints/cstdlib/div/zero_denominator.cpp is death.ints.cstdlib.div.zero_denominator.
+        string(REGEX REPLACE "[.]cpp$" "" death_id ${d})
+        string(REPLACE "/" "." death_id death.${death_id})
+
+        add_executable(${death_id} death/${d})
+        target_link_libraries(
+            ${death_id} PRIVATE
+            xstd::ints
+            ${${project_id}_test_boost_int128}
+            ${project_id}_test_options
+        )
+
+        # The launcher comes before the cross-compiling emulator, so the script runs whatever the test would.
+        set_target_properties(${death_id} PROPERTIES TEST_LAUNCHER "${CMAKE_COMMAND};-P;${death_source_dir}/expect_assert.cmake;--")
+        add_test(NAME ${death_id} COMMAND ${death_id})
+    endforeach()
+endif()

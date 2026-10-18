@@ -30,6 +30,8 @@ Match the surrounding code's style by eye where `.clang-format` doesn't have an 
 
 Keep a focused test source for each public function, concept, and trait, mirroring its header path under `test/src/`. A source matching an umbrella header (for example, `cstdlib.cpp`, `concepts.cpp`, or `type_traits.cpp`) tests only identities that span several focused facilities. Integer-generic tests use the signed, unsigned, or combined exact-width type tuples in `test/include/test/exact_width_types.hpp` so the standard, xstd, optional third-party, and compiler bit-precise implementations stay in the same test matrix.
 
+Every precondition the library checks with `assert` is held by a death test as well: a source under `test/death/`, at its header's path as under `test/src/` and named for the mistake, whose `main` makes one call that violates it. [`test/death/expect_assert.cmake`](test/death/expect_assert.cmake) runs each as its test launcher and passes it only when the process fails an assert under `xstd/ints/`, so a call that returns, or a sanitizer that stops it first, fails the test. They exist only where `assert` does: CMake registers them where neither `CMAKE_CXX_FLAGS` nor the build type's flags define `NDEBUG`, as in a Debug build, and not on Windows or under a multi-config generator. `ctest --test-dir build -R '^death\.'` runs them alone.
+
 The library itself has no dependencies outside `<xstd/ext/>`, whose headers each need the library they adapt - see [README.md](README.md). Its test suite has more, and none of those are needed to *use* xstd:
 
 | Tool | Needed for | Notes |

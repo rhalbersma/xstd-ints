@@ -101,7 +101,7 @@ tidy() {
                 "clang-tidy-${version}" --quiet "${header}" -- -x c++-header "${std}" -I"${root}/include" ${flags} \
                         -isystem "${dir}/_deps/absl_int128-src" -isystem "${dir}/_deps/boost_int128-src/include" || status=1
         done < <(find "${root}/include" -type f -name '*.hpp' ! -path "${root}/include/xstd/config/*" -print0)
-        "run-clang-tidy-${version}" -quiet -p "${dir}" "${root}/test/src/.*" || status=1
+        "run-clang-tidy-${version}" -quiet -p "${dir}" "${root}/test/.*" || status=1
         return "${status}"
 }
 
