@@ -19,7 +19,7 @@ struct make_unsigned
 {};
 
 template<class T>
-using make_unsigned_t = make_unsigned<T>::type;
+using make_unsigned_t = make_unsigned<T>::type; // none for an integer-class type until make_unsigned is specialized for it, as its adaptor does
 
 // [meta.trans.sign]/2's whole mandated domain, less the cv bool std declines to pair there.
 template<class T>
