@@ -40,7 +40,7 @@ constexpr auto in_domain(T x)
 }
 
 template<class T>
-constexpr auto agrees_at(int k)
+[[nodiscard]] constexpr auto agrees_at(int k)
         -> bool
 {
         auto agrees = true;

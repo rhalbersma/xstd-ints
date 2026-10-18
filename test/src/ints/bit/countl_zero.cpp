@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsTheBodys)
 namespace {
 
 template<class T>
-constexpr auto agrees_with_the_oracle()
+[[nodiscard]] constexpr auto agrees_with_the_oracle()
         -> bool
 {
         auto agrees = true;

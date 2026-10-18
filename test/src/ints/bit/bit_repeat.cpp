@@ -35,7 +35,7 @@ template<int L>
 concept repeats_as_a_constant = requires { typename std::integral_constant<std::uint32_t, xstd::bit_repeat(std::uint32_t{1}, L)>; };
 
 template<class T>
-constexpr auto agrees_at(int k)
+[[nodiscard]] constexpr auto agrees_at(int k)
         -> bool
 {
         auto agrees      = true;

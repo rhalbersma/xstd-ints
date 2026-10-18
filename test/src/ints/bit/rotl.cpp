@@ -36,7 +36,7 @@ concept std_answers = requires (T x, int s) { std::rotl(x, s); };
 
 // Counts that reduce differently: zero, one and the width with its neighbours either way, and the int extremes.
 template<class T>
-constexpr auto counts() noexcept
+[[nodiscard]] constexpr auto counts() noexcept
 {
         constexpr auto N = xstd::numeric_limits<T>::digits;
         return std::array{0, 1, -1, N - 1, N, N + 1, 1 - N, -N, -N - 1, (2 * N) + 3, std::numeric_limits<int>::min(), std::numeric_limits<int>::max()};

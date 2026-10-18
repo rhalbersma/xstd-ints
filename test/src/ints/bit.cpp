@@ -31,7 +31,7 @@ using basis_unsigned_types = decltype(std::tuple_cat(
 ));
 
 // P3104R5's countr_zero, its alternating masks named by bit_repeat rather than spelled as magic numbers.
-constexpr auto countr_zero_by_repeat(std::uint32_t v)
+[[nodiscard]] constexpr auto countr_zero_by_repeat(std::uint32_t v)
         -> int
 {
         auto c = 32;

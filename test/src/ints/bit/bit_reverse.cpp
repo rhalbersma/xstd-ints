@@ -28,7 +28,7 @@ template<class T>
 concept xstd_answers = requires (T x) { xstd::bit_reverse(x); };
 
 template<class T>
-constexpr auto agrees_at(int k)
+[[nodiscard]] constexpr auto agrees_at(int k)
         -> bool
 {
         auto agrees = true;
