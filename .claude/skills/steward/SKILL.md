@@ -24,8 +24,9 @@ file covers the rest: what happens between opening a pull request and merging it
 
 ## Red CI
 
-Every check in CONTRIBUTING.md's table gates the merge, and none is advisory. That includes the development rungs
-(`17-SVN`, `24-SVN`, `2026-Preview`), libc++, clang-cl on VS 2022, ClusterFuzzLite and Codecov's `patch`.
+Every check that runs on a pull request is fixed before it merges, and none is advisory. That includes the
+development rungs (`17-SVN`, `24-SVN`, `2026-Preview`), libc++, clang-cl on VS 2022, ClusterFuzzLite and
+Codecov's `patch`. CONTRIBUTING.md's table lists the ones branch protection requires.
 
 1. **Read the leg, not the gate.** `<job> / all` only says that some leg failed. Fetch the failing leg's log and find
    the first error. A compiler crash prints a stack dump that names the declaration it was generating.
