@@ -133,6 +133,7 @@ target_sources(
         include/xstd/ints/type_traits/is_unsigned.hpp
         include/xstd/ints/type_traits/make_signed.hpp
         include/xstd/ints/type_traits/make_unsigned.hpp
+        include/xstd/ints/type_traits/detail/promoted.hpp
         include/xstd/ints/type_traits/promoted.hpp
 )
 

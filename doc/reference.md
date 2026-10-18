@@ -419,11 +419,7 @@ namespace xstd {
   template<size_t N> struct make_unsigned<signed _BitInt(N)>;
 
   template<class T>
-    struct integral_promoted : type_identity<decltype(+declval<const T&>())> {};
-  template<class T>
-    using promoted = conditional_t<integral<T>, integral_promoted<T>, type_identity<T>>;
-  template<class T>
-    using promoted_t = typename promoted<T>::type;
+    using promoted_t = see below;
 }
 ```
 
@@ -519,14 +515,13 @@ Each is declared, where the compiler defines `__BITINT_MAXWIDTH__`, in the heade
 - *Remarks:* A translation unit that can name either trait has them, whatever else it includes.
   *Untested:* each test source that asks either trait of a `_BitInt` also reaches `<xstd/ints/cstdint/bit_int.hpp>`.
 
-### `integral_promoted`, `promoted`, `promoted_t`
+### `promoted_t`
 
 - `promoted_t<T>` is the type of `+a` for an lvalue `a` of type `const T` where `T` is `std::integral`, which is what
   [conv.prom] gives, and `T` otherwise. Narrow built-ins promote to `int`, or to `int` or `unsigned` as the platform
   decides, `bool` to `int`, and `int` and wider are their own; a cv-qualified type promotes as the unqualified type
   does, `short const` to `int`. *Test:* `type_traits/promoted.cpp: MatchesTheIntegralPromotions`.
-- A non-integral type's own `operator+` is never asked: `integral_promoted` is a class of its own so that
-  `conditional_t` does not form `decltype(+a)` for the branch it discards.
+- A non-integral type's own `operator+` is never asked: `decltype(+a)` is formed only for an integral `T`.
   *Test:* `type_traits/promoted.cpp: MatchesTheIntegralPromotions`, over `type_identity<void>`.
 - For an integer-class type it is the type itself, which the closure requirements of `integer_class` rely on, and so
   it is for a bit-precise type, which is exempt from integral promotion whichever branch it takes: `uint128`,
