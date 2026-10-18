@@ -23,6 +23,7 @@
 [![MSVC-Analyze](https://github.com/rhalbersma/xstd-ints/actions/workflows/msvc-analyze.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/msvc-analyze.yml)
 [![CodeQL](https://github.com/rhalbersma/xstd-ints/actions/workflows/codeql.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rhalbersma/xstd-ints/badge)](https://scorecard.dev/viewer/?uri=github.com/rhalbersma/xstd-ints)
+[![Documentation](https://github.com/rhalbersma/xstd-ints/actions/workflows/pages.yml/badge.svg)](https://rhalbersma.github.io/xstd-ints/)
 
 xstd-ints is a small, portable, header-only collection of integer extensions to
 the C++ standard library: concepts, traits, limits, division, alignment and
@@ -35,9 +36,9 @@ public APIs are in namespace `xstd`.
 
 
 ```cpp
-#include <climits>
 #include <xstd/ints/cstdlib.hpp>
 #include <xstd/ints/memory.hpp>
+#include <climits>
 
 static_assert(xstd::unsigned_abs(INT_MIN) == static_cast<unsigned>(INT_MAX) + 1u);
 static_assert(xstd::align_up(100uz, 64) == 128);
@@ -112,10 +113,12 @@ value of `T` at any base, so a buffer of it never comes back `value_too_large`:
 #include <array>
 #include <string_view>
 
+#ifdef XSTD_HAS_INT128
 auto const value = xstd::numeric_limits<xstd::uint128>::max();
 auto buffer = std::array<char, xstd::to_chars_max_size<xstd::uint128>>{};
 auto const [ptr, ec] = xstd::to_chars(buffer.data(), buffer.data() + buffer.size(), value, 16);
 auto const text = std::string_view(buffer.data(), ptr); // thirty-two f's
+#endif
 ```
 
 An `<xstd/ints/ext/>` header pairs a third-party integer class with its counterpart,
@@ -130,7 +133,8 @@ library it adapts with it, so naming it is enough:
 using i128 = boost::int128::int128;
 static_assert(xstd::signed_integer<i128>);
 
-auto const [quotient, remainder] = xstd::div_floor(i128{-8}, i128{3});
+constexpr auto result = xstd::div_floor(i128{-8}, i128{3});
+static_assert(result.quotient == i128{-3} and result.remainder == i128{1});
 ```
 
 Boost.Hash2 writes integers of at most 64 bits, takes `__int128` as integral only
@@ -146,9 +150,20 @@ as an `int64_t` does and a `bit_int<24>` as an `int32_t`, in constant evaluation
 #include <xstd/ints/cstdint.hpp>
 #include <xstd/ints/ext/boost/hash2.hpp> // brings Boost.Hash2's flavors with it
 #include <boost/hash2/fnv1a.hpp>
+#include <cstdint>
 
-auto h = boost::hash2::fnv1a_64{};
-xstd::hash_append_int(h, boost::hash2::little_endian_flavor{}, xstd::uint128{1} << 100);
+template<class... T>
+[[nodiscard]] constexpr auto fnv1a_of(T... values)
+        -> std::uint64_t
+{
+        auto h = boost::hash2::fnv1a_64{};
+        (xstd::hash_append_int(h, boost::hash2::little_endian_flavor{}, values), ...);
+        return h.result();
+}
+
+#ifdef XSTD_HAS_INT128
+static_assert(fnv1a_of(xstd::uint128{1} << 100) == fnv1a_of(std::uint64_t{0}, std::uint64_t{1} << 36)); // low word first
+#endif
 ```
 
 See [the reference](doc/reference.md) for each entity's specification and the test behind each
@@ -164,7 +179,7 @@ integer-class type, and [CONTRIBUTING.md](CONTRIBUTING.md) to build the library 
 | `<xstd/ints/bit.hpp>` | `bit_ceil` <br> `bit_compress` <br> `bit_expand` <br> `bit_floor` <br> `bit_repeat` <br> `bit_reverse` <br> `bit_select` <br> `bit_width` <br> `byteswap` <br> `countl_one` <br> `countl_zero` <br> `countr_one` <br> `countr_zero` <br> `has_single_bit` <br> `popcount` <br> `rotl` <br> `rotr` <br> `shl` <br> `shr` | `std::bit_ceil`, widened to the 128-bit integer classes and bit-precise widths `<bit>` declines <br> Gather the bits a mask selects into the low bits (PEXT) <br> Scatter the low bits to the positions a mask selects (PDEP) <br> `std::bit_floor`, widened the same way <br> Repeat the low `l` bits across the width <br> Mirror the bits, any xstd unsigned integer <br> Position of the `k`-th one bit, the inverse of rank (xstd extension) <br> `std::bit_width`, widened the same way <br> `std::byteswap`, widened to every xstd integer whose width is a whole number of bytes, and taking whatever `std::byteswap` takes, `bool` and the character types included <br> `std::countl_one`, widened the same way <br> `std::countl_zero`, widened the same way <br> `std::countr_one`, widened the same way <br> `std::countr_zero`, widened the same way <br> `std::has_single_bit`, widened the same way <br> `std::popcount`, widened the same way <br> `std::rotl`, widened the same way <br> `std::rotr`, widened the same way <br> Shift left by any count of any integer type, a negative count shifting right; never undefined <br> Shift right the same way, rounding towards negative infinity | [bit.pow.two] <br> [P3104R6](https://wg21.link/P3104R6) <br> [P3104R6](https://wg21.link/P3104R6) <br> [bit.pow.two] <br> [P3104R6](https://wg21.link/P3104R6) <br> [P3104R6](https://wg21.link/P3104R6) <br> none <br> [bit.pow.two] <br> [bit.byteswap] <br> [bit.count] <br> [bit.count] <br> [bit.count] <br> [bit.count] <br> [bit.pow.two] <br> [bit.count] <br> [bit.rotate] <br> [bit.rotate] <br> [P3793R2](https://wg21.link/P3793R2) <br> [P3793R2](https://wg21.link/P3793R2) |
 | `<xstd/ints/charconv.hpp>` | `to_chars` <br> `to_chars_max_size` | `std::to_chars`, widened to xstd integers it does not cover <br> Buffer size that holds any value of `T` at any base | [charconv.to.chars] <br> none |
 | `<xstd/ints/cstdint.hpp>` | `bit_int<N>` <br> `bit_uint<N>` <br> `bit_int_max_width` <br> `int128` <br> `uint128` | Native bit-precise signed integer (when available) <br> Native bit-precise unsigned integer (when available) <br> Maximum native bit-precise width (when available) <br> Platform 128-bit signed integer (when available) <br> Platform 128-bit unsigned integer (when available) | [P3666R0](https://wg21.link/P3666R0) <br> [P3666R0](https://wg21.link/P3666R0) <br> none <br> none <br> none |
-| `<xstd/ints/cstdlib.hpp>` | `div_result` <br> `sign` <br> `abs` <br> `unsigned_abs` <br> `div` <br> `div_euclid` <br> `div_floor` <br> `div_ceil` | Defaulted equality comparison <br> `-1`, `0`, or `1`; `0` or `1` when unsigned <br> `constexpr`, any xstd integer <br> Total `\|x\|`, returning the unsigned counterpart <br> Truncated division, any xstd integer <br> Euclidean division <br> Floored division <br> Ceiling division | none <br> [Boost.Math](https://www.boost.org/doc/libs/1_80_0/libs/math/doc/html/math_toolkit/sign_functions.html) <br> [p0533r9](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0533r9.pdf) (reviewed implementation wording) <br> [Rust `unsigned_abs`](https://doc.rust-lang.org/std/primitive.i32.html#method.unsigned_abs) (no C++ equivalent) <br> [p0533r9](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0533r9.pdf) (reviewed implementation wording) <br> [Euclidean division](https://en.wikipedia.org/wiki/Euclidean_division) <br> [Floored division](http://research.microsoft.com/pubs/151917/divmodnote-letter.pdf) <br> [P3724R4](https://wg21.link/P3724R4) (`div_rem_to_pos_inf`) |
+| `<xstd/ints/cstdlib.hpp>` | `div_result` <br> `sign` <br> `abs` <br> `unsigned_abs` <br> `div` <br> `div_euclid` <br> `div_floor` <br> `div_ceil` | Defaulted equality comparison <br> `-1`, `0`, or `1`; `0` or `1` when unsigned <br> `constexpr`, any xstd integer <br> Total <code>&#124;x&#124;</code>, returning the unsigned counterpart <br> Truncated division, any xstd integer <br> Euclidean division <br> Floored division <br> Ceiling division | none <br> [Boost.Math](https://www.boost.org/doc/libs/1_80_0/libs/math/doc/html/math_toolkit/sign_functions.html) <br> [p0533r9](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0533r9.pdf) (reviewed implementation wording) <br> [Rust `unsigned_abs`](https://doc.rust-lang.org/std/primitive.i32.html#method.unsigned_abs) (no C++ equivalent) <br> [p0533r9](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0533r9.pdf) (reviewed implementation wording) <br> [Euclidean division](https://en.wikipedia.org/wiki/Euclidean_division) <br> [Floored division](http://research.microsoft.com/pubs/151917/divmodnote-letter.pdf) <br> [P3724R4](https://wg21.link/P3724R4) (`div_rem_to_pos_inf`) |
 | `<xstd/ints/ext/absl.hpp>` | `make_unsigned<absl::int128>` <br> `make_signed<absl::uint128>` | Pairs Abseil's two integer-class types, so each models `integer` | none <br> none |
 | `<xstd/ints/ext/boost.hpp>` | `make_unsigned<boost::int128::int128>` <br> `make_signed<boost::int128::uint128>` <br> `hash_append_int` | Pairs Boost.Int128's two integer-class types, so each models `integer` <br> Hashes any xstd integer's value, never its object representation, into a Boost.Hash2 algorithm; a function to call, which `hash_append` does not find | none <br> none <br> none |
 | `<xstd/ints/format.hpp>` | `formatter<div_result>` | `std::format` support for every element type `div_result` accepts | [p3391](https://wg21.link/P3391R3) (reviewed constexpr-format wording) |

@@ -5,8 +5,9 @@
 #          http://www.boost.org/LICENSE_1_0.txt)
 
 # Runs the GitHub Actions jobs' Linux legs on what setup-toolchain.sh installs, so a change fails here, fast, before
-# it waits on CI's runners. Legs run cheapest first and the run stops at the first that fails. Each leg works under
-# build/ci-local/<leg> and logs to build/ci-local/<leg>.log, and the run ends in one line per leg.
+# it waits on CI's runners. Legs run cheapest first and the run stops at the first that fails. The site leg builds the
+# documentation as the Pages workflow does. Each leg works under build/ci-local/<leg> and logs to
+# build/ci-local/<leg>.log, and the run ends in one line per leg.
 #
 #   tools/ci-local.sh --quick             before a commit: format, actionlint, GCC 15, clang 22 and clang-tidy 22
 #   tools/ci-local.sh                     before a push or a pull request: every leg
@@ -32,7 +33,7 @@ cmake="${local_bin}/cmake"
 readonly cmake
 
 # Cheapest first, so a slip in formatting or a workflow fails in seconds rather than after an hour of compiling.
-readonly all_legs=(format actionlint gcc-15 clang-22 tidy-22 codegen consumption gcc-16 clang-23 gcc-17 clang-24
+readonly all_legs=(format actionlint site gcc-15 clang-22 tidy-22 codegen consumption gcc-16 clang-23 gcc-17 clang-24
                    libcxx-22 i686 gcc-bmi2 clang-bmi2 tidy-23 tidy-24 coverage asan-gcc ubsan-gcc ubsan-clang
                    implicit-conversion)
 readonly quick_legs=(format actionlint gcc-15 clang-22 tidy-22)
@@ -157,10 +158,22 @@ format() {
         find "${root}/include" "${root}/test" -regex '.*\.\(hpp\|cpp\)' -print0 | xargs -0 clang-format-22 --dry-run --Werror
 }
 
+# The Pages workflow's build: MkDocs Material, pinned by hash, into a virtual environment of its own, then the site in
+# --strict mode, which fails on a link to a page or an anchor that does not exist.
+site() {
+        local dir="${out}/site"
+        if [ ! -x "${dir}/venv/bin/mkdocs" ]; then
+                python3 -m venv "${dir}/venv" \
+                        && "${dir}/venv/bin/pip" install --quiet --require-hashes -r "${root}/tools/mkdocs-requirements.txt" || return 1
+        fi
+        (cd "${root}" && PYTHONDONTWRITEBYTECODE=1 "${dir}/venv/bin/mkdocs" build --strict --site-dir "${dir}/html")
+}
+
 run_leg() {
         case "$1" in
                 format) format ;;
                 actionlint) actionlint ;;
+                site) site ;;
                 gcc-1[56]) suite "$1" "g++-${1#gcc-}" "" "${build_type}" ;;
                 clang-2[23]) suite "$1" "clang++-${1#clang-}" "$(gcc_for_clang "${1#clang-}")" "${build_type}" ;;
                 # The trunk libstdc++ is newer than the GCC 15 that built the installed Boost.Test.

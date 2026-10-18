@@ -7,7 +7,8 @@ When adding or changing a public utility:
 1. Add or update the relevant header under `include/xstd/`.
 2. Add or update matching tests under `test/src/`; CMake creates one test executable per `.cpp` file in that directory.
 3. Build and test locally (see below).
-4. Update the feature table and examples in [README.md](README.md) when the public API changes.
+4. Update the feature table and examples in [README.md](README.md) when the public API changes. Each ```` ```cpp ```` block
+   there is compiled as a test, so an example includes what it uses and declares what it names.
 
 ## What a PR must satisfy before it can merge
 
@@ -19,6 +20,8 @@ This repository enforces its quality bar through CI rather than through review d
 - **No new sanitizer failures.** The [sanitizers workflow](.github/workflows/sanitizers.yml) must stay green.
 - **The bit kernels compile to the instructions they exist for.** The [Codegen workflow](.github/workflows/codegen.yml) compiles [`codegen/`](codegen) to assembly with the stable rung's GCC and Clang, on an x86-64 and an AArch64 runner, and reads it with FileCheck - see [Codegen tests](#codegen-tests) below.
 - **The public headers stay self-sufficient.** Each header is compiled as its own translation unit (see `test/CMakeLists.txt`); don't rely on include order from another header.
+- **The README's examples compile.** `test/CMakeLists.txt` writes each ```` ```cpp ```` block of [README.md](README.md) to a translation unit of its own, `readme.example<n>`, built with the tests' warnings on every leg. An example that includes an `<xstd/ints/ext/>` header is built where the library it adapts resolved, as that header's own test is, and one that names `xstd::int128` or `xstd::uint128` tests `XSTD_HAS_INT128` itself, as a test source does.
+- **The documentation site builds.** The [Pages workflow](.github/workflows/pages.yml) runs `mkdocs build --strict` over the README and `doc/`, which fails on a link to a page or an anchor that does not exist, and deploys the site from `main`.
 - **`clang-format` is clean.** The [Clang-Format workflow](.github/workflows/clang-format.yml) runs `clang-format --dry-run --Werror` over every header and test source against [`.clang-format`](.clang-format), so any diff fails the job. Run `clang-format -i` on changed files before pushing, with **version 22 or newer**: before 22, clang-format reads `{ a * b }` in a requires-expression as a pointer declaration and rewrites the binary-operator rows of `integer_class.hpp` and `nothrow_const_operators.hpp`. The remaining `// clang-format off` / `// clang-format on` guards are the hand-laid-out test-data tables, which clang-format cannot express; don't add new guards without a comparable reason.
 - **Workflow files pass `actionlint`.** The [Actionlint workflow](.github/workflows/actionlint.yml) validates GitHub Actions syntax and expressions.
 - **The documented consumption methods work.** The [Consumption workflow](.github/workflows/consumption.yml) builds a consumer using `find_package`, `add_subdirectory`, and `FetchContent`.
@@ -44,6 +47,7 @@ The library itself has no dependencies outside `<xstd/ints/ext/>`, whose headers
 | `clang-tidy` and `run-clang-tidy` | reproducing the clang-tidy gate | Only for the workflow below |
 | `clang-format` 22+ | the formatting gate | Run `clang-format -i` on changed files before pushing; older versions rewrite the requires-expressions in `concepts/` |
 | [FileCheck](https://pypi.org/project/filecheck/) | the codegen tests | The pure-Python port of LLVM's, pinned by hash in [`tools/filecheck-requirements.txt`](tools/filecheck-requirements.txt), which `setup-toolchain.sh` installs; LLVM's own `FileCheck` reads the same directives |
+| [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) | building the documentation site | Hash-pinned in [`tools/mkdocs-requirements.txt`](tools/mkdocs-requirements.txt); `ci-local.sh`'s site leg installs it into a virtual environment of its own |
 
 ## Getting a toolchain
 
@@ -159,7 +163,7 @@ run-clang-tidy -quiet -p build "$PWD/build/test/header_self_sufficiency/.*"
 ```
 
 [`tools/ci-local.sh`](tools/ci-local.sh) runs the CI jobs' Linux legs on what `setup-toolchain.sh` installs, so a change fails here, fast, rather than after hours in CI's queue:
-- the format gate and actionlint;
+- the format gate and actionlint, and the site, built as the Pages workflow builds it;
 - the suite on GCC 15, 16 and 17-SVN, and on clang 22, 23 and 24-SVN, each clang on its own rung's libstdc++;
 - the libc++ 22, i686 and BMI2 legs;
 - clang-tidy 22, 23 and 24-SVN, with the clang-tidy job's passes;
@@ -177,6 +181,17 @@ tools/ci-local.sh --list           # every leg, in the order a full run takes th
 ```
 
 MSVC, clang-cl, MinGW and Apple Clang have no Linux equivalent, and Emscripten, CodeQL and the sanitizer ladder's other rungs stay CI's.
+
+### Building the documentation
+
+[`mkdocs.yml`](mkdocs.yml) serves the README as the site's index and the pages under `doc/` beside it, leaving out the
+WG21 papers and the ideas kept there, and [`tools/mkdocs_hooks.py`](tools/mkdocs_hooks.py) points each relative link,
+written for GitHub, at the page the site serves for it, or at its file on GitHub. To preview the site as it is edited:
+
+```sh
+python3 -m venv build/mkdocs && build/mkdocs/bin/pip install --require-hashes -r tools/mkdocs-requirements.txt
+build/mkdocs/bin/mkdocs serve --strict
+```
 
 ## Fuzzing
 
@@ -363,6 +378,7 @@ The names to tick under branch protection, exactly as GitHub reports them:
 | `msvc / all` | cl on VS 2022, 2026 and 2026-Preview |
 | `msvc_analyze / all` | `/analyze` on the same three rungs |
 | `sanitizers / all` | all fifteen sanitizer legs |
+| `site` | `mkdocs build --strict`: every page and anchor a link names exists |
 
 Codecov posts two more, `codecov/project` and `codecov/patch`, which carry the same 100% bar for the whole
 tree and for the diff.
@@ -375,8 +391,9 @@ branch protection requires: a leg name changes whenever a rung moves, the gate n
 
 The gate is this repository's own job, carrying the required name, beside the shared ladder it waits for. On a
 pull request, [`changes.yml`](.github/workflows/changes.yml) first compares the diff with the paths no ladder
-builds: prose, `doc/`, the suites with workflows of their own (`bench/`, `codegen/`, `exhaustive/`, `fuzz/`,
-`mutation/`, `proofs/`), `tools/`, and the workflows that are not ladders. When every changed file is one of
+builds: prose but the README, whose examples are tests, `doc/`, the suites with workflows of their own (`bench/`,
+`codegen/`, `exhaustive/`, `fuzz/`, `mutation/`, `proofs/`), `tools/`, `mkdocs.yml`, and the workflows that are not
+ladders. When every changed file is one of
 those, the ladder is skipped and its gate passes; any other file, a new directory included, runs the ladder in
 full and the gate passes only if every leg did. A push to `main`, the schedule, a manual run and the canary always
 build. The names under branch protection do not change. This table is
