@@ -15,6 +15,15 @@ concurrency:
 on:
   pull_request:
     branches: [ main ]
+    # What the fuzzers compile: the library, the targets and their build.
+    paths:
+      - 'include/**'
+      - 'fuzz/**'
+      - 'test/include/**'
+      - '.clusterfuzzlite/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+      - '.github/workflows/cflite_pr.yml'
   workflow_dispatch:
 
 jobs:

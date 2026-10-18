@@ -22,9 +22,15 @@ on:
   workflow_call:
 
 jobs:
+  # Whether this pull request can reach what the ladders build; see changes.yml.
+  changes:
+    uses: ./.github/workflows/changes.yml
+
   # One input, and not about the ladder: this library builds on every rung,
   # which is what the shared workflow defaults to.
-  gcc:
+  gcc_ladder:
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
     uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
     with:
       # Boost.Test, which vcpkg.json keeps out of its default features so that
@@ -34,6 +40,8 @@ jobs:
   # 32-bit x86: a 32-bit size_t, 4-byte alignment for 64-bit integers, and no
   # __int128. One rung in Debug, since what is under test is the target.
   i686:
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
     uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
     with:
       arch: x86
@@ -45,6 +53,8 @@ jobs:
   # above leaves to the portable kernels. One rung and one build type suffice,
   # the instructions being the processor's rather than the compiler's.
   gcc_bmi2:
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
     uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
     with:
       tiers: stable
@@ -59,9 +69,25 @@ jobs:
   # seeing the mode in CMAKE_CXX_FLAGS, it adds no -std of its own. One build
   # type, since what is under test is the standard library's.
   gcc_cxx29:
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
     uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
     with:
       tiers: development
       build_types: Debug
       cxx_flags: -std=gnu++2d
       vcpkg_features: test
+
+  # The name branch protection requires: green when the ladder passed, or when
+  # the pull request changes nothing the ladder builds.
+  all:
+    name: gcc / all
+    needs: [ changes, gcc_ladder ]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Every leg succeeded, or none was needed
+        env:
+          BUILD: ${{ needs.changes.outputs.build }}
+          RESULT: ${{ needs.gcc_ladder.result }}
+        run: test "${BUILD}" = false || test "${RESULT}" = success
