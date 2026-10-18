@@ -55,7 +55,7 @@ jobs:
 
       - name: Install the stable rung and CMake
         run: |
-          tools/setup-toolchain.sh
+          tools/setup-toolchain.sh --stable
           pip install --quiet --user --break-system-packages --require-hashes -r tools/cmake-requirements.txt
           echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
 
@@ -82,7 +82,7 @@ jobs:
 
       - name: Install the stable rung, CMake and an AArch64 standard library
         run: |
-          tools/setup-toolchain.sh
+          tools/setup-toolchain.sh --stable
           sudo apt-get install -y -qq libstdc++-14-dev-arm64-cross
           pip install --quiet --user --break-system-packages --require-hashes -r tools/cmake-requirements.txt
           echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
