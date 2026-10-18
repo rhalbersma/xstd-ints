@@ -20,12 +20,13 @@ else()
 endif()
 option(${project_option_prefix}_FUZZ_BMI2 "Build the fuzz targets with -mbmi2" ${fuzz_bmi2_default})
 
-foreach(target_id fuzz_bit_permutation)
+foreach(target_id fuzz_align fuzz_bit_permutation fuzz_div fuzz_shift fuzz_to_chars)
     add_executable(${target_id} ${target_id}.cpp)
 
     # The properties the fuzzer checks are the unit tests' own, from the test tree's header-only helpers.
     target_include_directories(
         ${target_id} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${PROJECT_SOURCE_DIR}/test/include
     )
 
