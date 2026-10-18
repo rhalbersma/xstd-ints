@@ -12,6 +12,7 @@
 #include <xstd/ints/limits/numeric_limits.hpp>     // numeric_limits
 #include <xstd/ints/type_traits/is_signed.hpp>     // is_signed_v
 #include <xstd/ints/type_traits/make_unsigned.hpp> // make_unsigned_t
+#include <bit>                                     // bit_width
 #include <cassert>                                 // assert
 #include <charconv>                                // to_chars, to_chars_result
 #include <concepts>                                // integral, same_as
@@ -54,9 +55,10 @@ template<integer I>
         // A pointer rather than a string_view: these are only ever subscripted.
         static constexpr auto* digits = "0123456789abcdefghijklmnopqrstuvwxyz";
 
-        // The unsigned counterpart holds |min()|, widened to unsigned below 6 bits, where base 36 would wrap.
-        using U          = std::conditional_t<(numeric_limits<make_unsigned_t<I>>::digits < 6), unsigned, make_unsigned_t<I>>;
-        auto const radix = static_cast<U>(base);
+        // The unsigned counterpart holds |min()|, widened to unsigned where it is too narrow to hold the radix.
+        constexpr auto max_base = 36U;
+        using U                 = std::conditional_t<(numeric_limits<make_unsigned_t<I>>::digits < std::bit_width(max_base)), unsigned, make_unsigned_t<I>>;
+        auto const radix        = static_cast<U>(base);
 
         // Reduced once here, not per digit; both are well-formed and branchless when unsigned.
         auto const zero      = static_cast<I>(0);
