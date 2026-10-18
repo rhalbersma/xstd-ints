@@ -122,6 +122,7 @@ target_sources(
         include/xstd/ints/format/detail/decimal.hpp
         include/xstd/ints/format/div_result.hpp
         include/xstd/ints/limits.hpp
+        include/xstd/ints/limits/detail/digits10.hpp
         include/xstd/ints/limits/numeric_limits.hpp
         include/xstd/ints/memory.hpp
         include/xstd/ints/memory/align_down.hpp
@@ -168,9 +169,9 @@ if(PROJECT_IS_TOP_LEVEL)
     if(BUILD_TESTING)
         # Relaxed to gnu++ for the tests alone, leaving the library's own dialect above
         # untouched. The reason is specific: <bit>'s functions take std::unsigned_integral,
-        # and libstdc++ and libc++ carry unsigned __int128 into that concept only outside
-        # __STRICT_ANSI__. Strictly conforming, xstd::uint128 is the one exact width with no
-        # bit basis on GCC and Clang -- on MSVC it is a class and carries its own -- so the
+        # and libstdc++ 15, the GCC ladder's floor, carries unsigned __int128 into that concept
+        # only outside __STRICT_ANSI__. Strictly conforming, xstd::uint128 there is the one exact
+        # width with no bit basis -- on MSVC it is a class and carries its own -- so the
         # 128-bit column would drop out of the bit/ instantiation lists rather than fail,
         # which is the worse of the two outcomes. xstd-bits relaxes it in the same place and
         # for the same reason. [xstd-bits design.md#uint128-support]
