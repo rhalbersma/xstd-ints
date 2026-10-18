@@ -28,8 +28,9 @@ template<integer I>
                 assert(numer != numeric_limits<I>::min() or denom != static_cast<I>(-1));
         }
         // Prvalue operands: x86 MSVC's optimizer lets the 128-bit STL division write through to named ones.
-        auto const qT = static_cast<I>(I{numer} / I{denom});
-        auto const rT = static_cast<I>(I{numer} % I{denom});
+        // Bound by reference: Clang 19 crashes emitting a const local _BitInt over 128 bits.
+        auto const& qT = static_cast<I>(I{numer} / I{denom});
+        auto const& rT = static_cast<I>(I{numer} % I{denom});
         assert(numer == static_cast<I>(static_cast<I>(denom * qT) + rT));
         // Said on the counterpart every integer type has, |MIN| fitting in no other.
         assert(xstd::unsigned_abs(rT) < xstd::unsigned_abs(denom));

@@ -58,12 +58,14 @@ template<integer I>
         // The unsigned counterpart holds |min()|, widened to unsigned where it is too narrow to hold the radix.
         constexpr auto max_base = 36U;
         using U                 = std::conditional_t<(numeric_limits<make_unsigned_t<I>>::digits < std::bit_width(max_base)), unsigned, make_unsigned_t<I>>;
-        auto const radix        = static_cast<U>(base);
+        // Bound by reference: Clang 19 crashes emitting a const local _BitInt over 128 bits.
+        auto const& radix = static_cast<U>(base);
 
         // Reduced once here, not per digit; both are well-formed and branchless when unsigned.
-        auto const zero      = static_cast<I>(0);
-        auto const negative  = value < zero;
-        auto const magnitude = static_cast<U>(negative ? U{} - static_cast<U>(value) : static_cast<U>(value));
+        auto const zero     = static_cast<I>(0);
+        auto const negative = value < zero;
+        // Bound by reference: Clang 19 crashes emitting a const local _BitInt over 128 bits.
+        auto const& magnitude = static_cast<U>(negative ? U{} - static_cast<U>(value) : static_cast<U>(value));
 
         // Converted rather than selected: a conditional would be one-sided when unsigned.
         auto const sign_width = static_cast<std::ptrdiff_t>(negative);
