@@ -5,9 +5,9 @@
 
 #include <xstd/ints/charconv/to_chars.hpp> // to_chars, to_chars_max_size
 #include <xstd/ints/concepts/integer.hpp>  // integer
-#include <xstd/ints/cstdint.hpp>           // XSTD_HAS_INT128, int128, uint128
-#include <test/exact_width_types.hpp>      // std_signed_types, exact_width_signed_integer_types, exact_width_unsigned_integer_types
+#include <xstd/ints/cstdint.hpp>           // XSTD_HAS_BIT_INT, XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
 #include <xstd/ints/limits.hpp>            // numeric_limits
+#include <test/exact_width_types.hpp>      // std_signed_types, exact_width_signed_integer_types, exact_width_unsigned_integer_types
 #include <boost/test/unit_test.hpp>        // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <array>                           // array
 #include <charconv>                        // to_chars, to_chars_result
@@ -179,6 +179,27 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(HexBoundariesMatchGroundTruthUnsigned, T, test::ex
         BOOST_CHECK_EQUAL(rendered(T{1}, 16), "1");
         BOOST_CHECK_EQUAL(rendered(T{2}, 16), "2");
 }
+
+#ifdef XSTD_HAS_BIT_INT
+// A nibble in hex: a base past the type's own maximum leaves one digit, where a radix of that type would wrap.
+BOOST_AUTO_TEST_CASE(NarrowBitPreciseTakesEveryBase)
+{
+        BOOST_CHECK_EQUAL(rendered(xstd::bit_uint<4>{15}, 16), "f");
+        BOOST_CHECK_EQUAL(rendered(xstd::bit_int<4>{-8}, 16), "-8");
+        BOOST_CHECK_EQUAL(rendered(xstd::bit_uint<5>{31}, 36), "v");
+        BOOST_CHECK_EQUAL(rendered(xstd::bit_uint<2>{3}, 36), "3");
+}
+
+#if __BITINT_MAXWIDTH__ >= 129
+// Signed and one bit wider than 128, with its sign: libc++ admits _BitInt(129) as integral yet cannot format it.
+BOOST_AUTO_TEST_CASE(SignedBitPreciseOnePastTheWidestStandardType)
+{
+        BOOST_CHECK_EQUAL(rendered(xstd::bit_int<129>{-1}, 10), "-1");
+        BOOST_CHECK_EQUAL(rendered(xstd::numeric_limits<xstd::bit_int<129>>::min(), 16), "-1" + std::string(32, '0'));
+        BOOST_CHECK_EQUAL(rendered(xstd::numeric_limits<xstd::bit_int<129>>::max(), 16), std::string(32, 'f'));
+}
+#endif
+#endif
 
 BOOST_AUTO_TEST_CASE(Int128Boundaries)
 {

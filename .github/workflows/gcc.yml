@@ -62,6 +62,22 @@ jobs:
       cxx_flags: -march=x86-64-v3
       vcpkg_features: test
 
+  # C++29 on the trunk snapshot, the one mode in which libstdc++ declares
+  # std::shl and std::shr, and P3104's permutations after them: the only leg
+  # where the overloads forwarding to <bit> compile and their agreement tests
+  # run. A flag rather than a CMake standard, since CMake knows no C++29 yet;
+  # seeing the mode in CMAKE_CXX_FLAGS, it adds no -std of its own. One build
+  # type, since what is under test is the standard library's.
+  gcc_cxx29:
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
+    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
+    with:
+      tiers: development
+      build_types: Debug
+      cxx_flags: -std=gnu++2d
+      vcpkg_features: test
+
   # The name branch protection requires: green when the ladder passed, or when
   # the pull request changes nothing the ladder builds.
   all:
