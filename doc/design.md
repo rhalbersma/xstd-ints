@@ -24,7 +24,7 @@ across the tested toolchains. Consumers need no third-party dependencies.
 
 ### Integer types
 
-[P3701R0](https://wg21.link/P3701R0) supplies the `integer`,
+[P3701R0](https://github.com/cplusplus/papers/issues/2330) supplies the `integer`,
 `signed_integer`, and `unsigned_integer` vocabulary and its built-in arithmetic
 boundary. The public concept is cv-transparent and accepts standard and extended
 integer types except `bool`, `char`, `wchar_t`, `char8_t`, `char16_t`, and `char32_t`.
@@ -49,7 +49,7 @@ Character conversion delegates a non-`bool` standard integral type to
 `std::to_chars` when it is no wider than `uint128`, which is where both standard
 libraries stop; every other `integer` takes xstd's own digit generation.
 
-`integer_class` follows the requirement order in [iterator.concept.winc], but is
+`integer_class` follows the requirement order in [[iterator.concept.winc]](https://eel.is/c++draft/iterator.concept.winc), but is
 an open structural concept rather than an implementation-defined set. It admits
 integer types of every width instead of requiring them to be wider than every
 integral type, and it deliberately checks only same-type arithmetic rather than
@@ -62,7 +62,7 @@ integer-class type need not be a class type, so excluding them was xstd's
 addition rather than the standard's, and it made the requirements unaskable of
 the types they were modelled on instead of merely false for them. The closure
 requirements in /7.3 and /7.6 are therefore stated against `promoted_t` rather
-than `T`: identity for a class type, and for a built-in whatever [conv.prom]
+than `T`: identity for a class type, and for a built-in whatever [[conv.prom]](https://eel.is/c++draft/conv.prom)
 yields, which is what the same requirement means once promotion is in scope.
 Asked that way every standard integer satisfies the concept except `bool`, whose
 `++` and `--` C++17 removed. `promoted_t` asks the language — `decltype(+a)` —
@@ -94,14 +94,14 @@ unsigned counterpart and has no signed one.
 They reach it as `integer_class` on either standard library, though only libc++
 makes `_BitInt` integral: that choice moves which arm `promoted_t` takes, and
 both name `_BitInt` itself, since it is exempt from promotion. The public
-domain currently begins at two because Clang has not yet implemented N3747's
+domain currently begins at two because Clang has not yet implemented [N3747](https://wg21.link/N3747)'s
 signed `_BitInt(1)`.
 
 The `<bit>` counterparts follow the same split. Where the standard library's `<bit>` takes a
 type, xstd forwards to it. Every other `unsigned_integer` — an integer class, or an
 `unsigned _BitInt(N)` on libstdc++, whose `<bit>` declines it — is answered by one template per function
 that works a `std::size_t` block at a time, the block being `std::size_t` because
-[iterator.concept.winc] promises every integer-class type an explicit conversion to and from
+[[iterator.concept.winc]](https://eel.is/c++draft/iterator.concept.winc) promises every integer-class type an explicit conversion to and from
 it, and each block goes to the standard function, which knows its own instructions. The
 128-bit classes get no overloads of their own: the template reaches them through their
 operators, and being a template declared beside the forwarding overload, it is the same
@@ -118,7 +118,7 @@ as `std::byteswap` does, swapping through the unsigned counterpart, and asks for
 number of bytes rather than for the absence of padding bits that `std::byteswap` mandates,
 since it swaps the value and not the object representation.
 
-The four permutations from [P3104R6](https://wg21.link/P3104R6) — `bit_reverse`,
+The four permutations from [P3104R6](https://github.com/cplusplus/papers/issues/1768) — `bit_reverse`,
 `bit_repeat`, `bit_compress` and `bit_expand` — have no `<bit>` to defer to yet, so each is
 one template over `unsigned_integer` beside an overload forwarding to the standard function,
 declared once `__cpp_lib_bitops` reaches the working draft's `202607L` and constrained, like
@@ -210,8 +210,8 @@ where the block kernel finds it and the block's offset is added. Shift counts ar
 for a built-in type, so no count is signed, and `int` for a class type, the one amount every
 integer class in the test matrix takes without a narrowing conversion.
 
-P3793R2's `shl` and `shr` are forwarded the same way, once `__cpp_lib_bitops` reaches the
-`202606L` that libstdc++ gives them in C++29 mode, one below the value P3104 asks for. Their
+[P3793R2](https://github.com/cplusplus/papers/issues/2399)'s `shl` and `shr` are forwarded the same way, once `__cpp_lib_bitops` reaches the
+`202606L` that libstdc++ gives them in C++29 mode, one below the value [P3104](https://github.com/cplusplus/papers/issues/1768) asks for. Their
 template takes any two `integer` types and reduces every count to three cases: a magnitude at
 or past the width gives zero, or minus one for a negative value shifted right; any other
 magnitude is a single shift. The magnitude is the count's `unsigned_abs`, so the most negative
@@ -221,7 +221,7 @@ count. A left shift goes through the unsigned counterpart, which keeps a signed 
 overflowing, and the result converts back modulo the width, as C++20 defines the conversion.
 
 `bit_select(x, k)` is xstd's own, beside the four: it is not a standard function and no part of
-P3104, so it has no `<bit>` overload to forward to and is one template over `unsigned_integer`.
+[P3104](https://github.com/cplusplus/papers/issues/1768), so it has no `<bit>` overload to forward to and is one template over `unsigned_integer`.
 It answers the position of the `k`-th one bit of `x`, counting from zero at the least
 significant end, which makes it the inverse of rank: `popcount(x & ((T{1} << bit_select(x, k)) - 1)) == k`
 for every `k` below `popcount(x)`. Its signature reads as `<bit>`'s do: `x` taken as the other
@@ -236,7 +236,7 @@ no wider than a block calls the block kernel directly. Its contract is narrow, a
 
 ### `bit_mask`
 
-[bitmask.types] gives a bitmask type three implementations: an enumeration
+[[bitmask.types]](https://eel.is/c++draft/bitmask.types) gives a bitmask type three implementations: an enumeration
 that overloads the operators, an integer type, or a `std::bitset`. The
 standard's own are mostly the first kind (`std::filesystem::perms`,
 `std::launch`, `std::chars_format`, the `regex_constants` flags), and the
@@ -244,7 +244,7 @@ standard names the requirement without a concept to check it. `bit_mask` asks
 for what /2 writes out: regularity, the complement, and the three logical
 operators in both their compound and their binary form. Nothing arithmetic,
 nothing about range, no conversions, no increment, no ordering, and no shifts:
-[bitmask.types] has none, and an enumeration overloading the rest need not add
+[[bitmask.types]](https://eel.is/c++draft/bitmask.types) has none, and an enumeration overloading the rest need not add
 them.
 
 The shape is also `std::bitset`'s, which generalized exactly these operators
@@ -338,7 +338,7 @@ does.
 
 All integer operations are `constexpr`. Those with a wide contract have a conditional `noexcept`,
 on whether the element type's own operations carry the specifier, because
-[iterator.concept.winc] does not ask for `noexcept` anywhere — the word does not
+[[iterator.concept.winc]](https://eel.is/c++draft/iterator.concept.winc) does not ask for `noexcept` anywhere — the word does not
 occur in the subclause. Requiring it would narrow the extension point to
 integer-class types whose authors wrote it: `absl::uint128` is two `uint64_t`
 halves with no way to throw and not one `noexcept` in its header, and was turned
@@ -367,9 +367,9 @@ performs costs nothing, where missing one it does perform is a wrong
 
 None of this would be here if the language could deduce it. `noexcept(auto)` was
 proposed against exactly this shape of problem —
-[N3207](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3207.htm)
+[N3207](https://wg21.link/N3207)
 (2010), still open as
-[P3166R0](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p3166r0.html)
+[P3166R0](https://github.com/cplusplus/papers/issues/1829)
 (2024) — and [C++23](https://wg21.link/N4950) has no such thing. The manual `noexcept(noexcept(e))` reaches
 only a single-expression function, which these are not.
 
@@ -380,7 +380,7 @@ writes only `[[nodiscard]]`, the one of the three with no implicit form. Neither
 is restated for symmetry, because the two fail differently: a `constexpr` that
 cannot hold is refused where a constant
 expression needs it, while
-[P1286R2](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1286r2.html)
+[P1286R2](https://github.com/cplusplus/papers/issues/154)
 (C++20) removed the rule that deleted such a defaulted function, so an over-broad
 `noexcept` buys a `std::terminate` in place of a diagnostic.
 
@@ -391,7 +391,7 @@ exact-width names carry. C reserves typedef names beginning with `int` or `uint`
 and ending in `_t` for future additions to `<stdint.h>`. The reservation does not
 reach into a user-defined namespace, but `<xstd/ints/cstdint.hpp>` exists precisely
 because the standard header lacks the type, so the day it gains one is the day
-the two spellings collide. Boost.Int128 renamed the same way during its review.
+the two spellings collide. [Boost.Int128](https://github.com/cppalliance/int128) renamed the same way during its review.
 
 Their two associations live in `<xstd/ints/cstdint/int128.hpp>`, beside the aliases
 and not inside the traits; `<xstd/ints/cstdint.hpp>` is the umbrella that exports
@@ -426,7 +426,7 @@ the same specializations. Because they are explicit specializations, shipping
 them later would have been the breaking change, not shipping them now: a user
 who had written their own would meet a redefinition.
 
-The layout is Boost.Hana's `boost/hana/ext/`, one directory per adapted library
+The layout is [Boost.Hana](https://www.boost.org/doc/libs/latest/libs/hana/)'s `boost/hana/ext/`, one directory per adapted library
 and one header per upstream header, contents in this library's namespace rather
 than the adapted one's. The prefix is load-bearing where Hana's is: these
 headers are installed, and an unprefixed top-level `ext/` would put a generic
@@ -465,7 +465,7 @@ So the answer is the linter's configuration rather than a header:
 `misc-include-cleaner` is not asked about `boost/.*` at all, in the root
 `.clang-tidy` and so in the test tree that inherits it. This is not a
 Boost.Int128 workaround. No Boost library ships IWYU pragmas — Boost.Hana has
-none across 450 headers — and Boost.Test's macros expand through private
+none across 450 headers — and [Boost.Test](https://www.boost.org/doc/libs/latest/libs/test/)'s macros expand through private
 implementation headers for the same reason, which is why the test tree carried
 this option long before these adapters existed. Any project including any Boost
 library and linting its own sources needs the same line, and no library can
@@ -474,7 +474,7 @@ no usage requirement that could propagate one.
 
 ### Hashing
 
-Boost.Hash2 serializes an integer through byte writers that stop at 8 bytes, and
+[Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) serializes an integer through byte writers that stop at 8 bytes, and
 selects that path by `std::is_integral`, which libstdc++ grants `__int128` only
 outside `__STRICT_ANSI__`. Neither the Microsoft STL's `std::_Signed128` nor a
 fundamental type such as `__int128` or `_BitInt(N)` has a namespace in which a
@@ -533,7 +533,7 @@ does stand beside a concept, as `is_signed` does beside `signed_integer`, the
 the standard library, so callers get its tuned implementation. For an xstd
 `integer` that `std::to_chars` does not cover, the digits are produced here to
 the same specification, bases 2 through 36 and `value_too_large` included. The
-default base is written as the literal `10`, as [charconv.to.chars] writes it, so the two
+default base is written as the literal `10`, as [[charconv.to.chars]](https://eel.is/c++draft/charconv.to.chars) writes it, so the two
 signatures read alike; `readability-magic-numbers` is suppressed a line at a time
 rather than taught to ignore `10` throughout.
 
@@ -606,7 +606,7 @@ standard's own rendering, with no intermediate string.
 
 That delegation can be missing in two ways that do not coincide: the element type
 may not be formattable, which is Abseil's `int128` and the Microsoft STL's 128-bit
-classes, or tuple formatting itself may be missing, p2286 having reached libstdc++
+classes, or tuple formatting itself may be missing, [P2286](https://github.com/cplusplus/papers/issues/977) having reached libstdc++
 only in GCC 15. Where only the element type is missing, the second specialization
 renders each member through `xstd::to_chars` and hands the two digit strings to a
 tuple formatter of an exposition-only type, so the spec grammar stays the tuple's:
@@ -626,7 +626,7 @@ tuples, and the string's on a library that formats none.
 
 xstd specializes `std::formatter` only for `div_result`, which is program-defined. The
 128-bit types are not xstd's to specialize for: they are built-ins or
-standard-library types, which [namespace.std]/2 does not cover. There is no
+standard-library types, which [[namespace.std]/2](https://eel.is/c++draft/namespace.std#2) does not cover. There is no
 stream inserter either — a built-in has no associated namespace for ADL, and a
 standard-library type's is one no program may add to. Boost.Test, the only
 consumer that needed it, asks through `print_log_value`, which the tests
@@ -635,7 +635,7 @@ specialize directly.
 ### Alignment
 
 `align_up` and `align_down` round a value to a power-of-two alignment, spelled as
-Boost.Align, LLVM's `alignTo`/`alignDown` and the kernel's `ALIGN` macros all
+[Boost.Align](https://www.boost.org/doc/libs/latest/libs/align/), LLVM's `alignTo`/`alignDown` and the kernel's `ALIGN` macros all
 spell it: value first, alignment second. `is_aligned` asks whether rounding would
 change anything.
 
@@ -682,7 +682,7 @@ fit, which these cannot.
 
 `div_result` is xstd's common result for four complete integer-division
 conventions: truncating `div`, Euclidean `div_euclid`, floored `div_floor`, and ceiling `div_ceil`.
-Its result vocabulary follows [P3724R4](https://wg21.link/P3724R4), while xstd
+Its result vocabulary follows [P3724R4](https://github.com/cplusplus/papers/issues/2354), while xstd
 intentionally limits the operation family to these established conventions and
 extends all four across its broader `integer` domain.
 
@@ -717,12 +717,12 @@ auto const [quotient, remainder] = xstd::div_euclid(-8, 3);
 auto const [q, r] = xstd::div_floor(-8, 3);
 ```
 
-xstd adopts the relevant P3724 result vocabulary and rounding semantics, not the
+xstd adopts the relevant [P3724](https://github.com/cplusplus/papers/issues/2354) result vocabulary and rounding semantics, not the
 complete proposal; no other rounding modes are part of xstd. All four
 operations support signed, unsigned, extended, bit-precise, and paired
 integer-class types. For unsigned types the first three conventions coincide, while
 `div_ceil` rounds any inexact quotient up and leaves the remainder that requires,
-`numerator - denominator * quotient`, taken modulo 2^N as P3724R4's
+`numerator - denominator * quotient`, taken modulo 2^N as [P3724R4](https://github.com/cplusplus/papers/issues/2354)'s
 `div_rem_to_pos_inf` words it, so the identity above holds in the type's own
 arithmetic. Its quotient is what counting whole units asks for: the blocks that
 N bits take, at any block width.
@@ -833,7 +833,7 @@ was too small, never that the call was out of domain.
 | `to_chars(first, last, value, base)` | `2 <= base` and `base <= 36`, and `[first, last)` a valid range |
 | `align_up(value, alignment)` <br> `align_down(value, alignment)` <br> `is_aligned(value, alignment)` | `alignment` is a power of two, which is not zero; `align_up` additionally that the rounded result is representable |
 | `bit_ceil(x)` | The result is representable: `x` is at most the highest power of two of its type. A call that violates it is not a constant expression even under `NDEBUG`, as `[bit.pow.two]` requires |
-| `bit_repeat(x, l)` | `l > 0`. A call that violates it is not a constant expression even under `NDEBUG`, as [P3104R6](https://wg21.link/P3104R6) requires |
+| `bit_repeat(x, l)` | `l > 0`. A call that violates it is not a constant expression even under `NDEBUG`, as [P3104R6](https://github.com/cplusplus/papers/issues/1768) requires |
 | `bit_select(x, k)` | `0 <= k` and `k < popcount(x)`, so `x` has a `k`-th one. A call that violates it is not a constant expression even under `NDEBUG`, as for `bit_repeat` |
 
 `sign`, `unsigned_abs`, the `<bit>` counterparts other than `bit_ceil` and `bit_repeat`, and every concept and

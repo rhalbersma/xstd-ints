@@ -39,10 +39,10 @@ The library itself has no dependencies outside `<xstd/ints/ext/>`, whose headers
 | :--- | :--------- | :---- |
 | A conforming C++23 compiler | everything | Same requirement as the library; see the table in [README.md](README.md) for the versions under CI |
 | [CMake](https://cmake.org/) 3.30+ | configuring and building | `cmake_minimum_required` in [`CMakeLists.txt`](CMakeLists.txt); CTest ships with it. Noble's is 3.28; `setup-toolchain.sh` installs the version the workflows pin, from [`tools/cmake-requirements.txt`](tools/cmake-requirements.txt) |
-| [Boost.Test](https://www.boost.org/doc/libs/release/libs/test/) 1.70+ | the unit tests under `test/src/` | 1.70 introduced arbitrary type-list support for `BOOST_AUTO_TEST_CASE_TEMPLATE`, which the tests use with `std::tuple`; declared under the opt-in `test` feature of the checked-in [`vcpkg.json`](vcpkg.json) manifest, which the `*-vcpkg` presets select from a `VCPKG_ROOT`-configured vcpkg, or install it with your system package manager |
+| [Boost.Test](https://www.boost.org/doc/libs/latest/libs/test/) 1.70+ | the unit tests under `test/src/` | 1.70 introduced arbitrary type-list support for `BOOST_AUTO_TEST_CASE_TEMPLATE`, which the tests use with `std::tuple`; declared under the opt-in `test` feature of the checked-in [`vcpkg.json`](vcpkg.json) manifest, which the `*-vcpkg` presets select from a `VCPKG_ROOT`-configured vcpkg, or install it with your system package manager |
 | [Boost.Int128](https://github.com/cppalliance/int128) | testing the integer-class extension points against a type from outside the library, and the `<xstd/ints/ext/boost/int128.hpp>` associations that pair it | Optional, and resolved without a manual step: `test/CMakeLists.txt` uses an installed copy where `find_package(boost_int128 CONFIG)` finds one and otherwise fetches a pinned commit from GitHub, as CI does: it is a pre-release library, in no Boost release yet. Configure with `-DXSTD_INTS_TEST_FETCH_BOOST_INT128=OFF` to build offline without it; the affected cases then run over xstd's own types alone |
 | [Abseil](https://github.com/abseil/abseil-cpp) | testing the same extension points against a type that declares no `noexcept` anywhere, and the `<xstd/ints/ext/absl/int128.hpp>` associations that pair it | Optional, and resolved the same way: an installed copy where `find_package(absl CONFIG)` finds one, and otherwise a pinned release tag, of which only `absl/numeric/int128.cc` is compiled. Configure with `-DXSTD_INTS_TEST_FETCH_ABSL_INT128=OFF` to build offline without it; the affected cases then do not run, no other type in the suite leaving `noexcept` off |
-| [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) | testing `<xstd/ints/ext/boost/hash2.hpp>`, and the `<xstd/ints/ext/boost.hpp>` umbrella that exports it | Optional: `test/CMakeLists.txt` uses an installed copy where `find_package(boost_hash2 CONFIG)` finds one - Boost ships it from 1.88, and the `test` feature of [`vcpkg.json`](vcpkg.json) names it - and fetches nothing otherwise, its own Boost dependencies being too many to fetch alone; the hashing cases then do not run |
+| [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) | testing `<xstd/ints/ext/boost/hash2.hpp>`, and the `<xstd/ints/ext/boost.hpp>` umbrella that exports it | Optional: `test/CMakeLists.txt` uses an installed copy where `find_package(boost_hash2 CONFIG)` finds one - Boost ships it from 1.88, and the `test` feature of [`vcpkg.json`](vcpkg.json) names it - and fetches nothing otherwise, its own Boost dependencies being too many to fetch alone; the hashing cases then do not run |
 | [gcovr](https://gcovr.com/) | reproducing the coverage gate | Pinned by hash in [`tools/gcovr-requirements.txt`](tools/gcovr-requirements.txt) as the coverage job pins it; `setup-toolchain.sh` installs it, and `tools/ci-local.sh coverage` runs the gate |
 | `clang-tidy` and `run-clang-tidy` | reproducing the clang-tidy gate | Only for the workflow below |
 | `clang-format` 22+ | the formatting gate | Run `clang-format -i` on changed files before pushing; older versions rewrite the requires-expressions in `concepts/` |
@@ -54,8 +54,8 @@ The library itself has no dependencies outside `<xstd/ints/ext/>`, whose headers
 Ubuntu 24.04 ships GCC 13, clang 18, CMake 3.28 and Boost 1.83, and none of them is what CI builds with: GCC 13
 rejects `-std=c++2c`, `CMakeLists.txt` asks for CMake 3.30, clang-format before 22 reads `{ a * b }` in a
 requires-expression as a pointer declaration, so it calls files dirty that are clean against
-[`.clang-format`](.clang-format), and Boost 1.83 has neither the Boost.Align package the test suite asks for nor
-Boost.Hash2. [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) brings a container as close to the GitHub Actions
+[`.clang-format`](.clang-format), and Boost 1.83 has neither the [Boost.Align](https://www.boost.org/doc/libs/latest/libs/align/) package the test suite asks for nor
+[Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/). [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) brings a container as close to the GitHub Actions
 ladders as an Ubuntu box gets, every rung of [README.md](README.md)'s matrix and the Boost CI resolves:
 
 - GCC 15 and 16 from the Ubuntu toolchain PPA, and the GCC trunk snapshot the development rung uses, as `g++-17`;
@@ -106,7 +106,7 @@ cmake --preset no-tests
 cmake --build --preset no-tests
 ```
 
-The full suite needs Boost.Test, from the table above, and a compiler from the ladders. Name it: on Ubuntu 24.04 the default `c++` is GCC 13, which rejects `-std=c++2c`. With what `setup-toolchain.sh` installs, no vcpkg is needed:
+The full suite needs [Boost.Test](https://www.boost.org/doc/libs/latest/libs/test/), from the table above, and a compiler from the ladders. Name it: on Ubuntu 24.04 the default `c++` is GCC 13, which rejects `-std=c++2c`. With what `setup-toolchain.sh` installs, no vcpkg is needed:
 
 ```sh
 cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-15
@@ -186,7 +186,11 @@ MSVC, clang-cl, MinGW and Apple Clang have no Linux equivalent, and Emscripten, 
 
 [`mkdocs.yml`](mkdocs.yml) serves the README as the site's index and the pages under `doc/` beside it, leaving out the
 WG21 papers and the ideas kept there, and [`tools/mkdocs_hooks.py`](tools/mkdocs_hooks.py) points each relative link,
-written for GitHub, at the page the site serves for it, or at its file on GitHub. To preview the site as it is edited:
+written for GitHub, at the page the site serves for it, or at its file on GitHub. The hook also fails the build on a
+citation left unlinked in prose: a section of the working draft, such as `[iterator.concept.winc]/3`, links to it at
+[eel.is/c++draft](https://eel.is/c++draft/), a WG21 paper to its [cplusplus/papers](https://github.com/cplusplus/papers)
+issue (`wg21.link/P3104/github` finds it), and a paper without one, or an N-numbered document, to `wg21.link`. A Boost
+library links to its documentation under `boost.org/doc/libs/latest/`. To preview the site as it is edited:
 
 ```sh
 python3 -m venv build/mkdocs && build/mkdocs/bin/pip install --require-hashes -r tools/mkdocs-requirements.txt
@@ -350,11 +354,11 @@ Everything but the table's revisions is recorded in [`tools/upstream-watch.json`
 
 | Paper | Reviewed wording | Tracking issue | Last reviewed | Relationship |
 |---|---|---|---|---|
-| P3104R6 | [P3104R6](https://wg21.link/P3104R6) | [cplusplus/papers#1768](https://github.com/cplusplus/papers/issues/1768) | 2026-10-10 | Supplies `bit_reverse`, `bit_repeat`, `bit_compress` and `bit_expand`. xstd implements the wording, R5's plus R6's constant-evaluation remark on `bit_repeat`, forwards to `<bit>` once `__cpp_lib_bitops` reaches `202607L`, and extends the domain to every xstd unsigned integer. |
-| P3793R2 | [P3793R2](https://wg21.link/P3793R2) | [cplusplus/papers#2399](https://github.com/cplusplus/papers/issues/2399) | 2026-10-17 | Supplies `shl` and `shr`. xstd implements the wording, forwards to `<bit>` once `__cpp_lib_bitops` reaches `202606L`, and extends the domain to every pair of xstd integers, a count of any `integer` type included. |
-| P3666R0 | [P3666R0](https://wg21.link/P3666R0) | [cplusplus/papers#2420](https://github.com/cplusplus/papers/issues/2420) | 2026-08-19 | Supplies the proposed native bit-precise aliases and library integration direction. xstd exposes Clang's existing `_BitInt` types through equivalent aliases and its open traits, without implementing the paper's core-language changes. |
-| P3701R0 | [P3701R0](https://wg21.link/P3701R0) | [cplusplus/papers#2330](https://github.com/cplusplus/papers/issues/2330) | 2026-08-18 | Supplies arithmetic-integer vocabulary and the built-in type boundary. xstd additionally admits paired integer-class types, requires valid signed/unsigned transformations, and is cv-transparent where the paper excludes cv-qualified types. |
-| P3724R4 | [P3724R4](https://wg21.link/P3724R4) | [cplusplus/papers#2354](https://github.com/cplusplus/papers/issues/2354) | 2026-08-18 | Supplies division-result vocabulary and relevant rounding semantics. xstd intentionally supports only truncating, Euclidean, and floored quotient/remainder operations over its broader integer domain. |
+| [P3104R6](https://github.com/cplusplus/papers/issues/1768) | [P3104R6](https://wg21.link/P3104R6) | [cplusplus/papers#1768](https://github.com/cplusplus/papers/issues/1768) | 2026-10-10 | Supplies `bit_reverse`, `bit_repeat`, `bit_compress` and `bit_expand`. xstd implements the wording, R5's plus R6's constant-evaluation remark on `bit_repeat`, forwards to `<bit>` once `__cpp_lib_bitops` reaches `202607L`, and extends the domain to every xstd unsigned integer. |
+| [P3793R2](https://github.com/cplusplus/papers/issues/2399) | [P3793R2](https://wg21.link/P3793R2) | [cplusplus/papers#2399](https://github.com/cplusplus/papers/issues/2399) | 2026-10-17 | Supplies `shl` and `shr`. xstd implements the wording, forwards to `<bit>` once `__cpp_lib_bitops` reaches `202606L`, and extends the domain to every pair of xstd integers, a count of any `integer` type included. |
+| [P3666R0](https://github.com/cplusplus/papers/issues/2420) | [P3666R0](https://wg21.link/P3666R0) | [cplusplus/papers#2420](https://github.com/cplusplus/papers/issues/2420) | 2026-08-19 | Supplies the proposed native bit-precise aliases and library integration direction. xstd exposes Clang's existing `_BitInt` types through equivalent aliases and its open traits, without implementing the paper's core-language changes. |
+| [P3701R0](https://github.com/cplusplus/papers/issues/2330) | [P3701R0](https://wg21.link/P3701R0) | [cplusplus/papers#2330](https://github.com/cplusplus/papers/issues/2330) | 2026-08-18 | Supplies arithmetic-integer vocabulary and the built-in type boundary. xstd additionally admits paired integer-class types, requires valid signed/unsigned transformations, and is cv-transparent where the paper excludes cv-qualified types. |
+| [P3724R4](https://github.com/cplusplus/papers/issues/2354) | [P3724R4](https://wg21.link/P3724R4) | [cplusplus/papers#2354](https://github.com/cplusplus/papers/issues/2354) | 2026-08-18 | Supplies division-result vocabulary and relevant rounding semantics. xstd intentionally supports only truncating, Euclidean, and floored quotient/remainder operations over its broader integer domain. |
 
 ## Required status checks
 
