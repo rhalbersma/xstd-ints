@@ -63,6 +63,12 @@ struct formatter<xstd::div_result<I>, CharT> : formatter<basic_string_view<CharT
         }
 };
 
+// libstdc++'s tuple formatter over stateless elements ends in tail padding, which Clang's -Wpadded reports.
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpadded"
+#endif
+
 // Where the library formats tuples but not I, the digits go through a tuple, so the spec grammar does not depend on I.
 template<xstd::integer I, class CharT>
         requires xstd::ints::detail::formats_tuples<CharT>
@@ -85,6 +91,10 @@ struct formatter<xstd::div_result<I>, CharT> : formatter<tuple<xstd::ints::detai
                 return formatter<tuple<xstd::ints::detail::decimal, xstd::ints::detail::decimal>, CharT>::format(digits, ctx);
         }
 };
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 // The most constrained one: where the library formats I as well, the tuple formatter renders the members themselves.
 template<xstd::integer I, class CharT>
