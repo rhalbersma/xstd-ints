@@ -29,7 +29,7 @@ template<class I>
 inline constexpr auto to_chars_max_size =
         static_cast<std::size_t>(numeric_limits<I>::digits) + (is_signed_v<I> ? 2 : 0);
 
-// The standard's own integral domain, other than its deleted bool overload.
+// The standard's own integral domain up to its widest type, other than its deleted bool overload.
 template<std::integral I>
         requires (not std::same_as<std::remove_cv_t<I>, bool>) and ints::detail::delegates_to_std<I>
 // NOLINTNEXTLINE(readability-magic-numbers): the standard's own default base, see above

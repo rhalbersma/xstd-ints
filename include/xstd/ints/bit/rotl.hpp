@@ -12,7 +12,7 @@
 #include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
 #include <bit>                                            // rotl
 
-// [bit.rot]'s rotl over every unsigned integer xstd knows.
+// [bit.rotate]'s rotl over every unsigned integer xstd knows.
 namespace xstd {
 
 // Constrained on the call, so constraint and body cannot drift: std::unsigned_integral admits what <bit> refuses.
@@ -24,7 +24,7 @@ template<class T>
         return std::rotl(x, s);
 }
 
-// [bit.rot]'s count taken modulo the width, a negative one turning the other way.
+// [bit.rotate]'s count taken modulo the width, a negative one turning the other way.
 template<unsigned_integer T>
         requires (not requires (T x, int s) { std::rotl(x, s); })
 [[nodiscard]] constexpr auto rotl(T x, int s) noexcept(nothrow_const_operators<T>)

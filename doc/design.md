@@ -54,7 +54,8 @@ an open structural concept rather than an implementation-defined set. It admits
 integer types of every width instead of requiring them to be wider than every
 integral type, and it deliberately checks only same-type arithmetic rather than
 mixed-mode operations or common types. Its range metadata comes from the open
-`xstd::numeric_limits`, whose primary template delegates to the standard trait.
+`xstd::numeric_limits`, which delegates to the standard trait for every non-array
+object type.
 
 It does not exclude the built-in integers. The subclause's own note says an
 integer-class type need not be a class type, so excluding them was xstd's
@@ -76,11 +77,20 @@ because the concept excluded built-ins. Each now says `not std::integral` where
 it means it — the "where std stops" line belongs to the trait that draws it, not
 to the concept.
 
-When Clang exposes `_BitInt`, `<xstd/ints/cstdint.hpp>` names the native types as
-`bit_int<N>` and `bit_uint<N>`. They are aliases, not wrappers: their ABI,
-conversions, promotions, and operators remain the compiler's. xstd specializes
+When the compiler defines `__BITINT_MAXWIDTH__`, as Clang does in C++,
+`<xstd/ints/cstdint.hpp>` names the native types as `bit_int<N>` and `bit_uint<N>`.
+They are aliases, not wrappers: their ABI, conversions, promotions, and operators
+remain the compiler's. xstd specializes
 its open limits and transformation traits for them, which makes paired widths
-model `integer` even before the standard library recognizes the extension.
+model `integer` even before the standard library recognizes the extension. The
+specializations sit in the headers that declare `numeric_limits`, `make_signed` and
+`make_unsigned`, not beside the aliases: `_BitInt` is a keyword, so a program can ask
+about one having included nothing else, and a translation unit that asked before the
+aliases' header would otherwise keep a different answer from one that asked after.
+They state every member the width decides, `digits10` included, which libstdc++ leaves
+at zero and libc++ takes from `sizeof`; it is `floor(digits * log10(2))` in 64.64
+fixed point, exact at every width Clang offers. `unsigned _BitInt(1)` is its own
+unsigned counterpart and has no signed one.
 They reach it as `integer_class` on either standard library, though only libc++
 makes `_BitInt` integral: that choice moves which arm `promoted_t` takes, and
 both name `_BitInt` itself, since it is exempt from promotion. The public
@@ -89,7 +99,7 @@ signed `_BitInt(1)`.
 
 The `<bit>` counterparts follow the same split. Where the standard library's `<bit>` takes a
 type, xstd forwards to it. Every other `unsigned_integer` — an integer class, or an
-`unsigned _BitInt(N)`, which neither standard library's counting functions take — is answered by one template per function
+`unsigned _BitInt(N)` on libstdc++, whose `<bit>` declines it — is answered by one template per function
 that works a `std::size_t` block at a time, the block being `std::size_t` because
 [iterator.concept.winc] promises every integer-class type an explicit conversion to and from
 it, and each block goes to the standard function, which knows its own instructions. The
@@ -196,8 +206,9 @@ Wider types compose the blocks: reversal sends each mirrored block to the mirror
 compression packs each block's result above the bits the lower blocks selected, expansion
 draws each block's bits from where the lower blocks stopped, and selection skips whole blocks,
 subtracting each one's population from `k`, until the `k`-th one lies in the current block,
-where the block kernel finds it and the block's offset is added. Shift counts are `int`, the one
-amount every integer class in the test matrix takes without a narrowing conversion.
+where the block kernel finds it and the block's offset is added. Shift counts are `unsigned`
+for a built-in type, so no count is signed, and `int` for a class type, the one amount every
+integer class in the test matrix takes without a narrowing conversion.
 
 P3793R2's `shl` and `shr` are forwarded the same way, once `__cpp_lib_bitops` reaches the
 `202606L` that libstdc++ gives them in C++29 mode, one below the value P3104 asks for. Their
@@ -325,8 +336,8 @@ does.
 
 ### Conditional `noexcept`
 
-All integer operations are `constexpr`. Their `noexcept` is conditional, on
-whether the element type's own operations carry the specifier, because
+All integer operations are `constexpr`. Those with a wide contract have a conditional `noexcept`,
+on whether the element type's own operations carry the specifier, because
 [iterator.concept.winc] does not ask for `noexcept` anywhere — the word does not
 occur in the subclause. Requiring it would narrow the extension point to
 integer-class types whose authors wrote it: `absl::uint128` is two `uint64_t`
@@ -339,9 +350,9 @@ direction, having no `noexcept` at all, because `std::to_chars` has none either.
 The predicate is named for what it can see — a type's declarations, not its
 behavior. "Integral" rather than "arithmetic", because an arithmetic category would also include floating point and this answers false for every
 floating-point type; "operators", because it ranges over a type's operators
-rather than its category. It is public because it *is* those six exception
-specifications, and a caller asking whether one throws over their own type is
-asking exactly this.
+rather than its category. It is public because it *is* those exception
+specifications, seven in `<xstd/ints/cstdlib/>` and sixteen in `<xstd/ints/bit/>`, and a
+caller asking whether one throws over their own type is asking exactly this.
 
 Its operations are every requirement `integer_class` states over `const`
 operands, and no more. That boundary is not this library's invention:
@@ -399,7 +410,7 @@ operations and Abseil annotates none, so they land on opposite sides of
 and `operator%` are `constexpr` only where a 128-bit intrinsic backs them, and
 out-of-line otherwise. That is the one place these tests assert something about
 the target rather than the type. The whole-surface battery in
-`test/src/cstdlib.cpp` runs over it everywhere, constant-evaluated where the
+`test/src/ints/cstdlib.cpp` runs over it everywhere, constant-evaluated where the
 intrinsic is there and checked at run time where it is not; its place in the
 exact-width lists is conditional on `ABSL_HAVE_INTRINSIC_INT128` instead, those
 cases constant-evaluating everything. Only the four divisions object at all, and
@@ -501,9 +512,10 @@ The type utilities intentionally remain narrow:
 - `nothrow_const_operators` answers whether the conditional `noexcept` holds.
 
 A concept spelling is provided when the standard library has an analogous
-concept; otherwise the trait is the interface. `nothrow_const_operators` is
-the one concept with no trait beside it, having no standard trait to mirror, and
-is spelled the way a caller writes it: inside a `noexcept`.
+concept; otherwise the trait is the interface. `nothrow_const_operators`,
+like `integer_class`, `bit_mask`, `alignable` and `nothrow_alignable`, has no standard trait
+to mirror and so no trait beside it, and it is spelled the way a caller writes it: inside a
+`noexcept`.
 
 Which decides where the `is` goes, and the subclause is no guide there. Its
 concept is *is-integer-like* — the only concept in the library or the standard
@@ -586,8 +598,9 @@ the strict dialect, `<charconv>` only outside it, and `<ostream>` in neither.
 ### Formatting
 
 `<xstd/ints/format.hpp>` formats a `div_result` as `(quotient, remainder)`, through three partial
-specializations of `std::formatter`. `div_result` is tuple-like, so where the standard
-library can format a tuple of the element type the specialization to use inherits
+specializations of `std::formatter`. `div_result` is not tuple-like, but `std::tie` makes a
+tuple of its two members, so where the standard library can format a tuple of the element
+type the specialization to use inherits
 `std::formatter<std::tuple<I const&, I const&>>` and hands it `std::tie` — the
 standard's own rendering, with no intermediate string.
 
@@ -635,8 +648,8 @@ assuming it. Subtracting the remainder suffices; complementing the mask to keep
 the high bits instead is a second trick that costs a requirement and, both
 compilers agree, emits the same instructions, at most scheduled in another order.
 
-`alignable` is `integer_class`'s opening clauses and then a stop: specialized,
-integer, radix 2, unsigned, wider than one bit, convertible both ways with
+`alignable` shares `integer_class`'s opening clauses and then stops, adding two of its own:
+specialized, integer, radix 2, unsigned, wider than one bit, convertible both ways with
 `size_t`, totally ordered, closed under `+`, `-` and `&`. Every
 `unsigned_integer` is `alignable` and no `signed_integer` is, while the converse
 fails — which is what kept it here when the storage utilities left for

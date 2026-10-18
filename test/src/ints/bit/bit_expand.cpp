@@ -5,7 +5,7 @@
 
 #include <xstd/ints/bit/bit_expand.hpp>                   // bit_expand
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_INT128, bit_int, bit_uint, uint128
+#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_BIT_INT, XSTD_HAS_INT128, bit_int, bit_uint, uint128
 #include <xstd/ints/limits.hpp>                           // numeric_limits
 #include <test/bit/oracle.hpp>                            // oracle_bit_expand
 #include <test/bit/shift_count.hpp>                       // shift_count_t
@@ -13,6 +13,7 @@
 #include <test/exact_width_types.hpp>                     // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>                       // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <array>                                          // array
+#include <concepts>                                       // same_as
 #include <cstdint>                                        // int32_t, uint64_t
 #include <ranges>                                         // iota
 #include <tuple>                                          // tuple_cat
@@ -123,6 +124,13 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsUnsignedInteger)
 BOOST_AUTO_TEST_CASE_TEMPLATE(NoexceptFollowsTheOperators, T, permutable_types)
 {
         static_assert(noexcept(xstd::bit_expand(T{1}, T{1})) == xstd::nothrow_const_operators<T>);
+        BOOST_CHECK(true);
+}
+
+// The argument's own type, never the int that integral promotion makes of a narrow one.
+BOOST_AUTO_TEST_CASE_TEMPLATE(ReturnsTheArgumentsType, T, permutable_types)
+{
+        static_assert(std::same_as<decltype(xstd::bit_expand(T{1}, T{1})), T>);
         BOOST_CHECK(true);
 }
 

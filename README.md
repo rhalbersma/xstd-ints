@@ -82,8 +82,8 @@ its two transformations compose back; a character type is a third type beside
 its pair, `make_signed_t<char>` being `signed char`. `bool` never reaches the
 question, C++17 having removed the `++` that `integer_class` asks for. xstd
 extends the paper's built-in boundary with paired `integer_class` types.
-Character conversion delegates the standard integral domain directly to
-`std::to_chars`.
+Character conversion delegates to `std::to_chars` every integral type no wider than the
+widest standard one.
 
 `div_result` is the common quotient/remainder result for truncating `div`,
 Euclidean `div_euclid`, floored `div_floor`, and ceiling `div_ceil`. Their vocabulary and relevant
@@ -118,7 +118,7 @@ auto const [ptr, ec] = xstd::to_chars(buffer.data(), buffer.data() + buffer.size
 auto const text = std::string_view(buffer.data(), ptr); // thirty-two f's
 ```
 
-An `<xstd/ext/>` header pairs a third-party integer class with its counterpart,
+An `<xstd/ints/ext/>` header pairs a third-party integer class with its counterpart,
 which is all the concepts and the functions were waiting for. It brings the
 library it adapts with it, so naming it is enough:
 
@@ -151,7 +151,8 @@ auto h = boost::hash2::fnv1a_64{};
 xstd::hash_append_int(h, boost::hash2::little_endian_flavor{}, xstd::uint128{1} << 100);
 ```
 
-See [the design notes](doc/design.md) for rationale and for customizing an
+See [the reference](doc/reference.md) for each entity's specification and the test behind each
+element of it, [the design notes](doc/design.md) for rationale and for customizing an
 integer-class type, and [CONTRIBUTING.md](CONTRIBUTING.md) to build the library itself.
 
 ## Headers
@@ -159,15 +160,15 @@ integer-class type, and [CONTRIBUTING.md](CONTRIBUTING.md) to build the library 
 
 | Header | Additions | Description | Specification |
 | :----- | :-------- | :---------- | :-------- |
-| `<xstd/ints/concepts/integer_class.hpp>` <br> `<xstd/ints/concepts/integer.hpp>` <br> `<xstd/ints/concepts/signed_integer.hpp>` <br> `<xstd/ints/concepts/unsigned_integer.hpp>` <br> `<xstd/ints/concepts/bit_mask.hpp>` <br> `<xstd/ints/concepts/alignable.hpp>` <br> `<xstd/ints/concepts/nothrow_const_operators.hpp>` | `integer_class` <br> `integer` <br> `signed_integer` <br> `unsigned_integer` <br> `bit_mask` <br> `alignable`, `nothrow_alignable` <br> `nothrow_const_operators` | The operations [iterator.concept.winc] states of an integer-class type <br> P3701 arithmetic domain, extended to paired integer-class types <br> Open form of `std::signed_integral` <br> Open form of `std::unsigned_integral` <br> The standard's bitmask type: an unsigned integer, `std::bitset`, or an enumeration overloading the operators <br> What the alignment functions ask of a type, and whether its operations carry `noexcept` <br> Exception specification of the integer functions | [iterator.concept.winc] (integer-class type) <br> [P3701R0](https://wg21.link/P3701R0), [iterator.concept.winc] <br> [iterator.concept.winc] (integer-class types) <br> [iterator.concept.winc] (integer-class types) <br> [bitmask.types] <br> none <br> none |
-| `<xstd/ints/bit.hpp>` | `bit_ceil` <br> `bit_compress` <br> `bit_expand` <br> `bit_floor` <br> `bit_repeat` <br> `bit_reverse` <br> `bit_select` <br> `bit_width` <br> `byteswap` <br> `countl_one` <br> `countl_zero` <br> `countr_one` <br> `countr_zero` <br> `has_single_bit` <br> `popcount` <br> `rotl` <br> `rotr` <br> `shl` <br> `shr` | `std::bit_ceil`, widened to the 128-bit integer classes and bit-precise widths `<bit>` declines <br> Gather the bits a mask selects into the low bits (PEXT) <br> Scatter the low bits to the positions a mask selects (PDEP) <br> `std::bit_floor`, widened the same way <br> Repeat the low `l` bits across the width <br> Mirror the bits, any xstd unsigned integer <br> Position of the `k`-th one bit, the inverse of rank (xstd extension) <br> `std::bit_width`, widened the same way <br> `std::byteswap`, widened to every xstd integer whose width is a whole number of bytes <br> `std::countl_one`, widened the same way <br> `std::countl_zero`, widened the same way <br> `std::countr_one`, widened the same way <br> `std::countr_zero`, widened the same way <br> `std::has_single_bit`, widened the same way <br> `std::popcount`, widened the same way <br> `std::rotl`, widened the same way <br> `std::rotr`, widened the same way <br> Shift left by any count of any integer type, a negative count shifting right; never undefined <br> Shift right the same way, rounding towards negative infinity | [bit.pow.two] <br> [P3104R6](https://wg21.link/P3104R6) <br> [P3104R6](https://wg21.link/P3104R6) <br> [bit.pow.two] <br> [P3104R6](https://wg21.link/P3104R6) <br> [P3104R6](https://wg21.link/P3104R6) <br> none <br> [bit.pow.two] <br> [bit.byteswap] <br> [bit.count] <br> [bit.count] <br> [bit.count] <br> [bit.count] <br> [bit.pow.two] <br> [bit.count] <br> [bit.rot] <br> [bit.rot] <br> [P3793R2](https://wg21.link/P3793R2) <br> [P3793R2](https://wg21.link/P3793R2) |
+| `<xstd/ints/concepts/integer_class.hpp>` <br> `<xstd/ints/concepts/integer.hpp>` <br> `<xstd/ints/concepts/signed_integer.hpp>` <br> `<xstd/ints/concepts/unsigned_integer.hpp>` <br> `<xstd/ints/concepts/bit_mask.hpp>` <br> `<xstd/ints/concepts/alignable.hpp>` <br> `<xstd/ints/concepts/nothrow_const_operators.hpp>` | `integer_class` <br> `integer` <br> `signed_integer` <br> `unsigned_integer` <br> `bit_mask` <br> `alignable`, `nothrow_alignable` <br> `nothrow_const_operators` | The operations [iterator.concept.winc] states of an integer-class type <br> P3701 arithmetic domain, extended to paired integer-class types <br> Open form of `std::signed_integral` <br> Open form of `std::unsigned_integral` <br> The standard's bitmask type: an unsigned integer, or any other non-integer type with the bitmask operators, such as `std::bitset` or an enumeration that overloads them <br> What the alignment functions ask of a type, and whether its operations carry `noexcept` <br> Exception specification of the integer functions | [iterator.concept.winc] (integer-class type) <br> [P3701R0](https://wg21.link/P3701R0), [iterator.concept.winc] <br> [iterator.concept.winc] (integer-class types) <br> [iterator.concept.winc] (integer-class types) <br> [bitmask.types] <br> none <br> none |
+| `<xstd/ints/bit.hpp>` | `bit_ceil` <br> `bit_compress` <br> `bit_expand` <br> `bit_floor` <br> `bit_repeat` <br> `bit_reverse` <br> `bit_select` <br> `bit_width` <br> `byteswap` <br> `countl_one` <br> `countl_zero` <br> `countr_one` <br> `countr_zero` <br> `has_single_bit` <br> `popcount` <br> `rotl` <br> `rotr` <br> `shl` <br> `shr` | `std::bit_ceil`, widened to the 128-bit integer classes and bit-precise widths `<bit>` declines <br> Gather the bits a mask selects into the low bits (PEXT) <br> Scatter the low bits to the positions a mask selects (PDEP) <br> `std::bit_floor`, widened the same way <br> Repeat the low `l` bits across the width <br> Mirror the bits, any xstd unsigned integer <br> Position of the `k`-th one bit, the inverse of rank (xstd extension) <br> `std::bit_width`, widened the same way <br> `std::byteswap`, widened to every xstd integer whose width is a whole number of bytes, and taking whatever `std::byteswap` takes, `bool` and the character types included <br> `std::countl_one`, widened the same way <br> `std::countl_zero`, widened the same way <br> `std::countr_one`, widened the same way <br> `std::countr_zero`, widened the same way <br> `std::has_single_bit`, widened the same way <br> `std::popcount`, widened the same way <br> `std::rotl`, widened the same way <br> `std::rotr`, widened the same way <br> Shift left by any count of any integer type, a negative count shifting right; never undefined <br> Shift right the same way, rounding towards negative infinity | [bit.pow.two] <br> [P3104R6](https://wg21.link/P3104R6) <br> [P3104R6](https://wg21.link/P3104R6) <br> [bit.pow.two] <br> [P3104R6](https://wg21.link/P3104R6) <br> [P3104R6](https://wg21.link/P3104R6) <br> none <br> [bit.pow.two] <br> [bit.byteswap] <br> [bit.count] <br> [bit.count] <br> [bit.count] <br> [bit.count] <br> [bit.pow.two] <br> [bit.count] <br> [bit.rotate] <br> [bit.rotate] <br> [P3793R2](https://wg21.link/P3793R2) <br> [P3793R2](https://wg21.link/P3793R2) |
 | `<xstd/ints/charconv.hpp>` | `to_chars` <br> `to_chars_max_size` | `std::to_chars`, widened to xstd integers it does not cover <br> Buffer size that holds any value of `T` at any base | [charconv.to.chars] <br> none |
 | `<xstd/ints/cstdint.hpp>` | `bit_int<N>` <br> `bit_uint<N>` <br> `bit_int_max_width` <br> `int128` <br> `uint128` | Native bit-precise signed integer (when available) <br> Native bit-precise unsigned integer (when available) <br> Maximum native bit-precise width (when available) <br> Platform 128-bit signed integer (when available) <br> Platform 128-bit unsigned integer (when available) | [P3666R0](https://wg21.link/P3666R0) <br> [P3666R0](https://wg21.link/P3666R0) <br> none <br> none <br> none |
 | `<xstd/ints/cstdlib.hpp>` | `div_result` <br> `sign` <br> `abs` <br> `unsigned_abs` <br> `div` <br> `div_euclid` <br> `div_floor` <br> `div_ceil` | Defaulted equality comparison <br> `-1`, `0`, or `1`; `0` or `1` when unsigned <br> `constexpr`, any xstd integer <br> Total `\|x\|`, returning the unsigned counterpart <br> Truncated division, any xstd integer <br> Euclidean division <br> Floored division <br> Ceiling division | none <br> [Boost.Math](https://www.boost.org/doc/libs/1_80_0/libs/math/doc/html/math_toolkit/sign_functions.html) <br> [p0533r9](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0533r9.pdf) (reviewed implementation wording) <br> [Rust `unsigned_abs`](https://doc.rust-lang.org/std/primitive.i32.html#method.unsigned_abs) (no C++ equivalent) <br> [p0533r9](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0533r9.pdf) (reviewed implementation wording) <br> [Euclidean division](https://en.wikipedia.org/wiki/Euclidean_division) <br> [Floored division](http://research.microsoft.com/pubs/151917/divmodnote-letter.pdf) <br> [P3724R4](https://wg21.link/P3724R4) (`div_rem_to_pos_inf`) |
 | `<xstd/ints/ext/absl.hpp>` | `make_unsigned<absl::int128>` <br> `make_signed<absl::uint128>` | Pairs Abseil's two integer-class types, so each models `integer` | none <br> none |
-| `<xstd/ints/ext/boost.hpp>` | `make_unsigned<boost::int128::int128>` <br> `make_signed<boost::int128::uint128>` <br> `hash_append_int` | Pairs Boost.Int128's two integer-class types, so each models `integer` <br> Boost.Hash2's `hash_append` for every xstd integer, hashing the value and never the object | none <br> none <br> none |
+| `<xstd/ints/ext/boost.hpp>` | `make_unsigned<boost::int128::int128>` <br> `make_signed<boost::int128::uint128>` <br> `hash_append_int` | Pairs Boost.Int128's two integer-class types, so each models `integer` <br> Hashes any xstd integer's value, never its object representation, into a Boost.Hash2 algorithm; a function to call, which `hash_append` does not find | none <br> none <br> none |
 | `<xstd/ints/format.hpp>` | `formatter<div_result>` | `std::format` support for every element type `div_result` accepts | [p3391](https://wg21.link/P3391R3) (reviewed constexpr-format wording) |
-| `<xstd/ints/limits.hpp>` | `numeric_limits` | Open `std::numeric_limits`, specialized for xstd extension types | [numeric.limits] |
+| `<xstd/ints/limits.hpp>` | `numeric_limits` | Open `std::numeric_limits`, and its specializations for the bit-precise `_BitInt(N)` types | [numeric.limits] |
 | `<xstd/ints/memory.hpp>` | `align_up` <br> `align_down` <br> `is_aligned` | Round a value up to a power-of-two alignment, any xstd unsigned integer <br> Round a value down to a power-of-two alignment <br> Whether rounding would change anything | [Boost.Align](https://www.boost.org/doc/libs/release/doc/html/align.html) (`align_up`), [LLVM `alignTo`](https://llvm.org/doxygen/namespacellvm.html) <br> [Boost.Align](https://www.boost.org/doc/libs/release/doc/html/align.html) (`align_down`), [LLVM `alignDown`](https://llvm.org/doxygen/namespacellvm.html) <br> [Boost.Align](https://www.boost.org/doc/libs/release/doc/html/align.html) (`is_aligned`) |
 | `<xstd/ints/type_traits/is_signed.hpp>` <br> `<xstd/ints/type_traits/is_unsigned.hpp>` <br> `<xstd/ints/type_traits/make_signed.hpp>` <br> `<xstd/ints/type_traits/make_unsigned.hpp>` <br> `<xstd/ints/type_traits/promoted.hpp>` | `is_signed` <br> `is_unsigned` <br> `make_signed` <br> `make_unsigned` <br> `promoted_t` | `std::is_signed`, opened to integer-class types <br> `std::is_unsigned`, opened to integer-class types <br> Open, user-specializable `std::make_signed` <br> Open, user-specializable `std::make_unsigned` <br> What a type's own operators yield: [conv.prom] for a built-in, the type itself otherwise | none <br> none <br> none <br> none <br> [conv.prom] |
 
@@ -177,8 +178,8 @@ minimum width is two so every exposed type has a signed or unsigned counterpart.
 The 128-bit aliases and their `make_signed` and `make_unsigned` associations are
 defined together in `<xstd/ints/cstdint/int128.hpp>`; `<xstd/ints/cstdint.hpp>` is their
 umbrella. They alias the Microsoft STL's integer classes or the compiler's `__int128`, and
-`XSTD_HAS_INT128` detects them: 32-bit x86 and ARM have neither, and there the aliases are
-absent rather than an error. The two `<xstd/ext/>` umbrellas export `<xstd/ints/ext/absl/int128.hpp>`, and
+`XSTD_HAS_INT128` detects them: GCC and Clang on 32-bit x86 and ARM have neither, and there the
+aliases are absent rather than an error. The two `<xstd/ints/ext/>` umbrellas export `<xstd/ints/ext/absl/int128.hpp>`, and
 `<xstd/ints/ext/boost/int128.hpp>` with `<xstd/ints/ext/boost/hash2.hpp>`, and each needs
 the libraries it adapts on the include path; nothing above them exports either. Each
 adapted header is exported in turn, so including one is enough: `<xstd/ints/ext/absl/int128.hpp>`
@@ -190,10 +191,11 @@ header is one overload set: the standard function wherever it accepts the argume
 beside it one template answering every other `unsigned_integer`, or for `byteswap` every
 `integer` whose width is a whole number of bytes. The template works through the value one
 `std::size_t` word at a time, so it covers `xstd::uint128` where it is a class, as it is in
-the Microsoft STL, and the types the two `<xstd/ext/>` adaptors adapt, with nothing in those
+the Microsoft STL, and the types the two `<xstd/ints/ext/>` adaptors adapt, with nothing in those
 adaptors beyond the `make_signed` and `make_unsigned` associations. Its exception
 specification is that of the type's operators, so it is `noexcept` for every type but
-`absl::uint128`, whose operators declare nothing. Where `xstd::uint128` is the built-in
+`absl::uint128`, whose operators declare nothing; `bit_ceil`, `bit_repeat` and `bit_select` have a
+precondition, and are not `noexcept` at all. Where `xstd::uint128` is the built-in
 `unsigned __int128` and the standard library leaves it out of `std::unsigned_integral`, as
 libstdc++ does in a strictly conforming translation unit on GCC, the word template answers
 it too, so every configuration has the whole of `<bit>` at that width.
@@ -216,9 +218,9 @@ but not `bit_uint<13>`.
 defined, one at or past the width included, and a negative count shifts the other way. Both
 operands may be any `integer`, signed or unsigned and of different types. Where the standard
 library declares them, as `__cpp_lib_bitops` of at least `202606L` says, xstd forwards to them
-for every pair of types they take; elsewhere one template answers, shifting left through the
-unsigned counterpart, where nothing overflows, and right in the type itself, where a signed
-shift floors.
+for every pair of types it takes both of them for; elsewhere one template answers, shifting
+through the unsigned counterpart, where nothing overflows, and complementing a negative value
+on either side of a right shift, so that it floors.
 
 `bit_reverse`, `bit_repeat`, `bit_compress` and `bit_expand` are P3104's bit
 permutations, which C++29's `<bit>` adds. Where the standard library declares them, as
@@ -266,12 +268,12 @@ CheckOptions:
 
 - A conforming [C++23](https://wg21.link/N4950) compiler
 - CMake 3.28 or later when using the supplied CMake project
-- No third-party runtime or library dependencies outside `<xstd/ext/>`
+- No third-party runtime or library dependencies outside `<xstd/ints/ext/>`
 
 `<xstd/ints/format.hpp>` is the only header that depends on `<format>`. The front
 door `<xstd/ints.hpp>` exports it along with everything else, so a translation unit
 that wants no `<format>` names the domain umbrellas it uses instead: none of those
-reaches it. The `<xstd/ext/>` headers are the only ones that include a third-party
+reaches it. The `<xstd/ints/ext/>` headers are the only ones that include a third-party
 library, and no other header includes them: an adapted library is reached by naming
 it.
 

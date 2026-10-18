@@ -4,7 +4,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <xstd/ints/bit/bit_repeat.hpp> // bit_repeat
-#include <xstd/ints/cstdint.hpp>        // XSTD_HAS_INT128, bit_int, bit_uint, uint128
+#include <xstd/ints/cstdint.hpp>        // XSTD_HAS_BIT_INT, XSTD_HAS_INT128, bit_int, bit_uint, uint128
 #include <xstd/ints/limits.hpp>         // numeric_limits
 #include <test/bit/oracle.hpp>          // oracle_bit_repeat
 #include <test/bit/sweep.hpp>           // bit_precise_sweep_types, for_each_edge_value_at, for_each_sweep_value, holds_at_every_position
@@ -13,6 +13,7 @@
 #include <boost/test/unit_test.hpp>     // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <array>                        // array
 #include <climits>                      // INT_MAX, INT_MIN
+#include <concepts>                     // same_as
 #include <cstdint>                      // int32_t, uint32_t, uint64_t
 #include <ranges>                       // iota
 #include <tuple>                        // tuple_cat
@@ -87,6 +88,13 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsUnsignedInteger)
 BOOST_AUTO_TEST_CASE_TEMPLATE(IsNotNoexcept, T, permutable_types)
 {
         static_assert(not noexcept(xstd::bit_repeat(T{1}, 1)));
+        BOOST_CHECK(true);
+}
+
+// The argument's own type, never the int that integral promotion makes of a narrow one.
+BOOST_AUTO_TEST_CASE_TEMPLATE(ReturnsTheArgumentsType, T, permutable_types)
+{
+        static_assert(std::same_as<decltype(xstd::bit_repeat(T{1}, 1)), T>);
         BOOST_CHECK(true);
 }
 

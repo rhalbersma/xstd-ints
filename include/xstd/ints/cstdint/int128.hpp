@@ -46,7 +46,7 @@ using uint128 = unsigned __int128;
 
 #endif
 
-// 32-bit x86 and ARM have neither, and there the pair is absent rather than an error.
+// GCC and Clang on 32-bit x86 and ARM have neither, and there the pair is absent rather than an error.
 #ifdef XSTD_HAS_INT128
 
 // The pair's associations, where the pair is introduced: whoever can name it has them.

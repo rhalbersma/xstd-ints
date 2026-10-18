@@ -4,12 +4,12 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <xstd/ints/concepts/integer.hpp>          // integer
-#include <test/exact_width_types.hpp>              // exact_width_signed_integer_types, exact_width_unsigned_integer_types
 #include <xstd/ints/type_traits/make_signed.hpp>   // make_signed_t
 #include <xstd/ints/type_traits/make_unsigned.hpp> // make_unsigned_t
-#include <boost/test/unit_test.hpp>
-#include <concepts> // same_as
-#include <cstdint>  // Boost.Test
+#include <test/exact_width_types.hpp>              // exact_width_integer_types, exact_width_signed_integer_types, exact_width_unsigned_integer_types
+#include <boost/test/unit_test.hpp>                // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END
+#include <concepts>                                // same_as
+#include <cstdint>                                 // int8_t, uint8_t
 
 template<class T>
 concept cv_rejected_integer =
