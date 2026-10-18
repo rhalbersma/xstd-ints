@@ -210,7 +210,8 @@ find_package(
 )
 
 # The one 128-bit type the suite tests against that xstd knows nothing about,
-# and not a hard dependency. Ships with Boost 1.92; until then the fetch below.
+# and not a hard dependency. A pre-release library in no Boost release yet,
+# so CI and a local build alike take the fetch below.
 option(${project_option_prefix}_TEST_FETCH_BOOST_INT128 "Fetch Boost.Int128 when no installed copy is found" ON)
 
 find_package(boost_int128 CONFIG QUIET)
