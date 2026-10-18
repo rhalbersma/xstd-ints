@@ -3,7 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/ints/bit/detail/shift.hpp>                 // shift, shift_direction
+#include <xstd/ints/bit/detail/shift.hpp>                 // IWYU pragma: keep; shift, shift_direction, where the standard library ships std::shl
 #include <xstd/ints/bit/shl.hpp>                          // shl
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
