@@ -190,6 +190,7 @@ BOOST_AUTO_TEST_CASE(NarrowBitPreciseTakesEveryBase)
         BOOST_CHECK_EQUAL(rendered(xstd::bit_uint<2>{3}, 36), "3");
 }
 
+#if __BITINT_MAXWIDTH__ >= 129
 // Signed and one bit wider than 128, with its sign: libc++ admits _BitInt(129) as integral yet cannot format it.
 BOOST_AUTO_TEST_CASE(SignedBitPreciseOnePastTheWidestStandardType)
 {
@@ -197,6 +198,7 @@ BOOST_AUTO_TEST_CASE(SignedBitPreciseOnePastTheWidestStandardType)
         BOOST_CHECK_EQUAL(rendered(xstd::numeric_limits<xstd::bit_int<129>>::min(), 16), "-1" + std::string(32, '0'));
         BOOST_CHECK_EQUAL(rendered(xstd::numeric_limits<xstd::bit_int<129>>::max(), 16), std::string(32, 'f'));
 }
+#endif
 #endif
 
 BOOST_AUTO_TEST_CASE(Int128Boundaries)
