@@ -164,14 +164,15 @@ def forwarding_overloads():
     for header in sorted((ROOT / "include/xstd/ints/bit/detail").glob("std_*.hpp")):
         text = header.read_text()
         threshold = re.search(r"__cpp_lib_bitops >= (\d+)L", text)
-        macro = re.search(r"#define (XSTD_\w+) 1", text)
-        if not (threshold and macro):
+        # The first macro is the threshold's own; any after it narrow it, and their functions still go live with it.
+        macros = re.findall(r"#define (XSTD_\w+) 1", text)
+        if not (threshold and macros):
             continue
         functions = sorted(path.stem for path in (ROOT / "include/xstd/ints/bit").glob("*.hpp")
-                           if f"#ifdef {macro.group(1)}" in path.read_text())
+                           if any(f"#ifdef {macro}" in path.read_text() for macro in macros))
         tests = [f"test/src/ints/bit/{name}.cpp" for name in functions
                  if (ROOT / "test/src/ints/bit" / f"{name}.cpp").exists()]
-        overloads.append({"threshold": int(threshold.group(1)), "macro": macro.group(1), "functions": functions,
+        overloads.append({"threshold": int(threshold.group(1)), "macro": macros[0], "functions": functions,
                           "tests": tests})
     return overloads
 

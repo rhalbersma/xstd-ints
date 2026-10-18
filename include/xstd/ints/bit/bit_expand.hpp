@@ -9,7 +9,7 @@
 #include <xstd/ints/bit/detail/block_expand.hpp>          // block_expand
 #include <xstd/ints/bit/detail/block_width.hpp>           // block_width
 #include <xstd/ints/bit/detail/shift_count.hpp>           // shift_count_t
-#include <xstd/ints/bit/detail/std_permutes_bits.hpp>     // XSTD_HAS_STD_BIT_PERMUTATIONS, std_permutes_bits
+#include <xstd/ints/bit/detail/std_permutes_bits.hpp>     // XSTD_HAS_STD_BIT_COMPRESS, std_compresses_bits
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
 #include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
@@ -19,10 +19,10 @@
 // P3104R5's bit_expand, over every unsigned integer xstd knows.
 namespace xstd {
 
-#ifdef XSTD_HAS_STD_BIT_PERMUTATIONS
+#ifdef XSTD_HAS_STD_BIT_COMPRESS
 
 template<class T>
-        requires ints::detail::std_permutes_bits<T>
+        requires ints::detail::std_compresses_bits<T>
 [[nodiscard]] constexpr auto bit_expand(T src, T mask) noexcept
         -> T
 {
@@ -33,7 +33,7 @@ template<class T>
 
 // Each block of the mask is expanded on its own, drawing on the bits of src the blocks below it left unconsumed.
 template<unsigned_integer T>
-        requires (not ints::detail::std_permutes_bits<T>)
+        requires (not ints::detail::std_compresses_bits<T>)
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters): P3104's signature, the source and then the mask
 [[nodiscard]] constexpr auto bit_expand(T src, T mask) noexcept(nothrow_const_operators<T>)
         -> T
