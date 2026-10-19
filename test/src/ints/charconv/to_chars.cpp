@@ -83,9 +83,6 @@ BOOST_AUTO_TEST_CASE(DelegatesWhereTheStandardLibraryCovers)
 #endif
 }
 
-template<class T>
-concept has_max_size = requires { xstd::to_chars_max_size<T>; };
-
 // char is the one character type [charconv.to.chars] declares; a char8_t reaches std::to_chars only by promotion.
 BOOST_AUTO_TEST_CASE(TakesCharAndNoOtherCharacterType)
 {
