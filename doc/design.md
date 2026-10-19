@@ -112,7 +112,11 @@ The four permutations from [P3104R6](https://wg21.link/P3104R6) — `bit_reverse
 `bit_repeat`, `bit_compress` and `bit_expand` — have no `<bit>` to defer to yet, so each is
 one template over `unsigned_integer` beside an overload forwarding to the standard function,
 declared once `__cpp_lib_bitops` reaches the working draft's `202607L` and constrained, like
-the counters, on the standard call being well-formed. The template works a block at a time.
+the counters, on the standard call being well-formed. `bit_compress` and `bit_expand` are not
+forwarded to libstdc++ where xstd has fast BMI2: GCC trunk's implementation is Hacker's Delight's
+parallel suffix for every type, about 28 ns a call on a Broadwell Xeon against 0.6 ns for
+`PEXT`, so xstd keeps its kernels, and the Toolchain Canary's `libstdcxx_pext` job fails the week
+GCC trunk starts emitting either instruction. The template works a block at a time.
 A block is mirrored, compressed or expanded by one of two families of kernels on a single
 `std::size_t`, each family in a directory of its own under `bit/detail/` with one header per
 kernel:
@@ -192,6 +196,28 @@ target is excluded. Beyond what tests can sample, Z3 proves each portable kernel
 specification for every input at 32 and 64 bits: PEXT and PDEP as the Intel SDM's pseudocode
 gives them, RBIT as the Arm ARM's ASL does, and select by its defining property, each shift
 within the width and the select's precondition met at every call.
+Branch-free is a claim about control flow; whether a kernel's control flow or memory addresses
+depend on secret data was checked separately, per kernel and per secret argument
+([`constant_time/`](../constant_time), [results](../constant_time/results.md)). Valgrind's memcheck,
+with the secret marked undefined, reports every branch and address computed from it, the same for
+GCC 15 and Clang 22 with and without `-march=x86-64-v3`:
+
+| Kernel | Secret | Memcheck |
+| :-- | :-- | :-- |
+| `block_reverse_by_swaps` | the word | clean |
+| `block_expand_by_walk` | the source, the mask public | clean |
+| `block_expand_by_walk` | the mask | a branch: one trip per mask one |
+| `block_compress_by_rank` | the source | a branch: one trip per selected bit |
+| `block_expand_by_select` | the source | a branch, and the table lookup |
+| `block_select_by_broadword` | the word and the rank | no branch, but one address from them: `select_in_byte` |
+| `PEXT`, `PDEP` | the source or the mask | clean |
+
+So only the byte reversal, the walk over a public mask, and the two instructions are free of
+secret-dependent branches and addresses. The select never branches, yet indexes a table by the
+secret, which a cache-timing attacker can observe, and the loops branch on no bit of the value but
+run a number of times that depends on it. Memcheck says nothing about time itself: the instructions'
+own latency can depend on their operands, as uops.info measures for
+[`PEXT (R64, R64, R64)`](https://uops.info/html-instr/PEXT_R64_R64_R64.html) on Zen 2.
 Wider types compose the blocks: reversal sends each mirrored block to the mirror of its offset,
 compression packs each block's result above the bits the lower blocks selected, expansion
 draws each block's bits from where the lower blocks stopped, and selection skips whole blocks,
@@ -585,27 +611,31 @@ the strict dialect, `<charconv>` only outside it, and `<ostream>` in neither.
 
 ### Formatting
 
-`<xstd/ints/format.hpp>` formats a `div_result` as `(quotient, remainder)`, through two partial
+`<xstd/ints/format.hpp>` formats a `div_result` as `(quotient, remainder)`, through three partial
 specializations of `std::formatter`. `div_result` is tuple-like, so where the standard
 library can format a tuple of the element type the specialization to use inherits
 `std::formatter<std::tuple<I const&, I const&>>` and hands it `std::tie` — the
 standard's own rendering, with no intermediate string.
 
 That delegation can be missing in two ways that do not coincide: the element type
-may not be formattable, which is the Microsoft STL's 128-bit classes, or tuple
-formatting itself may be missing, p2286 having reached libstdc++ only in GCC 15.
-Testing `formattable` on the *tuple* covers both with one predicate. Where it
-does not hold, the other specialization renders the members through
-`xstd::to_chars` into an inherited string formatter, so `div_result` formats on every
-implementation and for either signedness — for every element type `xstd::to_chars`
-itself covers, which is to say every one with an unsigned counterpart.
+may not be formattable, which is Abseil's `int128` and the Microsoft STL's 128-bit
+classes, or tuple formatting itself may be missing, p2286 having reached libstdc++
+only in GCC 15. Where only the element type is missing, the second specialization
+renders each member through `xstd::to_chars` and hands the two digit strings to a
+tuple formatter of an exposition-only type, so the spec grammar stays the tuple's:
+`{:n}` and `{:m}` mean the same for `div_result<absl::int128>` as for
+`div_result<int>`, and a format string written for one element type compiles for the
+other. Where tuple formatting itself is missing, the third renders the same text into
+an inherited string formatter, so `div_result` formats on every implementation and
+for either signedness — for every element type `xstd::to_chars` itself covers, which
+is to say every one with an unsigned counterpart.
 
 The choice is left to partial ordering, on the same footing as `to_chars`'s
-overloads: the tuple one requires the base it inherits, spelled where it applies,
-on top of the counterpart the other asks for, so its constraints are a superset
-and it wins wherever both are viable. Both produce `(quotient, remainder)`, so which runs is
-not observable in the output — only in the spec grammar, `parse()` being
-inherited, which is why the README says so.
+overloads: each specialization's constraints are a superset of the next one's, the
+tuple-of-digits one adding that the library formats tuples, and the tuple-of-`I` one
+adding that it formats `I`. All three produce `(quotient, remainder)`. Which one runs
+shows only in the spec grammar, which is the tuple's wherever the library formats
+tuples, and the string's on a library that formats none.
 
 xstd specializes `std::formatter` only for `div_result`, which is program-defined. The
 128-bit types are not xstd's to specialize for: they are built-ins or

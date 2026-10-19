@@ -10,9 +10,10 @@ cmake -S "$SRC/xstd-ints" -B "$WORK/build" -DBUILD_TESTING=OFF \
         -DXSTD_INTS_BUILD_FUZZERS=ON \
         -DXSTD_INTS_FUZZ_COMPILE_OPTIONS="" \
         -DXSTD_INTS_FUZZ_LINK_OPTIONS="$LIB_FUZZING_ENGINE"
-cmake --build "$WORK/build" --parallel "$(nproc)" --target fuzz_bit_permutation
+targets=(fuzz_align fuzz_bit_permutation fuzz_div fuzz_shift fuzz_to_chars)
+cmake --build "$WORK/build" --parallel "$(nproc)" --target "${targets[@]}"
 
-for target in fuzz_bit_permutation; do
+for target in "${targets[@]}"; do
         cp "$WORK/build/fuzz/$target" "$OUT/"
         # The checked-in seeds, which ClusterFuzzLite unpacks beside the corpus it keeps.
         (cd "$SRC/xstd-ints/fuzz/corpus/$target" && zip -q -j "$OUT/${target}_seed_corpus.zip" ./*)

@@ -48,8 +48,8 @@ jobs:
           # Paths no ladder compiles: prose, the suites with workflows of their
           # own, the tools those use, and the workflows that are not ladders.
           # Anything else, a new directory included, builds.
-          unbuilt='\.md$|^LICENSE_1_0\.txt$|^doc/|^bench/|^codegen/|^examples/|^exhaustive/|^fuzz/|^mutation/|^proofs/|^tools/|^\.clang-format$|^\.git-blame-ignore-revs$'
-          unbuilt="${unbuilt}"'|^\.github/workflows/(actionlint|bench|canary|cflite_batch|cflite_pr|clang-format|codegen|codeql|consumption|coverage|exhaustive|mutation|perft|proofs|scorecard|upstream-watch)\.yml$'
+          unbuilt='\.md$|^LICENSE_1_0\.txt$|^doc/|^bench/|^codegen/|^constant_time/|^examples/|^exhaustive/|^fuzz/|^mutation/|^proofs/|^tools/|^\.clang-format$|^\.git-blame-ignore-revs$'
+          unbuilt="${unbuilt}"'|^\.github/workflows/(actionlint|bench|canary|cflite_batch|cflite_pr|clang-format|codegen|codeql|constant-time|consumption|coverage|exhaustive|mutation|perft|proofs|scorecard|upstream-watch)\.yml$'
           if grep -qvE "${unbuilt}" "${RUNNER_TEMP}/changed"; then
             echo "build=true" >> "${GITHUB_OUTPUT}"
           else

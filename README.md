@@ -89,9 +89,9 @@ Character conversion delegates the standard integral domain directly to
 Euclidean `div_euclid`, floored `div_floor`, and ceiling `div_ceil`. Their vocabulary and relevant
 rounding semantics follow [P3724R4](https://wg21.link/P3724R4), but xstd
 intentionally implements only this established four-operation family.
-A `div_result` renders as `(quotient, remainder)` for every element type it accepts, but which
-format specs it accepts depends on that type: where the standard library can
-format a tuple of it the tuple grammar applies, and otherwise a string one.
+A `div_result` renders as `(quotient, remainder)` for every element type it accepts, and takes
+the tuple format specs, `{:n}` and `{:m}` among them, for every element type wherever the
+standard library formats tuples; on one that formats none, it takes a string's.
 
 ```cpp
 #include <xstd/ints/cstdlib.hpp>
@@ -222,8 +222,10 @@ shift floors.
 
 `bit_reverse`, `bit_repeat`, `bit_compress` and `bit_expand` are P3104's bit
 permutations, which C++29's `<bit>` adds. Where the standard library declares them, as
-`__cpp_lib_bitops` of at least `202607L` says, xstd forwards to them for every type they take;
-elsewhere one template answers every `unsigned_integer`, the 128-bit integer classes and
+`__cpp_lib_bitops` of at least `202607L` says, xstd forwards to them for every type they take,
+with one exception: libstdc++'s `bit_compress` and `bit_expand` use neither `PEXT` nor `PDEP`,
+so where xstd would, it keeps its own kernels, and a weekly canary reports when that changes.
+Elsewhere one template answers every `unsigned_integer`, the 128-bit integer classes and
 every `bit_uint<N>` width included, by working through it one `std::size_t` word at a time.
 All four are `constexpr`, portable in a constant expression and fast at run time: Clang's
 `__builtin_bitreverse64` mirrors a word, and with BMI2 on x86-64 (`-mbmi2`, or MSVC's
@@ -233,9 +235,11 @@ instructions in microcode, as uops.info's measurements of
 [`PEXT`](https://uops.info/html-instr/PEXT_R64_R64_R64.html) and
 [`PDEP`](https://uops.info/html-instr/PDEP_R64_R64_R64.html) on Zen 2 show against Zen 3, so
 a build targeting them (`-march=bdver4`, `znver1` or `znver2`) keeps the portable kernels even
-though it enables BMI2. Those kernels are branch-free where it counts: `bit_compress` places
+though it enables BMI2. Those kernels never branch on a bit of the value: `bit_compress` places
 each selected bit by one `popcount` of the mask below it, and `bit_expand` walks the mask's
-one-bits without branching on the value. `bit_repeat` alone has a precondition, a length above
+one-bits. Neither is constant-time in every argument, since `bit_compress` runs once per selected
+bit and `bit_expand` once per mask bit; design.md records, kernel by kernel, what Valgrind's
+memcheck found. `bit_repeat` alone has a precondition, a length above
 zero, and is not `noexcept`, as the paper specifies.
 
 `bit_select(x, k)` is an xstd extension beside them, not a standard function and not part of
@@ -318,7 +322,9 @@ where `size_t` is 32 bits but 64-bit integers keep their 8-byte alignment. The G
 adds a second 32-bit leg, i686 with GCC `-m32`, where `size_t` is 32 bits and there is no
 `__int128`. The MSVC workflow adds a third, x86 with VS 2026 in Debug and Release, where
 `xstd::uint128` is the MSVC STL's portable 128-bit class and the bit permutations take their
-portable kernels.
+portable kernels. One more GCC leg runs the trunk snapshot in C++29 mode,
+`-std=gnu++2d`, the one mode in which libstdc++ declares `shl` and `shr`: it is where the
+overloads forwarding to `<bit>` compile and their agreement tests run.
 
 ## License
 
