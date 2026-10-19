@@ -91,6 +91,7 @@ target_sources(
         include/xstd/ints/bit/shl.hpp
         include/xstd/ints/bit/shr.hpp
         include/xstd/ints/charconv.hpp
+        include/xstd/ints/charconv/detail/std_writes_chars.hpp
         include/xstd/ints/charconv/to_chars.hpp
         include/xstd/ints/concepts.hpp
         include/xstd/ints/concepts/alignable.hpp
