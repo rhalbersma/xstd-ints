@@ -6,9 +6,9 @@
 #ifndef XSTD_INTS_BIT_BIT_WIDTH_HPP
 #define XSTD_INTS_BIT_BIT_WIDTH_HPP
 
+#include <xstd/ints/bit/countl_zero.hpp>                  // countl_zero
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
-#include <xstd/ints/bit/countl_zero.hpp>                  // countl_zero
 #include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
 #include <bit>                                            // bit_width
 

@@ -6,9 +6,9 @@
 #ifndef XSTD_INTS_BIT_COUNTL_ONE_HPP
 #define XSTD_INTS_BIT_COUNTL_ONE_HPP
 
+#include <xstd/ints/bit/countl_zero.hpp>                  // countl_zero
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
-#include <xstd/ints/bit/countl_zero.hpp>                  // countl_zero
 #include <bit>                                            // countl_one
 
 // [bit.count] over every unsigned integer xstd knows.

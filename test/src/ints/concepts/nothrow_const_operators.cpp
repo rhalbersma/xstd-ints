@@ -19,6 +19,11 @@
 #include <xstd/ints/ext/absl/int128.hpp> // int128, uint128
 #endif
 
+#if __has_include(<boost/int128.hpp>)
+#define TEST_HAS_BOOST_INT128
+#include <xstd/ints/ext/boost/int128.hpp> // int128, uint128
+#endif
+
 BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(Concepts)
 BOOST_AUTO_TEST_SUITE(NothrowConstOperators)
@@ -40,6 +45,12 @@ BOOST_AUTO_TEST_CASE(HoldsForTheTypesThatDeclareIt)
         XSTD_CONSTEXPR_CHECK(xstd::nothrow_const_operators<xstd::bit_uint<17>>);
 #endif
 
+        // Boost annotates every operation, so its pair holds where Abseil's does not.
+#ifdef TEST_HAS_BOOST_INT128
+        XSTD_CONSTEXPR_CHECK(xstd::nothrow_const_operators<boost::int128::int128>);
+        XSTD_CONSTEXPR_CHECK(xstd::nothrow_const_operators<boost::int128::uint128>);
+#endif
+
         // Admitted by integer and refused here: why the two are separate concepts.
 #ifdef TEST_HAS_ABSL_INT128
         XSTD_CONSTEXPR_CHECK(xstd::integer<absl::int128>);
@@ -57,7 +68,7 @@ BOOST_AUTO_TEST_CASE(IncludesWhatPassingAndReturningCosts)
         XSTD_CONSTEXPR_CHECK(std::is_nothrow_copy_constructible_v<xstd::uint128>);
 #endif
 
-        // Which the concept now answers for, over the types this file already names.
+        // Which the concept answers for, over the types this file already names.
         XSTD_CONSTEXPR_CHECK(not xstd::nothrow_const_operators<int> or std::is_nothrow_copy_constructible_v<int>);
 #ifdef TEST_HAS_ABSL_INT128
         using T = absl::int128;
