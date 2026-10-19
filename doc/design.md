@@ -614,17 +614,18 @@ with it the reason the digits overload came first.
 
 Two places the standard library does not cover are worth separating. Integer-class
 types are never covered, `to_chars` being specified over the built-in integer
-types. But the *built-in* 128-bit types are not covered either in this dialect:
-libstdc++ gates its 128-bit pair on `__GLIBCXX_TYPE_INT_N_0`, predefined only
-outside `__STRICT_ANSI__`, so with `CMAKE_CXX_EXTENSIONS OFF` the overload is
-absent and the call is *ambiguous*. Detection therefore has to survive an
-ambiguity rather than a clean deduction failure, which it does: overload
-resolution failing is still failing in the immediate context.
+types. The *built-in* 128-bit types are covered everywhere but one place:
+libstdc++ 15 in the strict dialect, with `CMAKE_CXX_EXTENSIONS OFF`, counts
+neither `__int128` nor `unsigned __int128` as `std::integral` and declares no
+`std::to_chars` for them. There they take xstd's own digits. libstdc++ 16 and 17
+and libc++ take both in either dialect, and forward. The fallback's constraint
+needs no special case for this: a type that is not integral never reaches the
+`std::to_chars` call the constraint asks about.
 
-`<format>` goes the other way for the same underlying reason, libstdc++ adding a
-`formatter<__int128, CharT>` *only* under `__STRICT_ANSI__`. So the three
-facilities disagree about one type along different axes: `<format>` works only in
-the strict dialect, `<charconv>` only outside it, and `<ostream>` in neither.
+`<format>` does not follow `<charconv>` here. `std::formattable<__int128, char>`
+holds on libstdc++ 15, 16 and 17 and on libc++, in both dialects, so the one
+library and dialect that leaves the type out of `<charconv>` still formats it.
+`<ostream>` writes it in neither.
 `bool` is outside both conversion constraints.
 
 ### Formatting
