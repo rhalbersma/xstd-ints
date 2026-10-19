@@ -240,7 +240,7 @@ on either side of a right shift, so that it floors.
 permutations, which C++29's `<bit>` adds. Where the standard library declares them, as
 `__cpp_lib_bitops` of at least `202607L` says, xstd forwards to them for every type they take,
 with one exception: libstdc++'s `bit_compress` and `bit_expand` use neither `PEXT` nor `PDEP`,
-so where xstd would, it keeps its own kernels, and a weekly canary reports when that changes.
+so where xstd would, it keeps its own kernels, and a nightly canary reports when that changes.
 Elsewhere one template answers every `unsigned_integer`, the 128-bit integer classes and
 every `bit_uint<N>` width included, by working through it one `std::size_t` word at a time.
 All four are `constexpr`, portable in a constant expression and fast at run time: Clang's

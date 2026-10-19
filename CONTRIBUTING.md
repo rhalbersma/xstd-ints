@@ -14,7 +14,7 @@ When adding or changing a public utility:
 
 This repository enforces its quality bar through CI rather than through review discretion. A PR is mergeable once every required check below is green; none of these are aspirational:
 
-- **Every compiler/platform leg passes.** See the table in [README.md](README.md) for the current matrix (GCC, Clang, Clang-CL, MSVC, MinGW, Apple Clang). Every leg is required, including every `Development` leg (`17-SVN`, `24-SVN`, `2026-Preview`) and the `libc++` leg: xstd tracks the development channel deliberately and none of these are advisory.
+- **Every compiler/platform leg passes.** See the table in [README.md](README.md) for the current matrix (GCC, Clang, Clang-CL, MSVC, MinGW, Apple Clang). Every leg is required, including every `Development` leg (`17-SVN`, `24-SVN`, `2026-Preview`) and the `libc++` leg: xstd tracks the development channel deliberately and none of these are advisory. On a pull request each ladder builds only its floor and ceiling rungs, in Debug, while the single-purpose legs beside it run as they are; the nightly canary builds every rung and build type on `main`.
 - **`clang-tidy` is clean.** The [Clang-Tidy workflow](.github/workflows/clang-tidy.yml) runs the checks in [`.clang-tidy`](.clang-tidy) with `WarningsAsErrors: '*'` over the public headers, so any finding fails the job outright - there is no "advisory, fix later" mode.
 - **Line and branch coverage stay at 100%, project-wide and for the PR's own diff.** [`codecov.yml`](.github/codecov.yml) sets both the `project` and `patch` Codecov status checks to a 100% target with zero tolerance, backed by the [Coverage workflow](.github/workflows/coverage.yml)'s own `gcovr --fail-under-line 100 --fail-under-branch 100` gate. New code needs a test that exercises every line and branch it adds; existing coverage may not regress. Excluded from this bar: `assert(...)` contract checks (their failure path is undefined behavior by design, not something a correct test can hit), compiler-synthesized `= default;` special members (gcov cannot attribute a hit counter to them regardless of how often they run), and the exception-unwinding branch gcc/gcov attaches to any call that could throw (`--exclude-throw-branches`/`--exclude-unreachable-branches`) - not a code path a test can meaningfully hit either.
 - **No new sanitizer failures.** The [sanitizers workflow](.github/workflows/sanitizers.yml) must stay green.
@@ -411,10 +411,10 @@ pull request, [`changes.yml`](.github/workflows/changes.yml) first compares the 
 builds: prose but the README, whose examples are tests, `doc/`, the suites with workflows of their own (`bench/`,
 `codegen/`, `exhaustive/`, `fuzz/`, `mutation/`, `proofs/`), `tools/`, `mkdocs.yml`, and the workflows that are not
 ladders. When every changed file is one of
-those, the ladder is skipped and its gate passes; any other file, a new directory included, runs the ladder in
-full and the gate passes only if every leg did. A push to `main`, the schedule, a manual run and the canary always
-build. The names under branch protection do not change. This table is
-[xstd-bits](https://github.com/rhalbersma/xstd-bits/blob/main/CONTRIBUTING.md)' as well, less the C++26 legs
+those, the ladder is skipped and its gate passes; any other file, a new directory included, runs the ladder,
+reduced for a compiler ladder as above, and the gate passes only if every leg did. Any other event, a manual run
+and the canary's nightly dispatch among them, always builds. The names under branch protection do not change.
+This table is [xstd-bits](https://github.com/rhalbersma/xstd-bits/blob/main/CONTRIBUTING.md)' as well, less the C++26 legs
 it alone carries, the three repositories holding one bar between them.
 
 ## License

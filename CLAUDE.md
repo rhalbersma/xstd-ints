@@ -194,9 +194,11 @@ change is meant to be comment-only, and that every marker still sits on the line
 
 ## Pull requests and CI
 
-A push to a pull request runs the whole matrix, dozens of jobs, and so does the merge into `main`. Pull requests in
-this repository whose CI runs side by side finish no sooner for it: each waits longer for its first result, and
-every merge makes the others' runs stale. CI is therefore a queue, one pull request long, in each repository.
+A push to a pull request runs dozens of jobs, though each compiler ladder builds only its floor and ceiling rungs,
+in Debug; a merge into `main` runs the other workflows again but no compiler ladder, as the nightly canary runs the
+full matrix there. Pull requests in this repository whose CI runs side by side finish no sooner for it: each waits
+longer for its first result, and every merge makes the others' runs stale. CI is therefore a queue, one pull request
+long, in each repository.
 
 - **One run in flight in this repository.** Before opening a pull request, or pushing to one, check that no other
   pull request here has a run queued or in progress. If one has, finish the change locally and push only the
