@@ -6,7 +6,6 @@
 #ifndef XSTD_INTS_CONCEPTS_ALIGNABLE_HPP
 #define XSTD_INTS_CONCEPTS_ALIGNABLE_HPP
 
-#include <xstd/ints/cstdint/bit_int.hpp>       // IWYU pragma: keep; the _BitInt numeric_limits specializations
 #include <xstd/ints/limits/numeric_limits.hpp> // numeric_limits
 #include <compare>                             // strong_ordering
 #include <concepts>                            // constructible_from, convertible_to, same_as, three_way_comparable
@@ -15,7 +14,7 @@
 
 namespace xstd {
 
-// A prefix of integer_class: what alignment needs and no more, cv stripped so no answer turns on T being a class.
+// integer_class's opening clauses, then unsigned and wider than a bit: what alignment needs, cv stripped as there.
 template<class T_cv, class T = std::remove_cv_t<T_cv>>
 concept alignable =
         // T is the parameter's own default; naming it explicitly cannot redirect the question.

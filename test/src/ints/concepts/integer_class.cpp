@@ -5,10 +5,12 @@
 
 #include <xstd/ints/concepts/integer_class.hpp>    // integer_class
 #include <xstd/ints/limits/numeric_limits.hpp>     // numeric_limits
-#include <test/exact_width_types.hpp>              // exact_width_integer_types
 #include <xstd/ints/type_traits/make_signed.hpp>   // make_signed_t
 #include <xstd/ints/type_traits/make_unsigned.hpp> // make_unsigned_t
-#include <boost/test/unit_test.hpp>                // Boost.Test
+#include <test/constexpr_check.hpp>                // XSTD_CONSTEXPR_CHECK
+#include <test/exact_width_types.hpp>              // constexpr_exact_width_signed_integer_types, exact_width_integer_types
+#include <boost/test/unit_test.hpp>                // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END
+#include <cstddef>                                 // byte
 
 BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(Concepts)
@@ -23,7 +25,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(AdmitsTheExactWidthTypesThroughCv, T, test::exact_
         BOOST_CHECK(true);
 }
 
-// The requirements hold of the types they were modelled on, which the old std::integral clause made unaskable.
+// The requirements hold of the types they were modelled on, the built-in integers.
 BOOST_AUTO_TEST_CASE(StandardIntegral)
 {
         static_assert(xstd::integer_class<char>);
@@ -60,6 +62,20 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(RepresentableRange, T, test::constexpr_exact_width
         // The unsigned half spends on magnitude the bit the signed half spends on sign.
         static_assert(xstd::numeric_limits<U>::digits == xstd::numeric_limits<S>::digits + 1);
         static_assert((static_cast<U>(xstd::numeric_limits<S>::max()) * 2) + 1 == xstd::numeric_limits<U>::max());
+        BOOST_CHECK(true);
+}
+
+// [iterator.concept.winc]/10: a value-initialized object is zero.
+BOOST_AUTO_TEST_CASE_TEMPLATE(ValueInitializationIsZero, T, test::constexpr_exact_width_signed_integer_types)
+{
+        XSTD_CONSTEXPR_CHECK(T{} == static_cast<T>(0));
+        XSTD_CONSTEXPR_CHECK(xstd::make_unsigned_t<T>{} == static_cast<xstd::make_unsigned_t<T>>(0));
+}
+
+// std::byte has every bitwise operator an integer has, and no arithmetic and no numeric_limits.
+BOOST_AUTO_TEST_CASE(TheByteIsNotAnIntegerClass)
+{
+        static_assert(not xstd::integer_class<std::byte>);
         BOOST_CHECK(true);
 }
 

@@ -7,20 +7,21 @@
 #include <xstd/ints/bit/shl.hpp>                          // shl
 #include <xstd/ints/bit/shr.hpp>                          // shr
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
+#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_BIT_INT, XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
 #include <xstd/ints/limits.hpp>                           // numeric_limits
 #include <xstd/ints/type_traits/is_signed.hpp>            // is_signed_v
 #include <xstd/ints/type_traits/make_unsigned.hpp>        // make_unsigned_t
 #include <test/bit/oracle.hpp>                            // oracle_shift
 #include <test/bit/sweep.hpp>                             // for_each_edge_value, for_each_sweep_value
 #include <test/constexpr_check.hpp>                       // XSTD_CONSTEXPR_CHECK
-#include <test/exact_width_types.hpp>                     // exact_width_integer_types
+#include <test/exact_width_types.hpp>                     // constexpr_exact_width_signed_integer_types, constexpr_exact_width_unsigned_integer_types, exact_width_integer_types
 #include <boost/test/unit_test.hpp>                       // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <array>                                          // array
 #include <bit>                                            // IWYU pragma: keep; shr, where the standard library ships it
 #include <cstdint>                                        // int64_t, int8_t, uint32_t, uint64_t, uint8_t
 #include <limits>                                         // numeric_limits
-#include <tuple>                                          // apply, tuple
+#include <tuple>                                          // apply, tuple, tuple_cat
+#include <utility>                                        // declval
 #include <version>                                        // IWYU pragma: keep; __cpp_lib_bitops
 
 namespace {
@@ -50,6 +51,9 @@ using count_types = std::tuple<signed char, unsigned char, int, std::int64_t, st
 #else
 using count_types = std::tuple<signed char, unsigned char, int, std::int64_t, std::uint64_t>;
 #endif
+
+// Every exact width whose operators constant-evaluate, which leaves out only Abseil's fallback.
+using constexpr_integer_types = decltype(std::tuple_cat(std::declval<test::constexpr_exact_width_signed_integer_types>(), std::declval<test::constexpr_exact_width_unsigned_integer_types>()));
 
 } // namespace
 
@@ -127,7 +131,26 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(NoexceptFollowsTheOperators, T, test::exact_width_
         BOOST_CHECK(true);
 }
 
-// Each width against a oracle moving one place at a time, at every count that behaves differently.
+// At every width and at compile time: down from the top bit and past it, up to the top, and a count of type T.
+BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsOfEveryWidth, T, constexpr_integer_types)
+{
+        using U                    = xstd::make_unsigned_t<T>;
+        constexpr auto W           = xstd::numeric_limits<U>::digits;
+        constexpr auto ones        = static_cast<T>(xstd::numeric_limits<U>::max());
+        constexpr auto top         = static_cast<T>(U{1} << static_cast<unsigned>(W - 1));
+        constexpr auto shifted_out = xstd::is_signed_v<T> ? ones : T{0};
+        static_assert(xstd::shr(top, W - 1) == (xstd::is_signed_v<T> ? ones : T{1}));
+        static_assert(xstd::shr(T{1}, 1) == T{0});
+        static_assert(xstd::shr(T{1}, 1 - W) == top);
+        static_assert(xstd::shr(T{1}, -W) == T{0});
+        static_assert(xstd::shr(ones, W) == shifted_out);
+        static_assert(xstd::shr(ones, std::numeric_limits<int>::max()) == shifted_out);
+        static_assert(xstd::shr(T{1}, static_cast<T>(W)) == T{0});
+        static_assert(xstd::shr(T{1}, top) == T{0});
+        BOOST_CHECK(true);
+}
+
+// Each width against an oracle moving one place at a time, at every count that behaves differently.
 BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheOracle, T, test::exact_width_integer_types)
 {
         using U         = xstd::make_unsigned_t<T>;
