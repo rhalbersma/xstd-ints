@@ -318,6 +318,19 @@ Given `--uica` and a [uiCA](https://github.com/andreas-abel/uiCA) checkout that 
 
 The [Bench workflow](.github/workflows/bench.yml) runs both, by hand and on a pull request that touches the kernels or `bench/`: the benchmark with GCC 15 and Clang 22 on `ubuntu-24.04` and `ubuntu-24.04-arm` at `-march=native`, `-mcpu=native` on Arm, with each job's page in its summary, and the analysis beside them, uiCA included, pinned by commit, reporting any difference from the checked-in files. A benchmark reports a number and never fails on one, so it is not a required check.
 
+## Constant-time checks
+
+"Branch-free" is a claim about control flow, and a constant-time engineer asks a sharper one: does a kernel's time depend on secret data? [`constant_time/`](constant_time) answers the part of it that control flow and memory addresses decide, per kernel and per secret argument, over the cases in [`cases.hpp`](constant_time/cases.hpp), each named `kernel.secret`. `constant_time_memcheck` marks the secret argument undefined and runs the kernel under Valgrind, which then reports every branch and every memory address computed from it, as ctgrind does. A case that should be clean is a test that passes; a case that branches on its secret or indexes memory by it is a test expected to fail, so a change either way breaks the suite.
+
+```sh
+sudo apt-get install valgrind
+cmake -S . -B build-ct -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_CXX_FLAGS=-march=x86-64-v3 -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_CONSTANT_TIME_TESTS=ON
+cmake --build build-ct
+ctest --test-dir build-ct --output-on-failure
+```
+
+[`constant_time/results.md`](constant_time/results.md) keeps a run. The [Constant time workflow](.github/workflows/constant-time.yml) runs the tests with GCC 15 and Clang 22, with and without `-march=x86-64-v3`, weekly, by hand, and on a pull request that touches the portable kernels or `constant_time/`. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
+
 ## Standards-paper tracking
 
 Implementation-relevant proposals must record the paper number, the revision-pinned wording reviewed by xstd, the corresponding live `cplusplus/papers` tracking issue, the last-reviewed date, and a short statement saying whether xstd implements, partially follows, extends, or merely references the paper. Unversioned `wg21.link/P####` links are reserved for links explicitly described as the latest revision; implementation and conformance claims use pinned `P####R#` links. Durable prose does not copy volatile WG21 status labels.
