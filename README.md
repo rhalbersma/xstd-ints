@@ -83,8 +83,8 @@ its two transformations compose back; a character type is a third type beside
 its pair, `make_signed_t<char>` being `signed char`. `bool` never reaches the
 question, C++17 having removed the `++` that `integer_class` asks for. xstd
 extends the paper's built-in boundary with paired `integer_class` types.
-Character conversion delegates to `std::to_chars` every integral type no wider than the
-widest standard one.
+Character conversion delegates to `std::to_chars` `char` and every standard integer type,
+the types it declares overloads for, and refuses the other character types.
 
 `div_result` is the common quotient/remainder result for truncating `div`,
 Euclidean `div_euclid`, floored `div_floor`, and ceiling `div_ceil`. Their vocabulary and relevant

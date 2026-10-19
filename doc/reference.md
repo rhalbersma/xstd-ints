@@ -929,13 +929,13 @@ template<unsigned_integer T>
 ### `bit_compress`
 
 ```cpp
-#ifdef XSTD_HAS_STD_BIT_PERMUTATIONS
+#ifdef XSTD_HAS_STD_BIT_COMPRESS
 template<class T>
-  requires ints::detail::std_permutes_bits<T>
+  requires ints::detail::std_compresses_bits<T>
   constexpr auto bit_compress(T src, T mask) noexcept -> T;
 #endif
 template<unsigned_integer T>
-  requires (not ints::detail::std_permutes_bits<T>)
+  requires (not ints::detail::std_compresses_bits<T>)
   constexpr auto bit_compress(T src, T mask) noexcept(nothrow_const_operators<T>) -> T;
 ```
 
@@ -956,7 +956,8 @@ template<unsigned_integer T>
   type and not for `absl::uint128`.
 - *Remarks:* Where `__cpp_lib_bitops` is at least `202607L` and `std::bit_compress`, `std::bit_expand`,
   `std::bit_repeat` and `std::bit_reverse` all take `T`, the call is `std::bit_compress(src, mask)`, unconditionally
-  `noexcept`, and the template does not take `T`.
+  `noexcept`, and the template does not take `T`. On libstdc++ where `XSTD_INTS_HAS_FAST_BMI2` is defined it is not,
+  since that `<bit>` emits no `PEXT` or `PDEP`, and the template takes every `unsigned_integer`.
 - *Remarks:* The template compresses each block of `src` through the same block of `mask` and packs the result directly
   above the bits the lower blocks selected, so selected bits on either side of bit 64 land adjacent.
 - *Remarks:* Outside a constant expression, where `XSTD_INTS_HAS_FAST_BMI2` is defined, a block is one `PEXT`: x86-64
@@ -969,13 +970,13 @@ template<unsigned_integer T>
 ### `bit_expand`
 
 ```cpp
-#ifdef XSTD_HAS_STD_BIT_PERMUTATIONS
+#ifdef XSTD_HAS_STD_BIT_COMPRESS
 template<class T>
-  requires ints::detail::std_permutes_bits<T>
+  requires ints::detail::std_compresses_bits<T>
   constexpr auto bit_expand(T src, T mask) noexcept -> T;
 #endif
 template<unsigned_integer T>
-  requires (not ints::detail::std_permutes_bits<T>)
+  requires (not ints::detail::std_compresses_bits<T>)
   constexpr auto bit_expand(T src, T mask) noexcept(nothrow_const_operators<T>) -> T;
 ```
 
@@ -996,7 +997,8 @@ template<unsigned_integer T>
   type and not for `absl::uint128`.
 - *Remarks:* Where `__cpp_lib_bitops` is at least `202607L` and `std::bit_compress`, `std::bit_expand`,
   `std::bit_repeat` and `std::bit_reverse` all take `T`, the call is `std::bit_expand(src, mask)`, unconditionally
-  `noexcept`, and the template does not take `T`.
+  `noexcept`, and the template does not take `T`. On libstdc++ where `XSTD_INTS_HAS_FAST_BMI2` is defined it is not,
+  since that `<bit>` emits no `PEXT` or `PDEP`, and the template takes every `unsigned_integer`.
 - *Remarks:* The template expands each block of `mask` on its own, drawing on the bits of `src` the lower blocks left
   unconsumed, so the bits of a mask on either side of bit 64 receive adjacent bits of `src`.
 - *Remarks:* Outside a constant expression, where `XSTD_INTS_HAS_FAST_BMI2` is defined, as for `bit_compress`, a block
@@ -1183,15 +1185,15 @@ struct div_result {
 ```cpp
 namespace xstd {
   template<class I>
-    requires ((integral<I> and not same_as<remove_cv_t<I>, bool>) or integer<I>)
+    requires (same_as<remove_cv_t<I>, char> or integer<I>)
     constexpr size_t to_chars_max_size = see below;
 
   template<integral I>
-    requires (not same_as<remove_cv_t<I>, bool>) and delegates-to-std<I>
+    requires std-writes-chars<I>
     constexpr auto to_chars(char* first, char* last, I value, int base = 10) -> to_chars_result;
   auto to_chars(char* first, char* last, bool value, int base = 10) -> to_chars_result = delete;
   template<integer I>
-    requires (not delegates-to-std<I>)
+    requires (not std-writes-chars<I>)
     constexpr auto to_chars(char* first, char* last, I value, int base = 10) -> to_chars_result;
 }
 ```
@@ -1204,8 +1206,7 @@ The umbrella exports it.
   signed type one more digit for the magnitude of `min()` and one for the sign.
 - A buffer of that many characters holds every value of `I` at every base, and one character fewer does not hold the
   worst case, `min()` in base 2 for a signed type and `max()` for an unsigned one.
-- *Constraints:* `I` is a type `to_chars` takes: an integral type other than `bool`, character types included, or an
-  `integer`.
+- *Constraints:* `I` is a type `to_chars` takes: `char` or an `integer`.
 
 ### `to_chars`
 
@@ -1215,16 +1216,23 @@ template<class I>
     integral<I> and
     xstd::numeric_limits<I>::digits + (xstd::numeric_limits<I>::is_signed ? 1 : 0) <=
       xstd::numeric_limits<widest>::digits;
+
+template<class I>
+  concept std-writes-chars =  // exposition only
+    delegates-to-std<I> and (same_as<I, char> or integer<I>) and
+    requires (char* first, I value, int base) { std::to_chars(first, first, value, base); };
 ```
 
 where `widest` is `xstd::uint128` where `XSTD_HAS_INT128` is defined and `unsigned long long` elsewhere.
 
-- *Constraints:* The first overload takes an integral type other than `bool` that is no wider, sign bit included, than
-  the widest type `to_chars` takes: every standard integer type and character type. A character type, which is not an
-  `integer`, reaches it.
+- *Constraints:* The first overload takes `char` and every `integer` that is integral, no wider, sign bit included, than
+  `widest`, and that `std::to_chars` takes. [[charconv.to.chars]](https://eel.is/c++draft/charconv.to.chars) declares overloads for the integer types and
+  `char`, so these are every standard integer type and `char`.
 - *Constraints:* The last takes every `integer` the first does not: every integer-class type, a 128-bit or bit-precise
-  type the standard library does not count integral, and one it counts integral but wider than its widest type, such as
-  libc++'s `_BitInt(129)`. The two are mutually exclusive.
+  type the standard library does not count integral or gives no `std::to_chars`, and one it counts integral but wider
+  than `widest`, such as libc++'s `_BitInt(129)`. The two are mutually exclusive.
+- A call with `wchar_t`, `char8_t`, `char16_t` or `char32_t` is ill-formed. `std::to_chars` would take each only by
+  integral promotion, writing the code unit as a number.
 - A call with `bool`, `const` or not, is ill-formed, as the standard deletes its overload.
 - *Preconditions:* `2 <= base` and `base <= 36`, and `[first, last)` is a valid range.
 - *Effects:* The first overload is equivalent to `return std::to_chars(first, last, value, base);`. Forwarding writes

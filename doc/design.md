@@ -45,9 +45,10 @@ excludes the five of them without naming any. The refinements use xstd's open
 signedness traits, preserving concept subsumption across built-in, extended,
 bit-precise, and paired class integers.
 
-Character conversion delegates a non-`bool` standard integral type to
+Character conversion delegates `char` and a standard integer type to
 `std::to_chars` when it is no wider than `uint128`, which is where both standard
-libraries stop; every other `integer` takes xstd's own digit generation.
+libraries stop; every other `integer` takes xstd's own digit generation, and the
+other character types are refused.
 
 `integer_class` follows the requirement order in [[iterator.concept.winc]](https://eel.is/c++draft/iterator.concept.winc), but is
 an open structural concept rather than an implementation-defined set. It admits
@@ -555,8 +556,12 @@ does stand beside a concept, as `is_signed` does beside `signed_integer`, the
 
 ### Character conversion
 
-`xstd::to_chars` delegates every non-`bool` standard integral type directly to
-the standard library, so callers get its tuned implementation. For an xstd
+`xstd::to_chars` delegates `char` and every standard integer type directly to
+the standard library, so callers get its tuned implementation. Those are the types
+[[charconv.to.chars]](https://eel.is/c++draft/charconv.to.chars) declares an overload for. `wchar_t`, `char8_t`,
+`char16_t` and `char32_t` are refused rather than forwarded: `std::to_chars` would
+take each only by integral promotion and write the code unit as a number, which no
+caller converting a character type means. For an xstd
 `integer` that `std::to_chars` does not cover, the digits are produced here to
 the same specification, bases 2 through 36 and `value_too_large` included. The
 default base is written as the literal `10`, as [[charconv.to.chars]](https://eel.is/c++draft/charconv.to.chars) writes it, so the two
@@ -585,11 +590,12 @@ in a buffer it then reports as too small. That the walk cannot start before ther
 room for the first digit and the sign is why `value_too_large` has two returns,
 both covered per type since gcov records them per instantiation.
 
-The overloads state the split literally. The delegating overload accepts
-`std::integral` except `bool`; the fallback accepts `integer` only when a
-`std::to_chars` call is not well-formed. That detection is written directly in
-the fallback's constraint; it stays an answer rather than an error because `I`
-keeps the expression dependent until the constraint is checked. Between the two
+The overloads state the split literally, through one exposition-only concept
+both name. The delegating overload accepts `char` and every `integer` that is no
+wider than `uint128` and that a `std::to_chars` call takes; the fallback accepts
+every other `integer`. The call is detected inside that concept; it stays an
+answer rather than an error because `I` keeps the expression dependent until the
+constraint is checked. Between the two
 templates, a deleted `bool` overload mirrors the standard explicitly rather than
 leaving the rejection as an incidental result of their constraints.
 
