@@ -120,6 +120,7 @@ target_sources(
         include/xstd/ints/ext/boost/hash2.hpp
         include/xstd/ints/ext/boost/int128.hpp
         include/xstd/ints/format.hpp
+        include/xstd/ints/format/detail/decimal.hpp
         include/xstd/ints/format/div_result.hpp
         include/xstd/ints/limits.hpp
         include/xstd/ints/limits/numeric_limits.hpp
@@ -231,6 +232,15 @@ if(PROJECT_IS_TOP_LEVEL)
 
     if(${project_option_prefix}_BUILD_BENCHMARKS)
         add_subdirectory(bench)
+    endif()
+
+    # Off by default, and outside BUILD_TESTING: the constant-time checks run the kernels under Valgrind, which nothing
+    # else needs. enable_testing() stays here for the reason given above.
+    option(${project_option_prefix}_BUILD_CONSTANT_TIME_TESTS "Check the portable bit kernels for secret-dependent branches and addresses, under constant_time/" OFF)
+
+    if(${project_option_prefix}_BUILD_CONSTANT_TIME_TESTS)
+        enable_testing()
+        add_subdirectory(constant_time)
     endif()
 endif()
 

@@ -16,6 +16,12 @@
 #include <test/constexpr_check.hpp> // XSTD_CONSTEXPR_CHECK_EQUAL
 #endif
 
+// A 128-bit class with no std::formatter of its own, reached the way a consumer reaches it.
+#if __has_include(<absl/numeric/int128.h>)
+#define TEST_HAS_ABSL_INT128
+#include <xstd/ints/ext/absl/int128.hpp> // int128
+#endif
+
 BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(Format)
 BOOST_AUTO_TEST_SUITE(DivResult)
@@ -47,6 +53,18 @@ BOOST_AUTO_TEST_CASE(FillAndAlign)
 {
         BOOST_CHECK_EQUAL(std::format("{:>12}", xstd::div_result<int>{1, -2}), "     (1, -2)");
         BOOST_CHECK_EQUAL(std::format("{:*^12}", xstd::div_result<int>{1, -2}), "**(1, -2)***");
+}
+
+// The tuple's n and m, which a type the library cannot format takes as well wherever the library formats tuples.
+BOOST_AUTO_TEST_CASE(TupleSpecs)
+{
+        BOOST_CHECK_EQUAL(std::format("{:n}", xstd::div_result<int>{1, -2}), "1, -2");
+        BOOST_CHECK_EQUAL(std::format("{:m}", xstd::div_result<int>{1, -2}), "1: -2");
+#ifdef TEST_HAS_ABSL_INT128
+        BOOST_CHECK_EQUAL(std::format("{:n}", xstd::div_result<absl::int128>{1, -2}), "1, -2");
+        BOOST_CHECK_EQUAL(std::format("{:m}", xstd::div_result<absl::int128>{1, -2}), "1: -2");
+        BOOST_CHECK_EQUAL(std::format("{:*^12}", xstd::div_result<absl::int128>{1, -2}), "**(1, -2)***");
+#endif
 }
 
 BOOST_AUTO_TEST_CASE(WideFormatter)
