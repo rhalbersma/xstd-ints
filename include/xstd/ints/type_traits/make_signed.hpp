@@ -19,7 +19,7 @@ struct make_signed
 {};
 
 template<class T>
-using make_signed_t = make_signed<T>::type;
+using make_signed_t = make_signed<T>::type; // none for an integer-class type until make_signed is specialized for it, as its adaptor does
 
 // [meta.trans.sign]/2's whole mandated domain, less the cv bool std declines to pair there.
 template<class T>

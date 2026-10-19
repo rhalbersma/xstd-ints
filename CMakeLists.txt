@@ -119,6 +119,7 @@ target_sources(
         include/xstd/ints/ext/boost/hash2.hpp
         include/xstd/ints/ext/boost/int128.hpp
         include/xstd/ints/format.hpp
+        include/xstd/ints/format/detail/decimal.hpp
         include/xstd/ints/format/div_result.hpp
         include/xstd/ints/limits.hpp
         include/xstd/ints/limits/numeric_limits.hpp
