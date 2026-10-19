@@ -238,8 +238,10 @@ on either side of a right shift, so that it floors.
 
 `bit_reverse`, `bit_repeat`, `bit_compress` and `bit_expand` are [P3104](https://github.com/cplusplus/papers/issues/1768)'s bit
 permutations, which C++29's `<bit>` adds. Where the standard library declares them, as
-`__cpp_lib_bitops` of at least `202607L` says, xstd forwards to them for every type they take;
-elsewhere one template answers every `unsigned_integer`, the 128-bit integer classes and
+`__cpp_lib_bitops` of at least `202607L` says, xstd forwards to them for every type they take,
+with one exception: libstdc++'s `bit_compress` and `bit_expand` use neither `PEXT` nor `PDEP`,
+so where xstd would, it keeps its own kernels, and a weekly canary reports when that changes.
+Elsewhere one template answers every `unsigned_integer`, the 128-bit integer classes and
 every `bit_uint<N>` width included, by working through it one `std::size_t` word at a time.
 All four are `constexpr`, portable in a constant expression and fast at run time: Clang's
 `__builtin_bitreverse64` mirrors a word, and with BMI2 on x86-64 (`-mbmi2`, or MSVC's
@@ -249,9 +251,11 @@ instructions in microcode, as uops.info's measurements of
 [`PEXT`](https://uops.info/html-instr/PEXT_R64_R64_R64.html) and
 [`PDEP`](https://uops.info/html-instr/PDEP_R64_R64_R64.html) on Zen 2 show against Zen 3, so
 a build targeting them (`-march=bdver4`, `znver1` or `znver2`) keeps the portable kernels even
-though it enables BMI2. Those kernels are branch-free where it counts: `bit_compress` places
+though it enables BMI2. Those kernels never branch on a bit of the value: `bit_compress` places
 each selected bit by one `popcount` of the mask below it, and `bit_expand` walks the mask's
-one-bits without branching on the value. `bit_repeat` alone has a precondition, a length above
+one-bits. Neither is constant-time in every argument, since `bit_compress` runs once per selected
+bit and `bit_expand` once per mask bit; design.md records, kernel by kernel, what Valgrind's
+memcheck found. `bit_repeat` alone has a precondition, a length above
 zero, and is not `noexcept`, as the paper specifies.
 
 `bit_select(x, k)` is an xstd extension beside them, not a standard function and not part of
