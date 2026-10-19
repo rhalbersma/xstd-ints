@@ -83,19 +83,18 @@ BOOST_AUTO_TEST_CASE(DelegatesWhereTheStandardLibraryCovers)
 #endif
 }
 
-BOOST_AUTO_TEST_CASE(StandardIntegralTypesDelegate)
+template<class T>
+concept has_max_size = requires { xstd::to_chars_max_size<T>; };
+
+// char is the one character type [charconv.to.chars] declares; a char8_t reaches std::to_chars only by promotion.
+BOOST_AUTO_TEST_CASE(TakesCharAndNoOtherCharacterType)
 {
         static_assert(not xstd::integer<char>);
-        static_assert(has_std_to_chars<char>);
-        static_assert(has_std_to_chars<wchar_t>);
-        static_assert(has_std_to_chars<char8_t>);
-        static_assert(has_std_to_chars<char16_t>);
-        static_assert(has_std_to_chars<char32_t>);
-        static_assert(has_xstd_to_chars<char>);
-        static_assert(has_xstd_to_chars<wchar_t>);
-        static_assert(has_xstd_to_chars<char8_t>);
-        static_assert(has_xstd_to_chars<char16_t>);
-        static_assert(has_xstd_to_chars<char32_t>);
+        static_assert(has_std_to_chars<char> and has_xstd_to_chars<char> and has_max_size<char>);
+        static_assert(has_std_to_chars<char8_t> and not has_xstd_to_chars<char8_t> and not has_max_size<char8_t>);
+        static_assert(not has_xstd_to_chars<char16_t> and not has_max_size<char16_t>);
+        static_assert(not has_xstd_to_chars<char32_t> and not has_max_size<char32_t>);
+        static_assert(not has_xstd_to_chars<wchar_t> and not has_max_size<wchar_t>);
 }
 
 // The 128-bit types in the build, by whichever path each takes: an integer-class type always by the digits path.

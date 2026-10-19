@@ -6,32 +6,32 @@
 #ifndef XSTD_INTS_CHARCONV_TO_CHARS_HPP
 #define XSTD_INTS_CHARCONV_TO_CHARS_HPP
 
-#include <xstd/ints/concepts/integer.hpp>          // integer
-#include <xstd/ints/cstdlib/div.hpp>               // div
-#include <xstd/ints/detail/delegates_to_std.hpp>   // delegates_to_std
-#include <xstd/ints/limits/numeric_limits.hpp>     // numeric_limits
-#include <xstd/ints/type_traits/is_signed.hpp>     // is_signed_v
-#include <xstd/ints/type_traits/make_unsigned.hpp> // make_unsigned_t
-#include <bit>                                     // bit_width
-#include <cassert>                                 // assert
-#include <charconv>                                // to_chars, to_chars_result
-#include <concepts>                                // integral, same_as
-#include <cstddef>                                 // ptrdiff_t, size_t
-#include <iterator>                                // distance, next
-#include <system_error>                            // errc
-#include <type_traits>                             // conditional_t, remove_cv_t
+#include <xstd/ints/charconv/detail/std_writes_chars.hpp> // std_writes_chars
+#include <xstd/ints/concepts/integer.hpp>                 // integer
+#include <xstd/ints/cstdlib/div.hpp>                      // div
+#include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
+#include <xstd/ints/type_traits/is_signed.hpp>            // is_signed_v
+#include <xstd/ints/type_traits/make_unsigned.hpp>        // make_unsigned_t
+#include <bit>                                            // bit_width
+#include <cassert>                                        // assert
+#include <charconv>                                       // to_chars, to_chars_result
+#include <concepts>                                       // integral, same_as
+#include <cstddef>                                        // ptrdiff_t, size_t
+#include <iterator>                                       // distance, next
+#include <system_error>                                   // errc
+#include <type_traits>                                    // conditional_t, remove_cv_t
 
 namespace xstd {
 
-// Worst case is base 2: one character per value bit, and two more when signed.
+// Worst case is base 2: one character per value bit, and two more when signed; char and the integers, as to_chars.
 template<class I>
-        requires ((std::integral<I> and not std::same_as<std::remove_cv_t<I>, bool>) or integer<I>)
+        requires (std::same_as<std::remove_cv_t<I>, char> or integer<I>)
 inline constexpr auto to_chars_max_size =
         static_cast<std::size_t>(numeric_limits<I>::digits) + (is_signed_v<I> ? 2 : 0);
 
-// The standard's own integral domain up to its widest type, other than its deleted bool overload.
+// The integer types and char, where the standard library's own to_chars takes them.
 template<std::integral I>
-        requires (not std::same_as<std::remove_cv_t<I>, bool>) and ints::detail::delegates_to_std<I>
+        requires ints::detail::std_writes_chars<I>
 // NOLINTNEXTLINE(readability-magic-numbers): the standard's own default base, see above
 [[nodiscard]] constexpr auto to_chars(char* first, char* last, I value, int base = 10)
         -> std::to_chars_result
@@ -45,7 +45,7 @@ auto to_chars(char*, char*, bool, int = 10) -> std::to_chars_result = delete;
 
 // For xstd integers the standard library does not cover.
 template<integer I>
-        requires (not ints::detail::delegates_to_std<I>)
+        requires (not ints::detail::std_writes_chars<I>)
 // NOLINTNEXTLINE(readability-magic-numbers): the standard's own default base, see above
 [[nodiscard]] constexpr auto to_chars(char* first, char* last, I value, int base = 10)
         -> std::to_chars_result
