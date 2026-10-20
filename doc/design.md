@@ -762,7 +762,7 @@ N bits take, at any block width.
 
 ## Requirements and evolution
 
-xstd requires a conforming [C++23](https://wg21.link/N4950) compiler, and the CMake project CMake 3.28 or
+xstd requires a conforming [C++23](https://wg21.link/N4950) compiler, and the CMake project CMake 3.30 or
 later, exporting the header-only `xstd::ints` target. Consumers build neither the
 tests nor their dependencies. New facilities should stay small, portable and
 motivated by current practice; one that enters the standard library can be
