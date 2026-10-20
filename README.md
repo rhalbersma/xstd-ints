@@ -32,6 +32,29 @@ over the built-ins. It relies on the [C++23](https://wg21.link/N4950) standard
 and targets the draft [C++29](https://wg21.link/std) standard library. All
 public APIs are in namespace `xstd`.
 
+## Do as the ints do
+
+"When in doubt, do as the ints do," Scott Meyers advised authors of
+user-defined types. Abseil's `absl::int128` and Boost.Int128's
+`boost::int128::int128`, and their unsigned halves, take that advice: they
+spell out every operator a built-in integer has, specialize
+`std::numeric_limits` as integers, and compare with a strong ordering. The
+standard library does not return the favour. `std::integral` rests on
+`std::is_integral`, which a program may not specialize, so no class type can
+satisfy it, and the standard's functions over integers, such as those of
+`<bit>` and `<charconv>`, take only the built-in ones. The standard does know
+class types that behave as integers, the integer-class types of
+[[iterator.concept.winc]](https://eel.is/c++draft/iterator.concept.winc), but
+admits only those an implementation supplies itself.
+
+xstd's `integer_class` asks a type that subclause's questions rather than for
+its name, so a type that does as the ints do qualifies, and so do the built-in
+integers it imitates. Abseil's and Boost's 128-bit types qualify as they are.
+`integer` asks one thing more, a signed and unsigned pair, named through xstd's
+specializable `make_signed` and `make_unsigned`. Those two sign
+transformations are all that `<xstd/ints/ext/absl/int128.hpp>` and
+`<xstd/ints/ext/boost/int128.hpp>` adapt.
+
 ## Usage
 
 
