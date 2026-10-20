@@ -4,6 +4,12 @@
 >
 > Proverbs 6:6, King James Version
 
+<!-- two epigraphs, not one -->
+
+> "When in doubt, do as the ints do."
+>
+> Scott Meyers, Effective C++, 3rd edition, Item 18
+
 [![Project Status: Active](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![Language](https://img.shields.io/badge/language-C++-blue.svg)](https://isocpp.org/)
 [![Standard](https://img.shields.io/badge/c%2B%2B-23-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
@@ -34,17 +40,15 @@ public APIs are in namespace `xstd`.
 
 ## Do as the ints do
 
-"When in doubt, do as the ints do," Scott Meyers advised authors of
-user-defined types. Abseil's `absl::int128` and Boost.Int128's
-`boost::int128::int128`, and their unsigned halves, take that advice: they
-spell out every operator a built-in integer has, specialize
-`std::numeric_limits` as integers, and compare with a strong ordering. The
-standard library does not return the favour. `std::integral` rests on
-`std::is_integral`, which a program may not specialize, so no class type can
-satisfy it, and the standard's functions over integers, such as those of
-`<bit>` and `<charconv>`, take only the built-in ones. The standard does know
-class types that behave as integers, the integer-class types of
-[[iterator.concept.winc]](https://eel.is/c++draft/iterator.concept.winc), but
+Abseil's `absl::int128` and Boost.Int128's `boost::int128::int128`, and their
+unsigned halves, do as the ints do: they spell out every operator a built-in
+integer has, specialize `std::numeric_limits` as integers, and compare with a
+strong ordering. The standard library does not return the favour.
+`std::integral` rests on `std::is_integral`, which a program may not specialize,
+so no class type can satisfy it, and the standard's functions over integers,
+such as those of `<bit>` and `<charconv>`, take only the built-in ones. The
+standard does know class types that behave as integers, the integer-class types
+of [[iterator.concept.winc]](https://eel.is/c++draft/iterator.concept.winc), but
 admits only those an implementation supplies itself.
 
 xstd's `integer_class` asks a type that subclause's questions rather than for
