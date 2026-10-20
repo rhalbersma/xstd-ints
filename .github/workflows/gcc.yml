@@ -13,21 +13,18 @@ concurrency:
   cancel-in-progress: true
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
+  # canary.yml dispatches this nightly on main, the run its README badge shows.
   workflow_dispatch:
-  # canary.yml calls this weekly, so the stub stays callable itself.
-  workflow_call:
 
 jobs:
   # Whether this pull request can reach what the ladders build; see changes.yml.
   changes:
     uses: ./.github/workflows/changes.yml
 
-  # One input, and not about the ladder: this library builds on every rung,
-  # which is what the shared workflow defaults to.
+  # This library builds on every rung, which is what the shared workflow
+  # defaults to.
   gcc_ladder:
     needs: changes
     if: needs.changes.outputs.build == 'true'
@@ -36,6 +33,10 @@ jobs:
       # Boost.Test, which vcpkg.json keeps out of its default features so that
       # consuming this library resolves no Boost at all.
       vcpkg_features: test
+      # A pull request builds only the floor and ceiling rungs, in Debug. The
+      # all gate cannot see what was skipped, so the nightly canary covers it,
+      # building every rung and build type on main.
+      reduce_on_pr: true
 
   # 32-bit x86: a 32-bit size_t, 4-byte alignment for 64-bit integers, and no
   # __int128. One rung in Debug, since what is under test is the target.
