@@ -126,7 +126,7 @@ declared once `__cpp_lib_bitops` reaches the working draft's `202607L` and const
 the counters, on the standard call being well-formed. `bit_compress` and `bit_expand` are not
 forwarded to libstdc++ where xstd has fast BMI2: GCC trunk's implementation is Hacker's Delight's
 parallel suffix for every type, about 28 ns a call on a Broadwell Xeon against 0.6 ns for
-`PEXT`, so xstd keeps its kernels, and the Toolchain Canary's `libstdcxx_pext` job fails the week
+`PEXT`, so xstd keeps its kernels, and the Toolchain Canary's nightly `libstdcxx_pext` job fails once
 GCC trunk starts emitting either instruction. The template works a block at a time.
 A block is mirrored, compressed or expanded by one of two families of kernels on a single
 `std::size_t`, each family in a directory of its own under `bit/detail/` with one header per

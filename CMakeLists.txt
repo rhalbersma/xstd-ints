@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.30)
 project(
     xstd-ints
     VERSION 0.1.0
-    DESCRIPTION "Do as the ints do"
+    DESCRIPTION "Integer extensions to the C++ Standard Library"
     # Spelled out rather than derived from ${PROJECT_NAME}: project() expands its
     # own arguments before it sets that variable, so a derived URL would silently
     # record https://github.com/rhalbersma/ with no repository on the end.
