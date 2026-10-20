@@ -48,70 +48,20 @@ transformations are all that `<xstd/ints/ext/absl/int128.hpp>` and
 
 | Header | Description |
 | :----- | :---------- |
-| `<xstd/ints.hpp>` | Every header below but the `ext/` adaptors, through one include. |
-| `<xstd/ints/bit.hpp>` | The `<bit>` functions below, through one include. |
-| `<xstd/ints/bit/bit_ceil.hpp>` | `std::bit_ceil`, widened to every unsigned integer, the 128-bit integer classes and `_BitInt` included. |
-| `<xstd/ints/bit/bit_compress.hpp>` | Gathers the bits a mask selects into the low bits, as x86's `PEXT` does. |
-| `<xstd/ints/bit/bit_expand.hpp>` | Scatters the low bits to the positions a mask selects, as x86's `PDEP` does. |
-| `<xstd/ints/bit/bit_floor.hpp>` | `std::bit_floor`, widened to every unsigned integer, the 128-bit integer classes and `_BitInt` included. |
-| `<xstd/ints/bit/bit_repeat.hpp>` | Repeats the low `l` bits across the whole width. |
-| `<xstd/ints/bit/bit_reverse.hpp>` | Mirrors the bits of any unsigned integer. |
-| `<xstd/ints/bit/bit_select.hpp>` | The position of the `k`-th one bit, the inverse of rank. |
-| `<xstd/ints/bit/bit_width.hpp>` | `std::bit_width`, widened to every unsigned integer, the 128-bit integer classes and `_BitInt` included. |
-| `<xstd/ints/bit/byteswap.hpp>` | `std::byteswap`, widened to every integer whose width is a whole number of bytes. |
-| `<xstd/ints/bit/countl_one.hpp>` | `std::countl_one`, widened to every unsigned integer, the 128-bit integer classes and `_BitInt` included. |
-| `<xstd/ints/bit/countl_zero.hpp>` | `std::countl_zero`, widened to every unsigned integer, the 128-bit integer classes and `_BitInt` included. |
-| `<xstd/ints/bit/countr_one.hpp>` | `std::countr_one`, widened to every unsigned integer, the 128-bit integer classes and `_BitInt` included. |
-| `<xstd/ints/bit/countr_zero.hpp>` | `std::countr_zero`, widened to every unsigned integer, the 128-bit integer classes and `_BitInt` included. |
-| `<xstd/ints/bit/has_single_bit.hpp>` | `std::has_single_bit`, widened to every unsigned integer, the 128-bit integer classes and `_BitInt` included. |
-| `<xstd/ints/bit/popcount.hpp>` | `std::popcount`, widened to every unsigned integer, the 128-bit integer classes and `_BitInt` included. |
-| `<xstd/ints/bit/rotl.hpp>` | `std::rotl`, widened to every unsigned integer, the 128-bit integer classes and `_BitInt` included. |
-| `<xstd/ints/bit/rotr.hpp>` | `std::rotr`, widened to every unsigned integer, the 128-bit integer classes and `_BitInt` included. |
-| `<xstd/ints/bit/shl.hpp>` | Shifts left by any count of any integer type, a negative count shifting right, never undefined. |
-| `<xstd/ints/bit/shr.hpp>` | Shifts right the same way, rounding towards negative infinity. |
-| `<xstd/ints/charconv.hpp>` | `to_chars` and `to_chars_max_size`, through one include. |
-| `<xstd/ints/charconv/to_chars.hpp>` | `std::to_chars`, widened to the integers it does not cover, and the buffer size that holds any value at any base. |
-| `<xstd/ints/concepts.hpp>` | The concepts below, through one include. |
-| `<xstd/ints/concepts/alignable.hpp>` | What the alignment functions ask of a type, and whether its operations are `noexcept`. |
-| `<xstd/ints/concepts/bit_mask.hpp>` | The standard's bitmask type: an unsigned integer, or a type with the bitmask operators, such as `std::bitset`. |
-| `<xstd/ints/concepts/integer.hpp>` | An integer as [P3701](https://github.com/cplusplus/papers/issues/2330) bounds them, extended to paired integer-class types. |
-| `<xstd/ints/concepts/integer_class.hpp>` | The operations [[iterator.concept.winc]](https://eel.is/c++draft/iterator.concept.winc) states of an integer-class type. |
-| `<xstd/ints/concepts/nothrow_const_operators.hpp>` | Whether a type's operators are `noexcept`, which sets the integer functions' exception specifications. |
-| `<xstd/ints/concepts/signed_integer.hpp>` | An open `std::signed_integral`, which admits signed integer-class types. |
-| `<xstd/ints/concepts/unsigned_integer.hpp>` | An open `std::unsigned_integral`, which admits unsigned integer-class types. |
-| `<xstd/ints/cstdint.hpp>` | The integer aliases below, through one include. |
-| `<xstd/ints/cstdint/bit_int.hpp>` | `bit_int<N>` and `bit_uint<N>`, the compiler's bit-precise integers where it has them, and their widest width. |
-| `<xstd/ints/cstdint/int128.hpp>` | `int128` and `uint128`, the platform's 128-bit integers where it has them. |
-| `<xstd/ints/cstdlib.hpp>` | The integer functions below, through one include. |
-| `<xstd/ints/cstdlib/abs.hpp>` | `std::abs`, as a `constexpr` function over every integer. |
-| `<xstd/ints/cstdlib/div.hpp>` | Truncating division of any integer. |
-| `<xstd/ints/cstdlib/div_ceil.hpp>` | Ceiling division. |
-| `<xstd/ints/cstdlib/div_euclid.hpp>` | Euclidean division. |
-| `<xstd/ints/cstdlib/div_floor.hpp>` | Floored division. |
-| `<xstd/ints/cstdlib/div_result.hpp>` | The quotient and remainder the four divisions return. |
-| `<xstd/ints/cstdlib/sign.hpp>` | `-1`, `0` or `1`, by the sign of an integer. |
-| `<xstd/ints/cstdlib/unsigned_abs.hpp>` | The absolute value as the unsigned counterpart, defined for every argument. |
-| `<xstd/ints/ext/absl.hpp>` | The Abseil adaptor below, through one include. |
-| `<xstd/ints/ext/absl/int128.hpp>` | Pairs Abseil's `int128` and `uint128`, so that each models `integer`. |
-| `<xstd/ints/ext/boost.hpp>` | The Boost adaptors below, through one include. |
-| `<xstd/ints/ext/boost/hash2.hpp>` | `hash_append_int`, which hashes any integer's value, never its object representation, into a Boost.Hash2 algorithm. |
-| `<xstd/ints/ext/boost/int128.hpp>` | Pairs Boost.Int128's `int128` and `uint128`, so that each models `integer`. |
-| `<xstd/ints/format.hpp>` | The formatter below, through one include. |
-| `<xstd/ints/format/div_result.hpp>` | A `std::formatter` that writes a `div_result` as `(quotient, remainder)`. |
-| `<xstd/ints/limits.hpp>` | `numeric_limits`, through one include. |
-| `<xstd/ints/limits/numeric_limits.hpp>` | An open `std::numeric_limits`, with specializations for the bit-precise `_BitInt(N)` types. |
-| `<xstd/ints/memory.hpp>` | The alignment functions below, through one include. |
-| `<xstd/ints/memory/align_down.hpp>` | Rounds a value down to a power-of-two alignment. |
-| `<xstd/ints/memory/align_up.hpp>` | Rounds a value up to a power-of-two alignment. |
-| `<xstd/ints/memory/is_aligned.hpp>` | Whether a value is a multiple of a power-of-two alignment. |
-| `<xstd/ints/type_traits.hpp>` | The traits below, through one include. |
-| `<xstd/ints/type_traits/is_signed.hpp>` | `std::is_signed`, opened to integer-class types. |
-| `<xstd/ints/type_traits/is_unsigned.hpp>` | `std::is_unsigned`, opened to integer-class types. |
-| `<xstd/ints/type_traits/make_signed.hpp>` | An open `std::make_signed`, which users may specialize. |
-| `<xstd/ints/type_traits/make_unsigned.hpp>` | An open `std::make_unsigned`, which users may specialize. |
-| `<xstd/ints/type_traits/promoted.hpp>` | `promoted_t`, the type a type's own operators yield: [[conv.prom]](https://eel.is/c++draft/conv.prom) for a built-in, the type itself otherwise. |
+| `<xstd/ints.hpp>` | Every group below but the `ext/` adaptors, through one include. |
+| `<xstd/ints/bit.hpp>` | The `<bit>` functions, widened to every unsigned integer with the 128-bit integer classes and `_BitInt` included, with C++29's bit permutations and shifts by any count. |
+| `<xstd/ints/charconv.hpp>` | `std::to_chars`, widened to the integers it does not cover, and the buffer size that holds any value at any base. |
+| `<xstd/ints/concepts.hpp>` | Open counterparts of `std::integral` and its signed and unsigned halves that admit integer-class types, with the bitmask, alignment and `noexcept`-operator concepts. |
+| `<xstd/ints/cstdint.hpp>` | `bit_int<N>`, `bit_uint<N>`, `int128` and `uint128`: the platform's bit-precise and 128-bit integers, where it has them. |
+| `<xstd/ints/cstdlib.hpp>` | `abs`, `unsigned_abs`, `sign`, and truncating, floored, ceiling and Euclidean division of any integer. |
+| `<xstd/ints/format.hpp>` | A `std::formatter` that writes a division's quotient and remainder. |
+| `<xstd/ints/limits.hpp>` | An open `std::numeric_limits`, specialized for the bit-precise integers. |
+| `<xstd/ints/memory.hpp>` | Rounding a value up or down to a power-of-two alignment, and testing whether it is aligned. |
+| `<xstd/ints/type_traits.hpp>` | Open sign traits and sign transformations, which users may specialize, and the type an integer's own operators yield. |
+| `<xstd/ints/ext/absl.hpp>` | Pairs Abseil's `int128` and `uint128`, so that each models `integer`. |
+| `<xstd/ints/ext/boost.hpp>` | Pairs Boost.Int128's 128-bit integers, and hashes any integer's value into a Boost.Hash2 algorithm. |
 
-[The reference](doc/reference.md) specifies each entity, and [the design notes](doc/design.md) give the rationale, the
+[The reference](doc/reference/index.md) lists each group's headers and specifies each entity, and [the design notes](doc/design.md) give the rationale, the
 measurements, and how to customize an integer-class type. [CONTRIBUTING.md](CONTRIBUTING.md) builds the library itself.
 
 ## Usage
