@@ -502,8 +502,8 @@ no usage requirement that could propagate one.
 ### Hashing
 
 [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) serializes an integer through byte writers that stop at 8 bytes, and
-selects that path by `std::is_integral`, which libstdc++ grants `__int128` only
-outside `__STRICT_ANSI__`. Neither the Microsoft STL's `std::_Signed128` nor a
+selects that path by `std::is_integral`, which libstdc++ 15 and older grant
+`__int128` only outside `__STRICT_ANSI__`. Neither the Microsoft STL's `std::_Signed128` nor a
 fundamental type such as `__int128` or `_BitInt(N)` has a namespace in which a
 `tag_invoke` hook could be found by ADL, so no customization reaches them.
 `<xstd/ints/ext/boost/hash2.hpp>` therefore supplies a function to call rather than a
@@ -762,7 +762,7 @@ N bits take, at any block width.
 
 ## Requirements and evolution
 
-xstd requires a conforming [C++23](https://wg21.link/N4950) compiler, and the CMake project CMake 3.28 or
+xstd requires a conforming [C++23](https://wg21.link/N4950) compiler, and the CMake project CMake 3.30 or
 later, exporting the header-only `xstd::ints` target. Consumers build neither the
 tests nor their dependencies. New facilities should stay small, portable and
 motivated by current practice; one that enters the standard library can be
@@ -848,6 +848,16 @@ Development jobs are required where a usable development compiler exists; the
 README records the versions currently assigned to each channel. Building the
 tests requires the dependencies documented in
 [CONTRIBUTING.md](../CONTRIBUTING.md).
+
+The tests compile in the library's strictly conforming dialect wherever that
+dialect keeps the 128-bit column. `<bit>`'s functions take
+`std::unsigned_integral`, which libstdc++ 15 and older grant `unsigned __int128`
+only outside `__STRICT_ANSI__`; there `xstd::uint128` would drop out of the bit
+functions' instantiation lists rather than fail to compile. A configure-time
+probe asks the toolchain whether strict mode drops the type, and only where it
+does, on libstdc++ 15 whether under GCC or Clang, do the tests, the fuzz targets
+and the mutation build compile as `gnu++23`. libstdc++ 16 and later, libc++,
+MSVC and the 32-bit legs build them strictly.
 
 ## Contracts
 
