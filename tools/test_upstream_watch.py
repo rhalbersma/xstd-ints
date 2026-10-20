@@ -103,6 +103,8 @@ class Parsers(unittest.TestCase):
         self.assertEqual(overloads["XSTD_HAS_STD_SHIFTS"]["threshold"], 202606)
         self.assertEqual(overloads["XSTD_HAS_STD_SHIFTS"]["functions"], ["shl", "shr"])
         self.assertEqual(overloads["XSTD_HAS_STD_BIT_PERMUTATIONS"]["threshold"], 202607)
+        self.assertEqual(overloads["XSTD_HAS_STD_BIT_PERMUTATIONS"]["functions"],
+                         ["bit_compress", "bit_expand", "bit_repeat", "bit_reverse"])
 
 
 class SeededReport(unittest.TestCase):

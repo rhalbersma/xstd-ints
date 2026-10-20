@@ -6,13 +6,13 @@
 #ifndef XSTD_INTS_BIT_ROTR_HPP
 #define XSTD_INTS_BIT_ROTR_HPP
 
+#include <xstd/ints/bit/rotl.hpp>                         // rotl
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
 #include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
-#include <xstd/ints/bit/rotl.hpp>                         // rotl
 #include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
 #include <bit>                                            // rotr
 
-// [bit.rot]'s rotr over every unsigned integer xstd knows.
+// [bit.rotate]'s rotr over every unsigned integer xstd knows.
 namespace xstd {
 
 // Constrained on the call, so constraint and body cannot drift: std::unsigned_integral admits what <bit> refuses.

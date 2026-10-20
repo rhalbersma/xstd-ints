@@ -3,22 +3,24 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
+#include <xstd/ints/bit/detail/shift.hpp>                 // IWYU pragma: keep; shift, shift_direction, where the standard library ships std::shl
 #include <xstd/ints/bit/shl.hpp>                          // shl
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
+#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_BIT_INT, XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
 #include <xstd/ints/limits.hpp>                           // numeric_limits
 #include <xstd/ints/type_traits/is_signed.hpp>            // is_signed_v
 #include <xstd/ints/type_traits/make_unsigned.hpp>        // make_unsigned_t
 #include <test/bit/oracle.hpp>                            // oracle_shift
 #include <test/bit/sweep.hpp>                             // for_each_edge_value, for_each_sweep_value
 #include <test/constexpr_check.hpp>                       // XSTD_CONSTEXPR_CHECK
-#include <test/exact_width_types.hpp>                     // exact_width_integer_types
+#include <test/exact_width_types.hpp>                     // constexpr_exact_width_signed_integer_types, constexpr_exact_width_unsigned_integer_types, exact_width_integer_types
 #include <boost/test/unit_test.hpp>                       // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <array>                                          // array
 #include <bit>                                            // IWYU pragma: keep; shl, where the standard library ships it
 #include <cstdint>                                        // int64_t, int8_t, uint32_t, uint64_t, uint8_t
 #include <limits>                                         // numeric_limits
-#include <tuple>                                          // apply, tuple
+#include <tuple>                                          // apply, tuple, tuple_cat
+#include <utility>                                        // declval
 #include <version>                                        // IWYU pragma: keep; __cpp_lib_bitops
 
 namespace {
@@ -49,6 +51,9 @@ using count_types = std::tuple<signed char, unsigned char, int, std::int64_t, st
 using count_types = std::tuple<signed char, unsigned char, int, std::int64_t, std::uint64_t>;
 #endif
 
+// Every exact width whose operators constant-evaluate, which leaves out only Abseil's fallback.
+using constexpr_integer_types = decltype(std::tuple_cat(std::declval<test::constexpr_exact_width_signed_integer_types>(), std::declval<test::constexpr_exact_width_unsigned_integer_types>()));
+
 } // namespace
 
 BOOST_AUTO_TEST_SUITE(Ints)
@@ -69,6 +74,24 @@ BOOST_AUTO_TEST_CASE(EveryCountIsDefined)
 }
 
 #if defined(__cpp_lib_bitops) and __cpp_lib_bitops >= 202606L
+
+// The template every other type takes, called where <bit> answers too, so that the standard library is its oracle.
+BOOST_AUTO_TEST_CASE_TEMPLATE(TheFallbackAgreesWithStd, T, test::exact_width_integer_types)
+{
+        if constexpr (requires (T x, int s) { std::shl(x, s); }) {
+                using U         = xstd::make_unsigned_t<T>;
+                auto mismatches = 0UZ;
+                test::for_each_sweep_value<U>([&](U u) -> void {
+                        auto const& x = static_cast<T>(u);
+                        for (auto const c : counts<T>()) {
+                                mismatches += xstd::ints::detail::shift(x, c, xstd::ints::detail::shift_direction::left) == std::shl(x, c) ? 0UZ : 1UZ;
+                        }
+                });
+                BOOST_CHECK_EQUAL(mismatches, 0UZ);
+        } else {
+                BOOST_CHECK(true);
+        }
+}
 
 // Where <bit> answers, this IS <bit>: the overload forwards and must not drift from it.
 BOOST_AUTO_TEST_CASE(AgreesWithStdWhereStdAnswers)
@@ -107,7 +130,26 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(NoexceptFollowsTheOperators, T, test::exact_width_
         BOOST_CHECK(true);
 }
 
-// Each width against a oracle moving one place at a time, at every count that behaves differently.
+// At every width and at compile time: up to the top bit and past it, down past the bottom, and a count of type T.
+BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsOfEveryWidth, T, constexpr_integer_types)
+{
+        using U                    = xstd::make_unsigned_t<T>;
+        constexpr auto W           = xstd::numeric_limits<U>::digits;
+        constexpr auto ones        = static_cast<T>(xstd::numeric_limits<U>::max());
+        constexpr auto top         = static_cast<T>(U{1} << static_cast<unsigned>(W - 1));
+        constexpr auto shifted_out = xstd::is_signed_v<T> ? ones : T{0};
+        static_assert(xstd::shl(T{1}, W - 1) == top);
+        static_assert(xstd::shl(T{1}, W) == T{0});
+        static_assert(xstd::shl(T{2}, -1) == T{1});
+        static_assert(xstd::shl(T{1}, -1) == T{0});
+        static_assert(xstd::shl(ones, -W) == shifted_out);
+        static_assert(xstd::shl(ones, std::numeric_limits<int>::min()) == shifted_out);
+        static_assert(xstd::shl(T{1}, static_cast<T>(W)) == T{0});
+        static_assert(xstd::shl(T{1}, top) == T{0});
+        BOOST_CHECK(true);
+}
+
+// Each width against an oracle moving one place at a time, at every count that behaves differently.
 BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheOracle, T, test::exact_width_integer_types)
 {
         using U         = xstd::make_unsigned_t<T>;

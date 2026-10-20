@@ -45,12 +45,13 @@ jobs:
           fi
           git diff --name-only "${BASE}" HEAD > "${RUNNER_TEMP}/changed"
           cat "${RUNNER_TEMP}/changed"
-          # Paths no ladder compiles: prose, the suites with workflows of their
-          # own, the tools those use, and the workflows that are not ladders.
+          # Paths no ladder compiles: prose but the README, whose examples are
+          # tests, the suites with workflows of their own, the tools those use,
+          # the site's configuration, and the workflows that are not ladders.
           # Anything else, a new directory included, builds.
-          unbuilt='\.md$|^LICENSE_1_0\.txt$|^doc/|^bench/|^codegen/|^exhaustive/|^fuzz/|^mutation/|^proofs/|^tools/|^\.clang-format$|^\.git-blame-ignore-revs$'
-          unbuilt="${unbuilt}"'|^\.github/workflows/(actionlint|bench|canary|cflite_batch|cflite_pr|clang-format|codegen|codeql|consumption|coverage|exhaustive|mutation|proofs|scorecard|upstream-watch)\.yml$'
-          if grep -qvE "${unbuilt}" "${RUNNER_TEMP}/changed"; then
+          unbuilt='\.md$|^LICENSE_1_0\.txt$|^doc/|^bench/|^codegen/|^constant_time/|^examples/|^exhaustive/|^fuzz/|^mutation/|^proofs/|^tools/|^mkdocs\.yml$|^\.clang-format$|^\.git-blame-ignore-revs$'
+          unbuilt="${unbuilt}"'|^\.github/workflows/(actionlint|bench|canary|cflite_batch|cflite_pr|clang-format|codegen|codeql|constant-time|consumption|coverage|exhaustive|mutation|pages|perft|proofs|scorecard|upstream-watch)\.yml$'
+          if grep -qvE "${unbuilt}" "${RUNNER_TEMP}/changed" || grep -qx 'README\.md' "${RUNNER_TEMP}/changed"; then
             echo "build=true" >> "${GITHUB_OUTPUT}"
           else
             echo "build=false" >> "${GITHUB_OUTPUT}"

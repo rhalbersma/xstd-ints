@@ -4,6 +4,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
+#include <xstd/ints/concepts/integer.hpp>          // integer
 #include <test/exact_width_types.hpp>              // exact-width integer types
 #include <boost/test/unit_test.hpp>                // Boost.Test
 
@@ -25,6 +26,31 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SignedIsNotUnsigned, T, test::exact_width_signed_i
         static_assert(not xstd::unsigned_integer<T>);
         BOOST_CHECK(true);
 }
+
+namespace {
+
+[[nodiscard]] constexpr auto refinement(xstd::integer auto)
+        -> bool
+{
+        return false;
+}
+
+[[nodiscard]] constexpr auto refinement(xstd::unsigned_integer auto)
+        -> bool
+{
+        return true;
+}
+
+} // namespace
+
+// It subsumes integer, so an overload on it is chosen over one on integer for its models, and only for them.
+BOOST_AUTO_TEST_CASE(SubsumesInteger)
+{
+        static_assert(refinement(1U));
+        static_assert(not refinement(-1));
+        BOOST_CHECK(true);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()

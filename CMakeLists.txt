@@ -91,6 +91,7 @@ target_sources(
         include/xstd/ints/bit/shl.hpp
         include/xstd/ints/bit/shr.hpp
         include/xstd/ints/charconv.hpp
+        include/xstd/ints/charconv/detail/std_writes_chars.hpp
         include/xstd/ints/charconv/to_chars.hpp
         include/xstd/ints/concepts.hpp
         include/xstd/ints/concepts/alignable.hpp
@@ -119,8 +120,10 @@ target_sources(
         include/xstd/ints/ext/boost/hash2.hpp
         include/xstd/ints/ext/boost/int128.hpp
         include/xstd/ints/format.hpp
+        include/xstd/ints/format/detail/decimal.hpp
         include/xstd/ints/format/div_result.hpp
         include/xstd/ints/limits.hpp
+        include/xstd/ints/limits/detail/digits10.hpp
         include/xstd/ints/limits/numeric_limits.hpp
         include/xstd/ints/memory.hpp
         include/xstd/ints/memory/align_down.hpp
@@ -131,6 +134,7 @@ target_sources(
         include/xstd/ints/type_traits/is_unsigned.hpp
         include/xstd/ints/type_traits/make_signed.hpp
         include/xstd/ints/type_traits/make_unsigned.hpp
+        include/xstd/ints/type_traits/detail/promoted.hpp
         include/xstd/ints/type_traits/promoted.hpp
 )
 
@@ -167,9 +171,9 @@ if(PROJECT_IS_TOP_LEVEL)
     if(BUILD_TESTING)
         # Relaxed to gnu++ for the tests alone, leaving the library's own dialect above
         # untouched. The reason is specific: <bit>'s functions take std::unsigned_integral,
-        # and libstdc++ and libc++ carry unsigned __int128 into that concept only outside
-        # __STRICT_ANSI__. Strictly conforming, xstd::uint128 is the one exact width with no
-        # bit basis on GCC and Clang -- on MSVC it is a class and carries its own -- so the
+        # and libstdc++ 15, the GCC ladder's floor, carries unsigned __int128 into that concept
+        # only outside __STRICT_ANSI__. Strictly conforming, xstd::uint128 there is the one exact
+        # width with no bit basis -- on MSVC it is a class and carries its own -- so the
         # 128-bit column would drop out of the bit/ instantiation lists rather than fail,
         # which is the worse of the two outcomes. xstd-bits relaxes it in the same place and
         # for the same reason. [xstd-bits design.md#uint128-support]
@@ -230,6 +234,24 @@ if(PROJECT_IS_TOP_LEVEL)
 
     if(${project_option_prefix}_BUILD_BENCHMARKS)
         add_subdirectory(bench)
+    endif()
+
+    # Off by default, and outside BUILD_TESTING: the constant-time checks run the kernels under Valgrind, which nothing
+    # else needs. enable_testing() stays here for the reason given above.
+    option(${project_option_prefix}_BUILD_CONSTANT_TIME_TESTS "Check the portable bit kernels for secret-dependent branches and addresses, under constant_time/" OFF)
+
+    if(${project_option_prefix}_BUILD_CONSTANT_TIME_TESTS)
+        enable_testing()
+        add_subdirectory(constant_time)
+    endif()
+
+    # Off by default, and outside BUILD_TESTING: the examples are programs that use the library the way its users do,
+    # each checking its own output. enable_testing() stays here for the reason given above.
+    option(${project_option_prefix}_BUILD_EXAMPLES "Build the example programs under examples/" OFF)
+
+    if(${project_option_prefix}_BUILD_EXAMPLES)
+        enable_testing()
+        add_subdirectory(examples/perft)
     endif()
 endif()
 

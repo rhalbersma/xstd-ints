@@ -4,9 +4,9 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <xstd/ints/type_traits/make_signed.hpp> // make_signed
+#include <xstd/ints/concepts/signed_integer.hpp> // signed_integer
 #include <test/constexpr_check.hpp>              // XSTD_CONSTEXPR_CHECK
 #include <test/exact_width_types.hpp>            // exact-width integer types
-#include <xstd/ints/concepts/signed_integer.hpp> // signed_integer
 #include <boost/test/unit_test.hpp>              // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
 #include <concepts>                              // same_as
 #include <cstdint>                               // int8_t, uint8_t

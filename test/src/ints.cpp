@@ -13,6 +13,18 @@
 
 BOOST_AUTO_TEST_SUITE(Ints)
 
+// An adapted library is reached by naming its adaptor, never through the front door.
+BOOST_AUTO_TEST_CASE(ExportsNoAdaptor)
+{
+#if defined(XSTD_INTS_EXT_ABSL_HPP) or defined(XSTD_INTS_EXT_ABSL_INT128_HPP)
+        static_assert(false, "the front door reached Abseil's adaptor");
+#endif
+#if defined(XSTD_INTS_EXT_BOOST_HPP) or defined(XSTD_INTS_EXT_BOOST_HASH2_HPP) or defined(XSTD_INTS_EXT_BOOST_INT128_HPP)
+        static_assert(false, "the front door reached a Boost adaptor");
+#endif
+        BOOST_CHECK(true);
+}
+
 #ifdef XSTD_HAS_INT128
 
 // int128 is not the standard library's, so every module carries it alone; arriving whole is the invariant here.
@@ -24,14 +36,14 @@ BOOST_AUTO_TEST_CASE(TheWidestTypeReachesEveryModule)
         static_assert(xstd::signed_integer<T>);
         static_assert(xstd::unsigned_integer<xstd::make_unsigned_t<T>>);
 
-        // limits, which std::numeric_limits alone would leave unspecialised
+        // limits, through the open xstd::numeric_limits
         static_assert(xstd::numeric_limits<T>::digits == 127);
 
         // cstdlib, over the type the standard library's div() cannot take
         BOOST_CHECK(xstd::abs(T{-2}) == T{2});
         BOOST_CHECK(xstd::div(T{8}, T{3}).quotient == T{2});
 
-        // charconv, whose std counterpart has no overload this wide
+        // charconv, forwarding to std::to_chars where it takes the type and answering itself where it does not
         auto buffer       = std::array<char, xstd::to_chars_max_size<T>>{};
         auto const result = xstd::to_chars(buffer.data(), buffer.data() + buffer.size(), T{-42});
         BOOST_CHECK(result.ec == std::errc{});
