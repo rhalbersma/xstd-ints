@@ -167,25 +167,48 @@ endif()
 # Tests and their Boost.Test dependency only exist when xstd-ints is being
 # developed; a consumer vendoring this directory gets the header-only target.
 if(PROJECT_IS_TOP_LEVEL)
+    string(MAKE_C_IDENTIFIER ${PROJECT_NAME} project_id)
+    string(TOUPPER ${project_id} project_option_prefix)
+
+    # What the repository builds for itself stays as strictly conforming as the library, except
+    # where strict mode would drop the 128-bit column: <bit>'s functions take std::unsigned_integral,
+    # and libstdc++ before 16 carries unsigned __int128 into that concept only outside
+    # __STRICT_ANSI__, where libc++ and libstdc++ 16 always do. Dropped, xstd::uint128 would fall
+    # out of the bit/ instantiation lists rather than fail, the worse of the two outcomes. The
+    # question is put to the toolchain rather than to a version number, so a clang on libstdc++ 15
+    # gets that library's answer, and MSVC and 32-bit targets, with no unsigned __int128 to lose,
+    # stay strict. The standard is named because nothing sets CMAKE_CXX_STANDARD, and GCC's and
+    # Clang's default dialects are gnu ones, where the question cannot be asked.
+    try_compile(
+        ${project_option_prefix}_STRICT_DROPS_UINT128
+        SOURCE_FROM_CONTENT strict_drops_uint128.cpp [[
+            #include <concepts>
+            #if !defined(__SIZEOF_INT128__) || defined(_MSC_VER)
+            #error "no unsigned __int128 to lose"
+            #endif
+            static_assert(not std::unsigned_integral<unsigned __int128>);
+            auto main() -> int { return 0; }
+        ]]
+        CXX_STANDARD 23
+        CXX_STANDARD_REQUIRED ON
+        CXX_EXTENSIONS OFF
+    )
+    if(${project_option_prefix}_STRICT_DROPS_UINT128)
+        message(STATUS "Tests, fuzz targets and mutants compile as gnu++: strict mode drops unsigned __int128 from std::unsigned_integral here")
+    else()
+        message(STATUS "Tests, fuzz targets and mutants compile as strictly as the library")
+    endif()
+
     include(CTest)
     if(BUILD_TESTING)
-        # Relaxed to gnu++ for the tests alone, leaving the library's own dialect above
-        # untouched. The reason is specific: <bit>'s functions take std::unsigned_integral,
-        # and libstdc++ 15, the GCC ladder's floor, carries unsigned __int128 into that concept
-        # only outside __STRICT_ANSI__. Strictly conforming, xstd::uint128 there is the one exact
-        # width with no bit basis -- on MSVC it is a class and carries its own -- so the
-        # 128-bit column would drop out of the bit/ instantiation lists rather than fail,
-        # which is the worse of the two outcomes. xstd-bits relaxes it in the same place and
-        # for the same reason. [xstd-bits design.md#uint128-support]
-        set(CMAKE_CXX_EXTENSIONS ON)
+        # The library's own dialect above is untouched; only the tests relax, and only where asked.
+        set(CMAKE_CXX_EXTENSIONS ${${project_option_prefix}_STRICT_DROPS_UINT128})
 
         add_subdirectory(test)
     endif()
 
     # Off by default, and outside BUILD_TESTING: ClusterFuzzLite builds the fuzz targets
     # alone, without the test tree's Boost.Test. Clang only, libFuzzer being clang's.
-    string(MAKE_C_IDENTIFIER ${PROJECT_NAME} project_id)
-    string(TOUPPER ${project_id} project_option_prefix)
     option(${project_option_prefix}_BUILD_FUZZERS "Build the libFuzzer targets under fuzz/" OFF)
 
     if(${project_option_prefix}_BUILD_FUZZERS)

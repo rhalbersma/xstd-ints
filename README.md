@@ -94,7 +94,7 @@ CheckOptions:
 
 
 - A conforming [C++23](https://wg21.link/N4950) compiler
-- CMake 3.28 or later when using the supplied CMake project
+- CMake 3.30 or later when using the supplied CMake project
 - No third-party runtime or library dependencies outside `<xstd/ints/ext/>`
 
 `<xstd/ints/format.hpp>` is the only header that depends on `<format>`. The front
