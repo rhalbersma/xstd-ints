@@ -32,7 +32,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: rhalbersma/cpp-ci/.github/workflows/codeql.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
+    uses: rhalbersma/cpp-ci/.github/workflows/codeql.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # v0.14.0
     with:
       # Boost.Test, which vcpkg.json keeps out of its default features so that
       # consuming this library resolves no Boost at all.

@@ -23,4 +23,4 @@ jobs:
   # Its own tier, deliberately left at stable: a formatter release reformats
   # the code base, which is not something a compiler bump should decide.
   clang_format:
-    uses: rhalbersma/cpp-ci/.github/workflows/clang-format.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
+    uses: rhalbersma/cpp-ci/.github/workflows/clang-format.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # v0.14.0
