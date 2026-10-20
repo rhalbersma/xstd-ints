@@ -137,8 +137,8 @@ constexpr auto result = xstd::div_floor(i128{-8}, i128{3});
 static_assert(result.quotient == i128{-3} and result.remainder == i128{1});
 ```
 
-[Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) writes integers of at most 64 bits, takes `__int128` as integral only
-outside strict ISO mode, cannot be taught a class in namespace `std`, and hashes a
+[Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) writes integers of at most 64 bits, takes `__int128` as integral on
+libstdc++ 15 only outside strict ISO mode, cannot be taught a class in namespace `std`, and hashes a
 `_BitInt(24)` through bytes that include its padding. `hash_append_int` hashes any
 xstd integer by its value instead: one of at most 64 bits as the narrowest
 standard type that holds it, and a wider one as 64-bit words, low word first, each
