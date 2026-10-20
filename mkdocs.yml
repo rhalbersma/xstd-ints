@@ -26,13 +26,91 @@ hooks:
 
 nav:
   - Overview: index.md
-  - Reference: reference.md
+  - Reference:
+    - reference/index.md
+    - concepts.hpp:
+      - reference/concepts/index.md
+      - alignable.hpp: reference/concepts/alignable.md
+      - integer_class.hpp: reference/concepts/integer_class.md
+      - integer.hpp: reference/concepts/integer.md
+      - signed_integer.hpp: reference/concepts/signed_integer.md
+      - unsigned_integer.hpp: reference/concepts/unsigned_integer.md
+      - bit_mask.hpp: reference/concepts/bit_mask.md
+      - nothrow_const_operators.hpp: reference/concepts/nothrow_const_operators.md
+    - type_traits.hpp:
+      - reference/type_traits/index.md
+      - is_signed.hpp: reference/type_traits/is_signed.md
+      - is_unsigned.hpp: reference/type_traits/is_unsigned.md
+      - make_signed.hpp: reference/type_traits/make_signed.md
+      - make_unsigned.hpp: reference/type_traits/make_unsigned.md
+      - promoted.hpp: reference/type_traits/promoted.md
+    - limits.hpp:
+      - reference/limits/index.md
+      - numeric_limits.hpp: reference/limits/numeric_limits.md
+    - cstdint.hpp:
+      - reference/cstdint/index.md
+      - bit_int.hpp: reference/cstdint/bit_int.md
+      - int128.hpp: reference/cstdint/int128.md
+    - bit.hpp:
+      - reference/bit/index.md
+      - bit_ceil.hpp: /xstd-ints/reference/bit/has_single_bit/
+      - bit_compress.hpp: reference/bit/bit_compress.md
+      - bit_expand.hpp: reference/bit/bit_expand.md
+      - bit_floor.hpp: /xstd-ints/reference/bit/has_single_bit/
+      - bit_repeat.hpp: reference/bit/bit_repeat.md
+      - bit_reverse.hpp: reference/bit/bit_reverse.md
+      - bit_select.hpp: reference/bit/bit_select.md
+      - bit_width.hpp: /xstd-ints/reference/bit/has_single_bit/
+      - byteswap.hpp: reference/bit/byteswap.md
+      - countl_one.hpp: /xstd-ints/reference/bit/countl_zero/
+      - countl_zero.hpp: reference/bit/countl_zero.md
+      - countr_one.hpp: /xstd-ints/reference/bit/countl_zero/
+      - countr_zero.hpp: /xstd-ints/reference/bit/countl_zero/
+      - has_single_bit.hpp: reference/bit/has_single_bit.md
+      - popcount.hpp: /xstd-ints/reference/bit/countl_zero/
+      - rotl.hpp: reference/bit/rotl.md
+      - rotr.hpp: /xstd-ints/reference/bit/rotl/
+      - shl.hpp: reference/bit/shl.md
+      - shr.hpp: /xstd-ints/reference/bit/shl/
+    - cstdlib.hpp:
+      - reference/cstdlib/index.md
+      - div_result.hpp: reference/cstdlib/div_result.md
+      - sign.hpp: reference/cstdlib/sign.md
+      - abs.hpp: reference/cstdlib/abs.md
+      - unsigned_abs.hpp: reference/cstdlib/unsigned_abs.md
+      - div.hpp: reference/cstdlib/div.md
+      - div_euclid.hpp: reference/cstdlib/div_euclid.md
+      - div_floor.hpp: reference/cstdlib/div_floor.md
+      - div_ceil.hpp: reference/cstdlib/div_ceil.md
+    - charconv.hpp:
+      - reference/charconv/index.md
+      - to_chars.hpp: reference/charconv/to_chars.md
+    - format.hpp:
+      - reference/format/index.md
+      - div_result.hpp: reference/format/div_result.md
+    - memory.hpp:
+      - reference/memory/index.md
+      - align_down.hpp: reference/memory/align_down.md
+      - align_up.hpp: reference/memory/align_up.md
+      - is_aligned.hpp: reference/memory/is_aligned.md
+    - ext/boost.hpp:
+      - reference/boost/index.md
+      - int128.hpp: reference/boost/int128.md
+      - hash2.hpp: reference/boost/hash2.md
+    - ext/absl.hpp:
+      - reference/absl/index.md
+      - int128.hpp: reference/absl/int128.md
+    - ints.hpp:
+      - reference/ints/index.md
   - Design: design.md
 
 theme:
   name: material
   features:
     - content.code.copy
+    # Each group's page is its section's index, and only the section open expands.
+    - navigation.indexes
+    - navigation.path
     - navigation.top
     - search.highlight
   palette:

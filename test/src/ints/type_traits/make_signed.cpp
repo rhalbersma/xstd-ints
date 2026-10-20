@@ -16,7 +16,10 @@ BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(TypeTraits)
 BOOST_AUTO_TEST_SUITE(MakeSigned)
 
-enum class color : unsigned { red = 1 };
+enum class color : unsigned
+{
+        red = 1,
+};
 
 // A named concept: a non-dependent invalid operand is a hard error on GCC.
 template<class T>
