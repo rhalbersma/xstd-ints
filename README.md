@@ -1,4 +1,4 @@
-# Do as the ints do
+# Integer extensions to the C++ Standard Library
 
 > "Go to the ant, thou sluggard; consider her ways, and be wise."
 >

@@ -1,7 +1,7 @@
 {
   "name": "xstd-ints",
   "version-string": "0.1.0",
-  "description": "Do as the ints do",
+  "description": "Integer extensions to the C++ Standard Library",
   "homepage": "https://github.com/rhalbersma/xstd-ints",
   "license": "BSL-1.0",
   "features": {

@@ -7,7 +7,7 @@
 # README as the index and points each relative link at its page, or at its file on GitHub where the site has none.
 
 site_name: xstd-ints
-site_description: Do as the ints do
+site_description: Integer extensions to the C++ Standard Library
 site_url: https://rhalbersma.github.io/xstd-ints/
 repo_url: https://github.com/rhalbersma/xstd-ints
 repo_name: rhalbersma/xstd-ints
