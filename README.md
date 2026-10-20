@@ -1,29 +1,20 @@
-# Do as the ints do
+# Integer extensions to the C++ Standard Library
 
 > "Go to the ant, thou sluggard; consider her ways, and be wise."
 >
 > Proverbs 6:6, King James Version
 
+<!-- two epigraphs, not one -->
+
+> "When in doubt, do as the ints do."
+>
+> Scott Meyers, Effective C++, 3rd edition, Item 18
+
 [![Project Status: Active](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![License](https://img.shields.io/badge/license-Boost-blue.svg)](https://opensource.org/licenses/BSL-1.0)
 [![Language](https://img.shields.io/badge/language-C++-blue.svg)](https://isocpp.org/)
 [![Standard](https://img.shields.io/badge/c%2B%2B-23-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
-[![License](https://img.shields.io/badge/license-Boost-blue.svg)](https://opensource.org/licenses/BSL-1.0)
-[![GCC](https://github.com/rhalbersma/xstd-ints/actions/workflows/gcc.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/gcc.yml)
-[![MinGW](https://github.com/rhalbersma/xstd-ints/actions/workflows/mingw.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/mingw.yml)
-[![Clang](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang.yml)
-[![Clang-libc++](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang-libc%2B%2B.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang-libc%2B%2B.yml)
-[![Apple Clang](https://github.com/rhalbersma/xstd-ints/actions/workflows/apple-clang.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/apple-clang.yml)
-[![Clang-CL](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang-cl.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang-cl.yml)
-[![MSVC](https://github.com/rhalbersma/xstd-ints/actions/workflows/msvc.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/msvc.yml)
-[![Emscripten](https://github.com/rhalbersma/xstd-ints/actions/workflows/emscripten.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/emscripten.yml)
-[![Coverage](https://codecov.io/gh/rhalbersma/xstd-ints/branch/main/graph/badge.svg)](https://codecov.io/gh/rhalbersma/xstd-ints)
-[![Consumption](https://github.com/rhalbersma/xstd-ints/actions/workflows/consumption.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/consumption.yml)
-[![Sanitizers](https://github.com/rhalbersma/xstd-ints/actions/workflows/sanitizers.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/sanitizers.yml)
-[![Clang-Tidy](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang-tidy.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang-tidy.yml)
-[![MSVC-Analyze](https://github.com/rhalbersma/xstd-ints/actions/workflows/msvc-analyze.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/msvc-analyze.yml)
-[![CodeQL](https://github.com/rhalbersma/xstd-ints/actions/workflows/codeql.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rhalbersma/xstd-ints/badge)](https://scorecard.dev/viewer/?uri=github.com/rhalbersma/xstd-ints)
-[![Documentation](https://github.com/rhalbersma/xstd-ints/actions/workflows/pages.yml/badge.svg)](https://rhalbersma.github.io/xstd-ints/)
 
 xstd-ints is a small, portable, header-only collection of integer extensions to
 the C++ standard library: concepts, traits, limits, division, alignment and
@@ -31,6 +22,27 @@ character conversion, open to integer-class types where the standard is closed
 over the built-ins. It relies on the [C++23](https://wg21.link/N4950) standard
 and targets the draft [C++29](https://wg21.link/std) standard library. All
 public APIs are in namespace `xstd`.
+
+## Do as the ints do
+
+Abseil's `absl::int128` and Boost.Int128's `boost::int128::int128`, and their
+unsigned halves, do as the ints do: they spell out every operator a built-in
+integer has, specialize `std::numeric_limits` as integers, and compare with a
+strong ordering. The standard library does not return the favour.
+`std::integral` rests on `std::is_integral`, which a program may not specialize,
+so no class type can satisfy it, and the standard's functions over integers,
+such as those of `<bit>` and `<charconv>`, take only the built-in ones. The
+standard does know class types that behave as integers, the integer-class types
+of [[iterator.concept.winc]](https://eel.is/c++draft/iterator.concept.winc), but
+admits only those an implementation supplies itself.
+
+xstd's `integer_class` asks a type that subclause's questions rather than for
+its name, so a type that does as the ints do qualifies, and so do the built-in
+integers it imitates. Abseil's and Boost's 128-bit types qualify as they are.
+`integer` asks one thing more, a signed and unsigned pair, named through xstd's
+specializable `make_signed` and `make_unsigned`. Those two sign
+transformations are all that `<xstd/ints/ext/absl/int128.hpp>` and
+`<xstd/ints/ext/boost/int128.hpp>` adapt.
 
 ## Usage
 
@@ -240,7 +252,7 @@ on either side of a right shift, so that it floors.
 permutations, which C++29's `<bit>` adds. Where the standard library declares them, as
 `__cpp_lib_bitops` of at least `202607L` says, xstd forwards to them for every type they take,
 with one exception: libstdc++'s `bit_compress` and `bit_expand` use neither `PEXT` nor `PDEP`,
-so where xstd would, it keeps its own kernels, and a weekly canary reports when that changes.
+so where xstd would, it keeps its own kernels, and a nightly canary reports when that changes.
 Elsewhere one template answers every `unsigned_integer`, the 128-bit integer classes and
 every `bit_uint<N>` width included, by working through it one `std::size_t` word at a time.
 All four are `constexpr`, portable in a constant expression and fast at run time: Clang's

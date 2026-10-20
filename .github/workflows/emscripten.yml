@@ -17,9 +17,8 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  # canary.yml dispatches this nightly on main, the run its README badge shows.
   workflow_dispatch:
-  # canary.yml calls this weekly, so the stub stays callable itself.
-  workflow_call:
 
 jobs:
   # Whether this pull request can reach what the ladder builds; see changes.yml.
