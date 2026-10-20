@@ -421,10 +421,10 @@ branch protection requires: a leg name changes whenever a rung moves, the gate n
 
 The gate is this repository's own job, carrying the required name, beside the shared ladder it waits for. On a
 pull request, [`changes.yml`](.github/workflows/changes.yml) first compares the diff with the paths no ladder
-builds: prose but the README, whose examples are tests, `doc/`, the suites with workflows of their own (`bench/`,
+builds: prose, `doc/`, the suites with workflows of their own (`bench/`,
 `codegen/`, `exhaustive/`, `fuzz/`, `mutation/`, `proofs/`), `tools/`, `mkdocs.yml`, and the workflows that are not
-ladders. When every changed file is one of
-those, the ladder is skipped and its gate passes; any other file, a new directory included, runs the ladder in
+ladders. The README counts as prose unless one of its ```` ```cpp ```` blocks, each compiled as a test, is added,
+removed or changed. When every changed file is one of those, the ladder is skipped and its gate passes; any other file, a new directory included, runs the ladder in
 full and the gate passes only if every leg did. A push to `main`, the schedule, a manual run and the canary always
 build. The names under branch protection do not change. This table is
 [xstd-bits](https://github.com/rhalbersma/xstd-bits/blob/main/CONTRIBUTING.md)' as well, less the C++26 legs
