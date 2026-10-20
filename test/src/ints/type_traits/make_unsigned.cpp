@@ -19,7 +19,7 @@ BOOST_AUTO_TEST_SUITE(MakeUnsigned)
 
 enum class color : unsigned
 {
-        red = 1
+        red = 1,
 };
 
 // A named concept: a non-dependent invalid operand is a hard error on GCC.
