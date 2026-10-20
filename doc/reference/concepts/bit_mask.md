@@ -1,6 +1,6 @@
 # `<xstd/ints/concepts/bit_mask.hpp>`
 
-## `bit_mask`
+## `xstd::bit_mask`
 
 ```cpp
 template<class T_cv, class T = remove_cv_t<T_cv>>
@@ -23,8 +23,10 @@ concept bit_mask =
   };
 ```
 
-It is the bitmask type of [[bitmask.types]](https://eel.is/c++draft/bitmask.types): an unsigned integer, or any type that is no kind of integer and has the
-operators.
+The bitmask type of [[bitmask.types]](https://eel.is/c++draft/bitmask.types): an unsigned integer, or any type that is
+no kind of integer and has the operators.
+
+### Models
 
 - Every unsigned exact-width type models it under every cv-qualification, and so does every unsigned built-in, the
   narrow ones through promotion.
@@ -38,6 +40,19 @@ operators.
   `filesystem::file_type` and `regex_constants::error_type`, enumerated types declared beside bitmask types, do not.
 - The compound forms need only be valid, whatever they return, so libstdc++'s `ios_base` flag types, whose compound
   assignments return `const X&`, model it where they are not signed integers.
+
+### Notes
+
 - Over the built-in types it admits exactly what `popcount`, `countr_zero`, `rotl` and `bit_width` accept.
 - No ordering is asked for: `bitset`, which has no `operator<`, models it.
 - No shifts are asked for: the standard's bitmask enumerations, which have none, model it.
+
+### See also
+
+| Entity | Relation |
+| :----- | :------- |
+| [`unsigned_integer`](unsigned_integer.md) | the integers it admits |
+| [`signed_integer`](signed_integer.md) | the integers it turns away |
+| [`promoted_t`](../type_traits/promoted.md) | the type its operators return |
+| [`popcount`](../bit/countl_zero.md), [`rotl`](../bit/rotl.md), [`bit_width`](../bit/has_single_bit.md) | take exactly its built-in models |
+| [*BitmaskType*](https://en.cppreference.com/w/cpp/named_req/BitmaskType) | the standard's named requirement |

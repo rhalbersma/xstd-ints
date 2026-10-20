@@ -29,6 +29,31 @@ This repository enforces its quality bar through CI rather than through review d
 
 Match the surrounding code's style by eye where `.clang-format` doesn't have an opinion, including the Boost Software License header comment at the top of every source and workflow file.
 
+## The CI matrix
+
+The matrix follows the channel model used by [apt.llvm.org](https://apt.llvm.org/): **stable** is the established
+release, **qualification** the newest release still being qualified, and **development** the current development
+branch. The [README](README.md#continuous-integration) records the versions assigned to each channel.
+
+The `Web` row runs one Emscripten release on the stable rung, in Debug: wasm32 under node,
+where `size_t` is 32 bits but 64-bit integers keep their 8-byte alignment. The GCC workflow
+adds a second 32-bit leg, i686 with GCC `-m32`, where `size_t` is 32 bits and there is no
+`__int128`. The MSVC workflow adds a third, x86 with VS 2026 in Debug and Release, where
+`xstd::uint128` is the MSVC STL's portable 128-bit class and the bit permutations take their
+portable kernels. One more GCC leg runs the trunk snapshot in C++29 mode,
+`-std=gnu++2d`, the one mode in which libstdc++ declares `shl` and `shr`: it is where the
+overloads forwarding to `<bit>` compile and their agreement tests run.
+
+The tests compile in the library's strictly conforming dialect wherever that
+dialect keeps the 128-bit column. `<bit>`'s functions take
+`std::unsigned_integral`, which libstdc++ 15 and older grant `unsigned __int128`
+only outside `__STRICT_ANSI__`; there `xstd::uint128` would drop out of the bit
+functions' instantiation lists rather than fail to compile. A configure-time
+probe asks the toolchain whether strict mode drops the type, and only where it
+does, on libstdc++ 15 whether under GCC or Clang, do the tests, the fuzz targets
+and the mutation build compile as `gnu++23`. libstdc++ 16 and later, libc++,
+MSVC and the 32-bit legs build them strictly.
+
 ## Test suite requirements
 
 Keep a focused test source for each public function, concept, and trait, mirroring its header path under `test/src/`. A source matching an umbrella header (for example, `cstdlib.cpp`, `concepts.cpp`, or `type_traits.cpp`) tests only identities that span several focused facilities. Integer-generic tests use the signed, unsigned, or combined exact-width type tuples in `test/include/test/exact_width_types.hpp` so the standard, xstd, optional third-party, and compiler bit-precise implementations stay in the same test matrix.
