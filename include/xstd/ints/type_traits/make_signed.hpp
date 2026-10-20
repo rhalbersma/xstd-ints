@@ -56,7 +56,7 @@ struct make_signed<T const volatile> : std::type_identity<std::add_cv_t<make_sig
 #pragma clang diagnostic ignored "-Wbit-int-extension"
 #endif
 
-// signed _BitInt(1) is ill-formed until Clang implements N3747, so unsigned _BitInt(1) has no counterpart.
+// signed _BitInt(1) is ill-formed until Clang implements WG14 N3747, so unsigned _BitInt(1) has no counterpart.
 template<>
 struct make_signed<unsigned _BitInt(1)>
 {};

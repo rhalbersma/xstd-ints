@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(Digits10CountsTheDecimalDigitsEveryValueHas)
 template<class T>
 concept has_signed_counterpart = requires { typename xstd::make_signed_t<T>; };
 
-// A one-bit flag spelled unsigned _BitInt(1) has no signed half until Clang implements N3747, so it is no integer.
+// A one-bit flag spelled unsigned _BitInt(1) has no signed half until Clang implements WG14 N3747, so it is no integer.
 BOOST_AUTO_TEST_CASE(OneBitHasNoSignedCounterpart)
 {
         static_assert(not has_signed_counterpart<unsigned _BitInt(1)>);
