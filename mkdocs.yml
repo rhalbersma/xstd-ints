@@ -20,6 +20,7 @@ exclude_docs: |
   P0330R0.*
   P0330R1.*
   ideas.*
+  mutation.md
 
 hooks:
   - tools/mkdocs_hooks.py
