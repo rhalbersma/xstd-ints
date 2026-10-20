@@ -74,9 +74,10 @@ opened to built-in types, which that subclause's note admits.
 
 ### Semantic requirements
 
-- A type models it only if its range is the one [[iterator.concept.winc]/3](https://eel.is/c++draft/iterator.concept.winc#3)
-  gives a width: `min() + max()` is −1 for the signed half of a pair, and the unsigned half runs from 0 to twice the
-  signed maximum plus one, with one digit more.
+- A type models it only if its range is the one
+  [[iterator.concept.winc]/3](https://eel.is/c++draft/iterator.concept.winc#3) gives a width: `min() + max()` is −1
+  for the signed half of a pair, and the unsigned half runs from 0 to twice the signed maximum plus one, with one digit
+  more.
 - A type models it only if value-initialization produces zero,
   [[iterator.concept.winc]/10](https://eel.is/c++draft/iterator.concept.winc#10): it does for every signed exact-width
   type and its unsigned counterpart in constant evaluation, Abseil's pair where it has a 128-bit intrinsic.

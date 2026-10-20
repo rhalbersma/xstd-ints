@@ -93,4 +93,4 @@ It asks the special members a call by value spends and every relation, not only 
 | :----- | :------- |
 | [`alignable`](#xstdalignable) | the concept it refines |
 | [`nothrow_const_operators`](nothrow_const_operators.md) | the same question asked of an `integer` |
-| [`align_up`](../memory/align_up.md), [`align_down`](../memory/align_down.md), [`is_aligned`](../memory/is_aligned.md) | are `noexcept` exactly where `T` models it |
+| [`align_up`](../memory/align_up.md), [`align_down`](../memory/align_down.md), [`is_aligned`](../memory/is_aligned.md) | their value forms are `noexcept` exactly where `T` models it |
