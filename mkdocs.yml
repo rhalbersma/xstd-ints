@@ -53,25 +53,25 @@ nav:
       - int128.hpp: reference/cstdint/int128.md
     - bit.hpp:
       - reference/bit/index.md
-      - bit_ceil.hpp: reference/bit/bit_ceil.md
+      - bit_ceil.hpp: /xstd-ints/reference/bit/has_single_bit/
       - bit_compress.hpp: reference/bit/bit_compress.md
       - bit_expand.hpp: reference/bit/bit_expand.md
-      - bit_floor.hpp: reference/bit/bit_floor.md
+      - bit_floor.hpp: /xstd-ints/reference/bit/has_single_bit/
       - bit_repeat.hpp: reference/bit/bit_repeat.md
       - bit_reverse.hpp: reference/bit/bit_reverse.md
       - bit_select.hpp: reference/bit/bit_select.md
-      - bit_width.hpp: reference/bit/bit_width.md
+      - bit_width.hpp: /xstd-ints/reference/bit/has_single_bit/
       - byteswap.hpp: reference/bit/byteswap.md
-      - countl_one.hpp: reference/bit/countl_one.md
+      - countl_one.hpp: /xstd-ints/reference/bit/countl_zero/
       - countl_zero.hpp: reference/bit/countl_zero.md
-      - countr_one.hpp: reference/bit/countr_one.md
-      - countr_zero.hpp: reference/bit/countr_zero.md
+      - countr_one.hpp: /xstd-ints/reference/bit/countl_zero/
+      - countr_zero.hpp: /xstd-ints/reference/bit/countl_zero/
       - has_single_bit.hpp: reference/bit/has_single_bit.md
-      - popcount.hpp: reference/bit/popcount.md
+      - popcount.hpp: /xstd-ints/reference/bit/countl_zero/
       - rotl.hpp: reference/bit/rotl.md
-      - rotr.hpp: reference/bit/rotr.md
+      - rotr.hpp: /xstd-ints/reference/bit/rotl/
       - shl.hpp: reference/bit/shl.md
-      - shr.hpp: reference/bit/shr.md
+      - shr.hpp: /xstd-ints/reference/bit/shl/
     - cstdlib.hpp:
       - reference/cstdlib/index.md
       - div_result.hpp: reference/cstdlib/div_result.md

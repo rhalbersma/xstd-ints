@@ -1,5 +1,7 @@
 # `<xstd/ints/bit/shl.hpp>`
 
+This page also specifies `<xstd/ints/bit/shr.hpp>`, whose functions share this text.
+
 ## `shl`, `shr`
 
 ```cpp

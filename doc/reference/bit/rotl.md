@@ -1,5 +1,7 @@
 # `<xstd/ints/bit/rotl.hpp>`
 
+This page also specifies `<xstd/ints/bit/rotr.hpp>`, whose functions share this text.
+
 ## `rotl`, `rotr`
 
 ```cpp

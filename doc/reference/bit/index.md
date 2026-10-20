@@ -58,25 +58,25 @@ namespace xstd {
 
 | Header | Declares |
 | :----- | :------- |
-| [`<xstd/ints/bit/bit_ceil.hpp>`](bit_ceil.md) | `bit_ceil` |
+| [`<xstd/ints/bit/bit_ceil.hpp>`](has_single_bit.md) | `bit_ceil` |
 | [`<xstd/ints/bit/bit_compress.hpp>`](bit_compress.md) | `bit_compress` |
 | [`<xstd/ints/bit/bit_expand.hpp>`](bit_expand.md) | `bit_expand` |
-| [`<xstd/ints/bit/bit_floor.hpp>`](bit_floor.md) | `bit_floor` |
+| [`<xstd/ints/bit/bit_floor.hpp>`](has_single_bit.md) | `bit_floor` |
 | [`<xstd/ints/bit/bit_repeat.hpp>`](bit_repeat.md) | `bit_repeat` |
 | [`<xstd/ints/bit/bit_reverse.hpp>`](bit_reverse.md) | `bit_reverse` |
 | [`<xstd/ints/bit/bit_select.hpp>`](bit_select.md) | `bit_select` |
-| [`<xstd/ints/bit/bit_width.hpp>`](bit_width.md) | `bit_width` |
+| [`<xstd/ints/bit/bit_width.hpp>`](has_single_bit.md) | `bit_width` |
 | [`<xstd/ints/bit/byteswap.hpp>`](byteswap.md) | `byteswap` |
-| [`<xstd/ints/bit/countl_one.hpp>`](countl_one.md) | `countl_one` |
+| [`<xstd/ints/bit/countl_one.hpp>`](countl_zero.md) | `countl_one` |
 | [`<xstd/ints/bit/countl_zero.hpp>`](countl_zero.md) | `countl_zero` |
-| [`<xstd/ints/bit/countr_one.hpp>`](countr_one.md) | `countr_one` |
-| [`<xstd/ints/bit/countr_zero.hpp>`](countr_zero.md) | `countr_zero` |
+| [`<xstd/ints/bit/countr_one.hpp>`](countl_zero.md) | `countr_one` |
+| [`<xstd/ints/bit/countr_zero.hpp>`](countl_zero.md) | `countr_zero` |
 | [`<xstd/ints/bit/has_single_bit.hpp>`](has_single_bit.md) | `has_single_bit` |
-| [`<xstd/ints/bit/popcount.hpp>`](popcount.md) | `popcount` |
+| [`<xstd/ints/bit/popcount.hpp>`](countl_zero.md) | `popcount` |
 | [`<xstd/ints/bit/rotl.hpp>`](rotl.md) | `rotl` |
-| [`<xstd/ints/bit/rotr.hpp>`](rotr.md) | `rotr` |
+| [`<xstd/ints/bit/rotr.hpp>`](rotl.md) | `rotr` |
 | [`<xstd/ints/bit/shl.hpp>`](shl.md) | `shl` |
-| [`<xstd/ints/bit/shr.hpp>`](shr.md) | `shr` |
+| [`<xstd/ints/bit/shr.hpp>`](shl.md) | `shr` |
 
 The umbrella exports each header under `<xstd/ints/bit/>`, one function to a header.
 

@@ -1,5 +1,7 @@
 # `<xstd/ints/bit/countl_zero.hpp>`
 
+This page also specifies `<xstd/ints/bit/countl_one.hpp>`, `<xstd/ints/bit/countr_one.hpp>`, `<xstd/ints/bit/countr_zero.hpp>` and `<xstd/ints/bit/popcount.hpp>`, whose functions share this text.
+
 ## `countl_zero`, `countl_one`, `countr_zero`, `countr_one`, `popcount`
 
 ```cpp

@@ -1,5 +1,7 @@
 # `<xstd/ints/bit/has_single_bit.hpp>`
 
+This page also specifies `<xstd/ints/bit/bit_ceil.hpp>`, `<xstd/ints/bit/bit_floor.hpp>` and `<xstd/ints/bit/bit_width.hpp>`, whose functions share this text.
+
 ## `has_single_bit`, `bit_ceil`, `bit_floor`, `bit_width`
 
 ```cpp
