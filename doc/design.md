@@ -177,27 +177,8 @@ density, the harness that feeds each call included. [`bench/results/`](../bench/
 each run with the machine, compiler, flags and commit it names, and
 [CONTRIBUTING.md](../CONTRIBUTING.md#benchmarks) gives the command; besides this container's
 run it holds the Bench workflow's on an [Emerald Rapids](../bench/results/emerald-rapids.md)
-and a [Neoverse N2](../bench/results/neoverse-n2.md) runner. From the
-[Cascade Lake run](../bench/results/cascade-lake.md), at `-march=native -O3`, with a cost per bit
-taken as the slope from the sparsest row of its table to the densest:
-
-| Kernel | Cost | GCC 15 | Clang 22 |
-| :-- | :-- | --: | --: |
-| `PEXT`, `PDEP` | per call | 1.7 | 1.7 to 2.0 |
-| `block_compress_by_rank` | per selected bit | 3.2 | 2.5 |
-| `block_expand_by_walk` | per mask bit | 3.0 | 2.5 |
-| `block_expand_by_select` | per source bit | 7.4 | 7.0 |
-| `std::countr_zero` of `PDEP` | per call | 3.0 | 2.0 |
-| `block_select_by_broadword` | per call | 12.1 | 11.7 |
-| the harness alone | per call | 2.1 | 1.8 |
-
-With two source ones, `block_expand_by_select` beats the walk from about nine mask ones up. The
-alternatives measured and left out cost, on the same run: the mask walk with an `if` on each bit,
-which both compilers turn into a conditional move rather than a branch, 1.75 times the rank kernel
-to compress at half density, since it pays for every mask bit rather than every selected one, and
-to expand as much as the masked walk with Clang and less with GCC, 2.1 cycles a mask bit against
-3.0; Hacker's Delight's parallel suffix, a flat 70 cycles to compress and 77 to expand; and
-Wegner's zp7, a flat 52 to 58 and 61 to 66 without `PCLMULQDQ`, and 25 to 26 and 34 with it.
+and a [Neoverse N2](../bench/results/neoverse-n2.md) runner. The [measurements](measurements.md#the-bit-permutation-kernels) give each kernel's cost and those of the
+alternatives it beat, from the Cascade Lake run.
 Tests check every portable kernel against a
 bit-at-a-time oracle at compile time and at run time, and the run-time block kernels against
 the portable ones, so a build with BMI2 checks the instructions too. Agreement cannot show which
@@ -209,26 +190,9 @@ gives them, RBIT as the Arm ARM's ASL does, and select by its defining property,
 within the width and the select's precondition met at every call.
 Branch-free is a claim about control flow; whether a kernel's control flow or memory addresses
 depend on secret data was checked separately, per kernel and per secret argument
-([`constant_time/`](../constant_time), [results](../constant_time/results.md)). Valgrind's memcheck,
-with the secret marked undefined, reports every branch and address computed from it, the same for
-GCC 15 and Clang 22 with and without `-march=x86-64-v3`:
-
-| Kernel | Secret | Memcheck |
-| :-- | :-- | :-- |
-| `block_reverse_by_swaps` | the word | clean |
-| `block_expand_by_walk` | the source, the mask public | clean |
-| `block_expand_by_walk` | the mask | a branch: one trip per mask one |
-| `block_compress_by_rank` | the source | a branch: one trip per selected bit |
-| `block_expand_by_select` | the source | a branch, and the table lookup |
-| `block_select_by_broadword` | the word and the rank | no branch, but one address from them: `select_in_byte` |
-| `PEXT`, `PDEP` | the source or the mask | clean |
-
-So only the byte reversal, the walk over a public mask, and the two instructions are free of
-secret-dependent branches and addresses. The select never branches, yet indexes a table by the
-secret, which a cache-timing attacker can observe, and the loops branch on no bit of the value but
-run a number of times that depends on it. Memcheck says nothing about time itself: the instructions'
-own latency can depend on their operands, as uops.info measures for
-[`PEXT (R64, R64, R64)`](https://uops.info/html-instr/PEXT_R64_R64_R64.html) on Zen 2.
+([`constant_time/`](../constant_time), [results](../constant_time/results.md)). [The measurements](measurements.md#secret-dependent-control-flow) give, per kernel and secret argument, what
+Valgrind's memcheck reports: only the byte reversal, the walk over a public mask, and `PEXT` and `PDEP` are free of
+secret-dependent branches and addresses.
 Wider types compose the blocks: reversal sends each mirrored block to the mirror of its offset,
 compression packs each block's result above the bits the lower blocks selected, expansion
 draws each block's bits from where the lower blocks stopped, and selection skips whole blocks,
@@ -835,29 +799,6 @@ needs a batch interface that the per-call signature cannot amortize, and belongs
 xstd-bits.
 wasm32 has no bit-permute instruction, so the portable kernels are already its
 answer.
-
-## CI policy
-
-The matrix follows the channel model used by
-[apt.llvm.org](https://apt.llvm.org/): **stable** is the established release,
-**qualification** the newest release still being qualified, and **development**
-the current development branch. These are tested across the three main compiler
-families, the three main standard libraries and the three main desktop platforms,
-with MinGW, Apple Clang and Clang-CL filling out the remaining combinations.
-Development jobs are required where a usable development compiler exists; the
-README records the versions currently assigned to each channel. Building the
-tests requires the dependencies documented in
-[CONTRIBUTING.md](../CONTRIBUTING.md).
-
-The tests compile in the library's strictly conforming dialect wherever that
-dialect keeps the 128-bit column. `<bit>`'s functions take
-`std::unsigned_integral`, which libstdc++ 15 and older grant `unsigned __int128`
-only outside `__STRICT_ANSI__`; there `xstd::uint128` would drop out of the bit
-functions' instantiation lists rather than fail to compile. A configure-time
-probe asks the toolchain whether strict mode drops the type, and only where it
-does, on libstdc++ 15 whether under GCC or Clang, do the tests, the fuzz targets
-and the mutation build compile as `gnu++23`. libstdc++ 16 and later, libc++,
-MSVC and the 32-bit legs build them strictly.
 
 ## Contracts
 

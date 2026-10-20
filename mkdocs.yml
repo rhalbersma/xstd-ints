@@ -103,6 +103,7 @@ nav:
     - ints.hpp:
       - reference/ints/index.md
   - Design: design.md
+  - Measurements: measurements.md
 
 theme:
   name: material

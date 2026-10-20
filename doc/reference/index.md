@@ -9,6 +9,31 @@ The synopses leave out `[[nodiscard]]`, as the standard's own have since [P2422R
 made it a recommended practice rather than part of a library's specification. The code carries it on every function that
 returns a value, so discarding a result here draws a warning.
 
+## How to read this reference
+
+Each header has a page, laid out as [cppreference](https://en.cppreference.com/) lays out its pages:
+
+- **The declarations,** numbered (1), (2), … where there are several, so the text below can say what each does. In a
+  declaration, `see below` stands for what the text specifies.
+- **A short description,** then one item per numbered declaration.
+- **The parameters and the members,** as tables: template parameters, parameters, member types, member functions.
+- **Semantic requirements** and **Models,** for a concept: what a type must do beyond the syntax, and which real
+  types model it and which do not. Each of those types is tested.
+- **Notes,** for what holds of the entity as a whole.
+- **See also,** for the entities a reader looks up next.
+
+Within a section, the elements of [[structure.specifications]](https://eel.is/c++draft/structure.specifications) keep
+their meanings:
+
+| Element | What it tells the caller |
+| :------ | :----------------------- |
+| *Constraints:* | When the overload takes part in overload resolution. A call that fails one is not an error by itself: it finds another overload, or none. |
+| *Preconditions:* | What the caller must ensure. A call that breaks one has undefined behaviour, and where a page says so, a hardened build or a constant evaluation diagnoses it. |
+| *Effects:* | What the call does. |
+| *Returns:* | The value the call returns. |
+| *Throws:* | The exceptions the call throws, and when. A function with none listed and no `noexcept` may still throw from what it calls. |
+| *Remarks:* | Anything else the caller can rely on, such as when the function is `noexcept` or a constant expression. |
+
 ## Relation to the standard library
 
 Each entity is one of five kinds:
