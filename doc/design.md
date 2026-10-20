@@ -95,7 +95,7 @@ unsigned counterpart and has no signed one.
 They reach it as `integer_class` on either standard library, though only libc++
 makes `_BitInt` integral: that choice moves which arm `promoted_t` takes, and
 both name `_BitInt` itself, since it is exempt from promotion. The public
-domain currently begins at two because Clang has not yet implemented [N3747](https://wg21.link/N3747)'s
+domain currently begins at two because Clang has not yet implemented [WG14 N3747](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3747.pdf)'s
 signed `_BitInt(1)`.
 
 The `<bit>` counterparts follow the same split. Where the standard library's `<bit>` takes a

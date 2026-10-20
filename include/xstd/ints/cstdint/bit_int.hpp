@@ -24,7 +24,7 @@ namespace xstd {
 
 inline constexpr auto bit_int_max_width = static_cast<std::size_t>(__BITINT_MAXWIDTH__);
 
-// Keep the public domain paired until Clang implements signed _BitInt(1) from N3747.
+// Keep the public domain paired until Clang implements signed _BitInt(1) from WG14 N3747.
 template<std::size_t N>
         requires (2 <= N and N <= bit_int_max_width)
 using bit_int = signed _BitInt(N);

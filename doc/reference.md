@@ -554,7 +554,7 @@ Each is declared, where the compiler defines `__BITINT_MAXWIDTH__`, in the heade
   specialization that forwards to the standard library, so they apply on libc++, which makes `_BitInt` integral, as well
   as elsewhere.
 - `make_signed<unsigned _BitInt(1)>` is an explicit specialization with no member `type`: Clang does not yet implement
-  [N3747](https://wg21.link/N3747)'s `signed _BitInt(1)`. So `make_signed_t` of `unsigned _BitInt(1)`, cv-qualified or not, is a substitution
+  [WG14 N3747](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3747.pdf)'s `signed _BitInt(1)`. So `make_signed_t` of `unsigned _BitInt(1)`, cv-qualified or not, is a substitution
   failure, and `integer` and `unsigned_integer` are `false` for it rather than ill-formed.
 - `make_unsigned<unsigned _BitInt(1)>::type` is `unsigned _BitInt(1)`, which libc++'s `std::make_unsigned` refuses, and
   through the cv-qualified specializations the qualifiers carry over.
@@ -728,7 +728,7 @@ aliases.
 ### `bit_int`, `bit_uint`
 
 - *Constraints:* `2 <= N` and `N <= bit_int_max_width`. The lower bound pairs every exposed width: Clang does not yet
-  implement [N3747](https://wg21.link/N3747)'s `signed _BitInt(1)`. Both aliases name a type at 2 and at `bit_int_max_width`, and neither at 1 or
+  implement [WG14 N3747](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3747.pdf)'s `signed _BitInt(1)`. Both aliases name a type at 2 and at `bit_int_max_width`, and neither at 1 or
   at `bit_int_max_width + 1`.
 - `bit_int<N>` is `signed _BitInt(N)` and `bit_uint<N>` is `unsigned _BitInt(N)`: aliases, not wrappers, so the
   conversions, promotions and operators are the compiler's.
@@ -1406,7 +1406,7 @@ struct formatter<xstd::div_result<I>, charT> : see below {
   - The text is the same over an unsigned element type, `std::uint8_t` included, whose members are written as numbers
     rather than as characters.
   - *Remarks:* It is `constexpr` where `__cpp_lib_constexpr_format` is at least `202511L`, as
-    [P3391R3](https://github.com/cplusplus/papers/issues/2046) makes the base's, and not otherwise.
+    [P3391R2](https://github.com/cplusplus/papers/issues/2046) makes the base's, and not otherwise.
 
 ## `<xstd/ints/memory.hpp>`
 
