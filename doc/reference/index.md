@@ -95,16 +95,16 @@ in another language where that counterpart shares its purpose. Papers are linked
   [`integral_promotion`](https://www.boost.org/doc/libs/latest/libs/type_traits/doc/html/boost_typetraits/reference/integral_promotion.html),
   which keeps the cv-qualifiers, where `promoted_t<short const>` is `int`.
 - **`int128`, `uint128`:**
-  - **C++:** Abseil's [`absl::int128` and `absl::uint128`](https://abseil.io/docs/cpp/guides/numeric#128-bit-integers)
-    and [Boost.Int128](https://github.com/cppalliance/int128)'s pair are 128-bit integer classes, which the `ext`
-    headers pair. [P3140R0](https://wg21.link/p3140r0), *`std::int_least128_t`* (Jan Schultke), proposes a standard
-    128-bit integer type.
-  - **Rust** has [`i128`](https://doc.rust-lang.org/std/primitive.i128.html) and
-    [`u128`](https://doc.rust-lang.org/std/primitive.u128.html) as primitive types.
+    - **C++:** Abseil's [`absl::int128` and `absl::uint128`](https://abseil.io/docs/cpp/guides/numeric#128-bit-integers)
+      and [Boost.Int128](https://github.com/cppalliance/int128)'s pair are 128-bit integer classes, which the `ext`
+      headers pair. [P3140R0](https://wg21.link/p3140r0), *`std::int_least128_t`* (Jan Schultke), proposes a standard
+      128-bit integer type.
+    - **Rust** has [`i128`](https://doc.rust-lang.org/std/primitive.i128.html) and
+      [`u128`](https://doc.rust-lang.org/std/primitive.u128.html) as primitive types.
 - **`bit_int`, `bit_uint`:**
-  - **C++:** [P3666R0](https://wg21.link/p3666r0), *Bit-precise integers* (Jan Schultke).
-  - **C23** has `_BitInt(N)`, which the aliases name, and Clang offers it in C++ as an
-    [extension](https://clang.llvm.org/docs/LanguageExtensions.html#bitint-extint).
+    - **C++:** [P3666R0](https://wg21.link/p3666r0), *Bit-precise integers* (Jan Schultke).
+    - **C23** has `_BitInt(N)`, which the aliases name, and Clang offers it in C++ as an
+      [extension](https://clang.llvm.org/docs/LanguageExtensions.html#bitint-extint).
 - **`byteswap`:** [P1272R4](https://wg21.link/p1272r4), *Byteswapping for fun&&nuf* (Isabella Muerte, Corentin Jabot).
 - **`rotl`, `rotr` and the counting functions:** [P0553R4](https://wg21.link/p0553r4), *Bit operations* (Jens
   Maurer).
@@ -121,21 +121,21 @@ in another language where that counterpart shares its purpose. Papers are linked
 - **`abs`, `div`:** [P0533R9](https://wg21.link/p0533r9), *`constexpr` for `<cmath>` and `<cstdlib>`* (Oliver Rosten,
   Edward Rosten), which makes the standard functions `constexpr`.
 - **`div_result`, `div_euclid`, `div_floor`, `div_ceil`:**
-  - **C++:** [P3724R4](https://wg21.link/p3724r4), *Integer division* (Jan Schultke), for the member names and the
-    rounding. Daan Leijen's
-    [*Division and Modulus for Computer Scientists*](https://www.microsoft.com/en-us/research/publication/division-and-modulus-for-computer-scientists/)
-    sets truncated, floored and Euclidean division side by side.
-  - **Rust's** [`div_euclid`](https://doc.rust-lang.org/std/primitive.i32.html#method.div_euclid) is `div_euclid`'s
-    quotient, and its [`div_ceil`](https://doc.rust-lang.org/std/primitive.u32.html#method.div_ceil), stable on the
-    unsigned types, is `div_ceil`'s.
-  - **Python's** [`divmod`](https://docs.python.org/3/library/functions.html#divmod) returns the quotient and
-    remainder of floored division together, as `div_floor` does.
+    - **C++:** [P3724R4](https://wg21.link/p3724r4), *Integer division* (Jan Schultke), for the member names and the
+      rounding. Daan Leijen's
+      [*Division and Modulus for Computer Scientists*](https://www.microsoft.com/en-us/research/publication/division-and-modulus-for-computer-scientists/)
+      sets truncated, floored and Euclidean division side by side.
+    - **Rust's** [`div_euclid`](https://doc.rust-lang.org/std/primitive.i32.html#method.div_euclid) is `div_euclid`'s
+      quotient, and its [`div_ceil`](https://doc.rust-lang.org/std/primitive.u32.html#method.div_ceil), stable on the
+      unsigned types, is `div_ceil`'s.
+    - **Python's** [`divmod`](https://docs.python.org/3/library/functions.html#divmod) returns the quotient and
+      remainder of floored division together, as `div_floor` does.
 - **`sign`:**
-  - **C++:** Boost.Math's
-    [`sign`](https://www.boost.org/doc/libs/latest/libs/math/doc/html/math_toolkit/sign_functions.html), which
-    returns `1`, `-1` or `0` as an `int`.
-  - **Rust's** [`signum`](https://doc.rust-lang.org/std/primitive.i32.html#method.signum) gives the same three values,
-    in the operand's own type and for the signed types only.
+    - **C++:** Boost.Math's
+      [`sign`](https://www.boost.org/doc/libs/latest/libs/math/doc/html/math_toolkit/sign_functions.html), which
+      returns `1`, `-1` or `0` as an `int`.
+    - **Rust's** [`signum`](https://doc.rust-lang.org/std/primitive.i32.html#method.signum) gives the same three values,
+      in the operand's own type and for the signed types only.
 - **`unsigned_abs`:** **Rust's** [`unsigned_abs`](https://doc.rust-lang.org/std/primitive.i32.html#method.unsigned_abs)
   returns the magnitude in the unsigned counterpart, `128u8` for `-128i8`, as `unsigned_abs` does.
 - **`to_chars`:** [P0067R5](https://wg21.link/p0067r5), *Elementary string conversions, revision 5* (Jens Maurer), and
