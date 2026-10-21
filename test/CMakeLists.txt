@@ -53,6 +53,7 @@ set(cxx_compile_options_warnings
         # when an element type has no std::formatter of its own, which is why
         # absl::int128 is the first to draw it. Clang 23 and 24-SVN both.
         -Wno-lifetime-safety-invalidation
+        -Wno-lifetime-safety-experimental-invalidation # the same warning, as Clang 24-SVN renames it under -Wlifetime-safety-experimental
         # xstd::to_chars takes a char* range because std::to_chars does, so
         # every pointer step inside that contract draws this.
         -Wno-unsafe-buffer-usage
