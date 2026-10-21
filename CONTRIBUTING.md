@@ -44,6 +44,10 @@ portable kernels. One more GCC leg runs the trunk snapshot in C++29 mode,
 `-std=gnu++2d`, the one mode in which libstdc++ declares `shl` and `shr`: it is where the
 overloads forwarding to `<bit>` compile and their agreement tests run.
 
+The `s390x` row is the one big-endian leg: GCC 15's s390x cross compiler, in Debug, with the
+tests run under QEMU's user-mode emulator. Emulation is several times slower than native, so
+the nightly canary dispatches it, and no pull request runs it.
+
 The tests compile in the library's strictly conforming dialect wherever that
 dialect keeps the 128-bit column. `<bit>`'s functions take
 `std::unsigned_integral`, which libstdc++ 15 and older grant `unsigned __int128`
