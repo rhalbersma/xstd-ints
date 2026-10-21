@@ -61,8 +61,8 @@ transformations are all that `<xstd/ints/ext/absl/int128.hpp>` and
 | `<xstd/ints/ext/absl.hpp>` | Pairs Abseil's `int128` and `uint128`, so that each models `integer`. |
 | `<xstd/ints/ext/boost.hpp>` | Pairs Boost.Int128's 128-bit integers, and hashes any integer's value into a Boost.Hash2 algorithm. |
 
-[The reference](doc/reference/index.md) lists each group's headers and specifies each entity, and [the design notes](doc/design.md) give the rationale, the
-measurements, and how to customize an integer-class type. [CONTRIBUTING.md](CONTRIBUTING.md) builds the library itself.
+[The reference](doc/reference/index.md) lists each group's headers and specifies each entity, [the design notes](doc/design.md)
+give the rationale and how to customize an integer-class type, and [the measurements](doc/measurements.md) the evidence. [CONTRIBUTING.md](CONTRIBUTING.md) builds the library itself.
 
 ## Usage
 
@@ -142,20 +142,14 @@ libraries) in both Debug and Release mode:
 | Windows  | MSVC       | MSVC             | 2022 (17.11+)             | 2026                      | 2026-Preview                   | [![MSVC](https://github.com/rhalbersma/xstd-ints/actions/workflows/msvc.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/msvc.yml) |
 | Web      | Emscripten | libc++           | 6.0.12                    | —                         | —                              | [![Emscripten](https://github.com/rhalbersma/xstd-ints/actions/workflows/emscripten.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/emscripten.yml) |
 
-The `Web` row runs one Emscripten release on the stable rung, in Debug: wasm32 under node,
-where `size_t` is 32 bits but 64-bit integers keep their 8-byte alignment. The GCC workflow
-adds a second 32-bit leg, i686 with GCC `-m32`, where `size_t` is 32 bits and there is no
-`__int128`. The MSVC workflow adds a third, x86 with VS 2026 in Debug and Release, where
-`xstd::uint128` is the MSVC STL's portable 128-bit class and the bit permutations take their
-portable kernels. One more GCC leg runs the trunk snapshot in C++29 mode,
-`-std=gnu++2d`, the one mode in which libstdc++ declares `shl` and `shr`: it is where the
-overloads forwarding to `<bit>` compile and their agreement tests run.
+[CONTRIBUTING.md](CONTRIBUTING.md#the-ci-matrix) says what each channel is, and which legs run beyond the table.
 
-Beyond the compilers, CI holds coverage at 100%, consumes the library through `find_package`, `add_subdirectory` and
-`FetchContent`, runs the sanitizers, analyzes the code with Clang-Tidy, MSVC's `/analyze` and CodeQL, and builds the
+Beyond the compilers, CI holds coverage at 100%, tests the tests by mutation, consumes the library through
+`find_package`, `add_subdirectory` and `FetchContent`, runs the sanitizers, analyzes the code with Clang-Tidy, MSVC's `/analyze` and CodeQL, and builds the
 documentation site:
 
 [![Coverage](https://codecov.io/gh/rhalbersma/xstd-ints/branch/main/graph/badge.svg)](https://codecov.io/gh/rhalbersma/xstd-ints)
+[![Mutation](https://github.com/rhalbersma/xstd-ints/actions/workflows/mutation.yml/badge.svg)](doc/mutation.md)
 [![Consumption](https://github.com/rhalbersma/xstd-ints/actions/workflows/consumption.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/consumption.yml)
 [![Sanitizers](https://github.com/rhalbersma/xstd-ints/actions/workflows/sanitizers.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/sanitizers.yml)
 [![Clang-Tidy](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang-tidy.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang-tidy.yml)

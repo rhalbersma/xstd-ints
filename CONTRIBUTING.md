@@ -29,6 +29,31 @@ This repository enforces its quality bar through CI rather than through review d
 
 Match the surrounding code's style by eye where `.clang-format` doesn't have an opinion, including the Boost Software License header comment at the top of every source and workflow file.
 
+## The CI matrix
+
+The matrix follows the channel model used by [apt.llvm.org](https://apt.llvm.org/): **stable** is the established
+release, **qualification** the newest release still being qualified, and **development** the current development
+branch. The [README](README.md#continuous-integration) records the versions assigned to each channel.
+
+The `Web` row runs one Emscripten release on the stable rung, in Debug: wasm32 under node,
+where `size_t` is 32 bits but 64-bit integers keep their 8-byte alignment. The GCC workflow
+adds a second 32-bit leg, i686 with GCC `-m32`, where `size_t` is 32 bits and there is no
+`__int128`. The MSVC workflow adds a third, x86 with VS 2026 in Debug and Release, where
+`xstd::uint128` is the MSVC STL's portable 128-bit class and the bit permutations take their
+portable kernels. One more GCC leg runs the trunk snapshot in C++29 mode,
+`-std=gnu++2d`, the one mode in which libstdc++ declares `shl` and `shr`: it is where the
+overloads forwarding to `<bit>` compile and their agreement tests run.
+
+The tests compile in the library's strictly conforming dialect wherever that
+dialect keeps the 128-bit column. `<bit>`'s functions take
+`std::unsigned_integral`, which libstdc++ 15 and older grant `unsigned __int128`
+only outside `__STRICT_ANSI__`; there `xstd::uint128` would drop out of the bit
+functions' instantiation lists rather than fail to compile. A configure-time
+probe asks the toolchain whether strict mode drops the type, and only where it
+does, on libstdc++ 15 whether under GCC or Clang, do the tests, the fuzz targets
+and the mutation build compile as `gnu++23`. libstdc++ 16 and later, libc++,
+MSVC and the 32-bit legs build them strictly.
+
 ## Test suite requirements
 
 Keep a focused test source for each public function, concept, and trait, mirroring its header path under `test/src/`. A source matching an umbrella header (for example, `cstdlib.cpp`, `concepts.cpp`, or `type_traits.cpp`) tests only identities that span several focused facilities. Integer-generic tests use the signed, unsigned, or combined exact-width type tuples in `test/include/test/exact_width_types.hpp` so the standard, xstd, optional third-party, and compiler bit-precise implementations stay in the same test matrix.
@@ -296,22 +321,7 @@ ctest --test-dir build-proofs --output-on-failure --verbose
 
 ## Mutation tests
 
-Coverage shows that a line ran under test, not that a test would fail if the line were wrong: `<` turned into `<=` at a boundary leaves every line covered and every test green. [Mull](https://github.com/mull-project/mull) checks the stronger claim. Its clang plugin compiles a mutant into every arithmetic, comparison, bitwise and logical operator it finds in the headers [`mutation/mull.yml`](mutation/mull.yml) names: the portable bit kernels, the shift behind `shl` and `shr`, and everything under `cstdlib/`. Each mutant then runs against the unit tests, and must make one of them fail.
-
-[`mutation/`](mutation) builds every unit test under `bit/` and `cstdlib/` a second time, one executable each, unoptimized and with the plugin, so that a mutant reruns only the tests compiled with it. The intrinsic kernels' test is left out: without BMI2 it reaches no mutated line, and it is the slowest of all. [`mutation/score.py`](mutation/score.py) runs `mull-runner` over each executable and counts a mutant as killed if any executable kills it. The test fails if a mutant survives, or if no executable reaches its line.
-
-A surviving mutant gets one of two answers. Either a test kills it, built from the cases users meet as the [test requirements](#test-suite-requirements) ask, or it is an equivalent mutant: the same function in a different spelling, such as `x < 0 ? -x : x` against `x <= 0 ? -x : x`, where both arms are zero at zero. An equivalent mutant is suppressed at its line with `// mull-ignore: <mutator>`, and the reason goes on its own comment line above. Mull reads every character after the colon as part of a mutator name, so a reason on the same line breaks the directive. A mutant is never suppressed just to raise the score.
-
-Mull's plugin is built against one LLVM major, and the newest it supports is 20, behind the stable rung's clang. Noble's own archive carries clang 20; Mull comes from its [package repository](https://cloudsmith.io/~mull-project/repos/mull-stable), checked against the hash the workflow pins. The suite needs Boost.Test, which noble's `libboost-test-dev` provides, and no vcpkg:
-
-```sh
-sudo apt-get install clang-20 libboost-test-dev ./Mull-20-0.34.1-LLVM-20.1.2-ubuntu-amd64-24.04.deb
-cmake -S . -B build-mutation -DCMAKE_CXX_COMPILER=clang++-20 -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_MUTATION_TESTS=ON
-cmake --build build-mutation --parallel
-ctest --test-dir build-mutation --output-on-failure
-```
-
-A run takes about eight minutes on four cores and leaves one SQLite report per executable under `build-mutation/mutation/reports/`. The [Mutation workflow](.github/workflows/mutation.yml) runs it weekly, by hand, and on a pull request that touches the mutated headers, the tests that kill their mutants, or `mutation/`. It is not a required check while its runtime and noise are still being learned.
+[Mull](https://github.com/mull-project/mull) tests the tests: it compiles a mutant into every operator of the portable bit kernels, the shift behind `shl` and `shr`, and `cstdlib/`, and each must make a unit test fail. [doc/mutation.md](doc/mutation.md) says how to run it and how to answer a mutant that survives.
 
 ## Benchmarks
 

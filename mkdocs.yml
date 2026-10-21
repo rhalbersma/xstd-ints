@@ -20,6 +20,7 @@ exclude_docs: |
   P0330R0.*
   P0330R1.*
   ideas.*
+  mutation.md
 
 hooks:
   - tools/mkdocs_hooks.py
@@ -103,6 +104,7 @@ nav:
     - ints.hpp:
       - reference/ints/index.md
   - Design: design.md
+  - Measurements: measurements.md
 
 theme:
   name: material
