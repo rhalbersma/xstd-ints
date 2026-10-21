@@ -14,28 +14,32 @@ concurrency:
 
 on:
   schedule:
-    - cron: '30 5 * * 1'
+    - cron: '14 1 * * *'
   workflow_dispatch:
 
 jobs:
-  # Run the complete compiler workflows weekly so dynamic development
+  # Dispatched rather than called: a dispatched run is the workflow's own run
+  # on main, which its README badge shows, where a called one is filed under
+  # this workflow and leaves the badge on whatever main last ran. Nightly, as
+  # the one run of every rung and build type: a pull request builds each
+  # ladder's floor and ceiling in Debug alone, and dynamic development
   # toolchains and mutable runner images are checked even without a push.
-  gcc:
-    uses: ./.github/workflows/gcc.yml
-  emscripten:
-    uses: ./.github/workflows/emscripten.yml
-  clang:
-    uses: ./.github/workflows/clang.yml
-  clang_libcxx:
-    uses: ./.github/workflows/clang-libc++.yml
-  mingw:
-    uses: ./.github/workflows/mingw.yml
-  apple_clang:
-    uses: ./.github/workflows/apple-clang.yml
-  msvc:
-    uses: ./.github/workflows/msvc.yml
-  clang_cl:
-    uses: ./.github/workflows/clang-cl.yml
+  dispatch:
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+    steps:
+      - name: Dispatch every compiler workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          REF: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          for workflow in gcc.yml emscripten.yml clang.yml clang-libc++.yml mingw.yml apple-clang.yml msvc.yml \
+                          clang-cl.yml; do
+            gh workflow run "$workflow" --repo "$REPO" --ref "$REF"
+          done
 
   # libstdc++'s std::bit_compress and std::bit_expand emit no PEXT or PDEP, so
   # on a fast-BMI2 target xstd keeps its own kernels rather than forward to
@@ -46,7 +50,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Install the GCC trunk snapshot
-        uses: rhalbersma/cpp-ci/.github/actions/install-gcc@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
+        uses: rhalbersma/cpp-ci/.github/actions/install-gcc@2a7b3577168d22d62a9119b1913c6e0122e78994 # v0.14.0
         with:
           version: "17"
           trunk: "true"

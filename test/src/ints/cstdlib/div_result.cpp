@@ -8,11 +8,18 @@
 #include <boost/test/unit_test.hpp>         // Boost.Test
 #include <concepts>                         // same_as
 #include <cstddef>                          // size_t
-#include <utility>                          // declval
+#include <utility>                          // declval, get, pair
 
 BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(CStdLib)
 BOOST_AUTO_TEST_SUITE(DivResult)
+
+// Named concepts, not bare requires-expressions: outside a template an invalid requirement is ill-formed, not false.
+template<class T>
+concept has_div_result = requires { typename xstd::div_result<T>; };
+
+template<class T>
+concept has_get = requires (T t) { std::get<0>(t); };
 
 // div_result{q, r} spells a div result at the argument's own width.
 BOOST_AUTO_TEST_CASE(DeducesItsElementTypeFromTheArguments)
@@ -51,6 +58,26 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(EqualityTracksTheElementType, T, test::std_signed_
 BOOST_AUTO_TEST_CASE_TEMPLATE(EqualityTracksTheUnsignedElementType, T, test::std_unsigned_types)
 {
         static_assert(noexcept(std::declval<xstd::div_result<T> const&>() == std::declval<xstd::div_result<T> const&>()) == noexcept(std::declval<T const&>() == std::declval<T const&>()));
+
+        BOOST_CHECK(true);
+}
+
+// Integral, yet no integer: a character or a truth value has no quotient to hold.
+BOOST_AUTO_TEST_CASE(TurnsAwayCharacterTypesAndBool)
+{
+        static_assert(has_div_result<signed char>);
+        static_assert(not has_div_result<char>);
+        static_assert(not has_div_result<char8_t>);
+        static_assert(not has_div_result<bool>);
+
+        BOOST_CHECK(true);
+}
+
+// A structured binding takes it by its members, but std::apply and std::get, which want the tuple protocol, do not.
+BOOST_AUTO_TEST_CASE(IsNotTupleLike)
+{
+        static_assert(has_get<std::pair<int, int>>);
+        static_assert(not has_get<xstd::div_result<int>>);
 
         BOOST_CHECK(true);
 }

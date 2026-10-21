@@ -20,10 +20,10 @@
 
 namespace {
 
-// Every exact width, the unsigned bit-precise ones reaching <bit> where it takes them and a builtin where it does not.
 template<class T>
 concept has_popcount = requires (T x) { xstd::popcount(x); };
 
+// Every exact width, the unsigned bit-precise ones reaching <bit> where it takes them and a builtin where it does not.
 using basis_unsigned_types = decltype(std::tuple_cat(
         std::declval<test::std_unsigned_types>(), std::declval<test::xstd_unsigned_types>(),
         std::declval<test::boost_unsigned_types>(), std::declval<test::absl_unsigned_types>(),
@@ -52,6 +52,33 @@ using basis_unsigned_types = decltype(std::tuple_cat(
 
 BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(Bit)
+
+// The front door opens on every room behind it: each function in the directory, declared through the umbrella.
+BOOST_AUTO_TEST_CASE(ReExportsTheWholeDirectory)
+{
+        static_assert(requires (std::uint32_t x, int s) {
+                xstd::bit_ceil(x);
+                xstd::bit_compress(x, x);
+                xstd::bit_expand(x, x);
+                xstd::bit_floor(x);
+                xstd::bit_repeat(x, s);
+                xstd::bit_reverse(x);
+                xstd::bit_select(x, s);
+                xstd::bit_width(x);
+                xstd::byteswap(x);
+                xstd::countl_one(x);
+                xstd::countl_zero(x);
+                xstd::countr_one(x);
+                xstd::countr_zero(x);
+                xstd::has_single_bit(x);
+                xstd::popcount(x);
+                xstd::rotl(x, s);
+                xstd::rotr(x, s);
+                xstd::shl(x, s);
+                xstd::shr(x, s);
+        });
+        BOOST_CHECK(true);
+}
 
 // The three together cross-check the halves: swapped accessors keep each single-function identity and break the sum.
 BOOST_AUTO_TEST_CASE_TEMPLATE(TheThreeAgreeOnASingleBit, T, basis_unsigned_types)

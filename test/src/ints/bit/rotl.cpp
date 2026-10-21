@@ -6,7 +6,7 @@
 #include <xstd/ints/bit/rotl.hpp>                         // rotl
 #include <xstd/ints/bit/rotr.hpp>                         // rotr
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
+#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_BIT_INT, XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
 #include <xstd/ints/limits.hpp>                           // numeric_limits
 #include <test/bit/oracle.hpp>                            // oracle_rotl
 #include <test/bit/sweep.hpp>                             // bit_precise_sweep_types, for_each_sweep_value
@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(RotlUndoesRotr, T, basis_unsigned_types)
         BOOST_CHECK_EQUAL(mismatches, 0UZ);
 }
 
-// Each width against a oracle turning one place at a time, at every count that reduces differently.
+// Each width against an oracle turning one place at a time, at every count that reduces differently.
 BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheOracle, T, basis_unsigned_types)
 {
         auto mismatches = 0UZ;

@@ -36,6 +36,19 @@ BOOST_AUTO_TEST_SUITE(Hash2)
 
 #ifdef TEST_HAS_BOOST_HASH2
 
+// A named concept, not a bare requires-expression: a call whose constraint fails is ill-formed outside a template.
+template<class T>
+concept hashes_as_an_integer = requires (boost::hash2::fnv1a_64& h, T v) { xstd::hash_append_int(h, boost::hash2::default_flavor{}, v); };
+
+// Hash2's own hash_append treats char and bool as integers; this takes only what models integer.
+BOOST_AUTO_TEST_CASE(TakesIntegersAndNotTheCharacterTypesOrBool)
+{
+        static_assert(hashes_as_an_integer<int> and hashes_as_an_integer<std::uint64_t>);
+        static_assert(not hashes_as_an_integer<char> and not hashes_as_an_integer<bool>);
+        static_assert(not noexcept(xstd::hash_append_int(std::declval<boost::hash2::fnv1a_64&>(), boost::hash2::default_flavor{}, 0)));
+        BOOST_CHECK(true);
+}
+
 namespace {
 
 // The bytes a hash would be fed, kept rather than digested, so a case reads back what the writer chose.

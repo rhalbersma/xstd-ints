@@ -5,8 +5,9 @@
 #          http://www.boost.org/LICENSE_1_0.txt)
 
 # Runs the GitHub Actions jobs' Linux legs on what setup-toolchain.sh installs, so a change fails here, fast, before
-# it waits on CI's runners. Legs run cheapest first and the run stops at the first that fails. Each leg works under
-# build/ci-local/<leg> and logs to build/ci-local/<leg>.log, and the run ends in one line per leg.
+# it waits on CI's runners. Legs run cheapest first and the run stops at the first that fails. The site leg builds the
+# documentation as the Pages workflow does. Each leg works under build/ci-local/<leg> and logs to
+# build/ci-local/<leg>.log, and the run ends in one line per leg.
 #
 #   tools/ci-local.sh --quick             before a commit: format, actionlint, GCC 15, clang 22 and clang-tidy 22
 #   tools/ci-local.sh                     before a push or a pull request: every leg
@@ -32,7 +33,7 @@ cmake="${local_bin}/cmake"
 readonly cmake
 
 # Cheapest first, so a slip in formatting or a workflow fails in seconds rather than after an hour of compiling.
-readonly all_legs=(format actionlint gcc-15 clang-22 tidy-22 codegen consumption gcc-16 clang-23 gcc-17 clang-24
+readonly all_legs=(format actionlint site gcc-15 clang-22 tidy-22 codegen consumption gcc-16 clang-23 gcc-17 clang-24
                    libcxx-22 i686 gcc-bmi2 clang-bmi2 tidy-23 tidy-24 coverage asan-gcc ubsan-gcc ubsan-clang
                    implicit-conversion)
 readonly quick_legs=(format actionlint gcc-15 clang-22 tidy-22)
@@ -89,35 +90,49 @@ sanitizer() {
         )
 }
 
-# The clang-tidy job's passes over the compile database, and its check of each public header on its own.
-tidy() {
-        local version="$1" dir="${out}/tidy-$1" flags std status=0
-        flags="$(gcc_for_clang "${version}")"
-        "${cmake}" -S "${root}" -B "${dir}" -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER="clang++-${version}" \
-                -DCMAKE_CXX_FLAGS="${flags}" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_SCAN_FOR_MODULES=OFF || return 1
-        std="$(jq -r '.[0].command // (.[0].arguments | join(" "))' "${dir}/compile_commands.json" | grep -o -- '-std=[^ ]*' | head -1)"
-        "run-clang-tidy-${version}" -quiet -p "${dir}" "${dir}/test/header_self_sufficiency/.*" || status=1
-        while IFS= read -r -d '' header; do
-                "clang-tidy-${version}" --quiet "${header}" -- -x c++-header "${std}" -I"${root}/include" ${flags} \
-                        -isystem "${dir}/_deps/absl_int128-src" -isystem "${dir}/_deps/boost_int128-src/include" || status=1
-        done < <(find "${root}/include" -type f -name '*.hpp' ! -path "${root}/include/xstd/config/*" -print0)
-        "run-clang-tidy-${version}" -quiet -p "${dir}" "${root}/test/src/.*" || status=1
-        return "${status}"
+# cpp-ci's script for a job, at the commit .github/workflows/clang-tidy.yml pins, fetched once into the leg's tree.
+cpp_ci_script() {
+        local name="$1" sha script
+        sha="$(grep -oE 'rhalbersma/cpp-ci/\.github/workflows/clang-tidy\.yml@[0-9a-f]{40}' "${root}/.github/workflows/clang-tidy.yml" | head -1)"
+        sha="${sha##*@}"
+        [ -n "${sha}" ] || { echo "no cpp-ci pin in .github/workflows/clang-tidy.yml" >&2; return 1; }
+        script="${out}/cpp-ci/${sha}/${name}.sh"
+        if [ ! -s "${script}" ]; then
+                mkdir -p "${script%/*}"
+                if ! curl -fsSL --retry 3 -o "${script}.part" \
+                        "https://raw.githubusercontent.com/rhalbersma/cpp-ci/${sha}/.github/actions/${name}/${name}.sh"; then
+                        rm -f "${script}.part"
+                        return 1
+                fi
+                mv "${script}.part" "${script}"
+        fi
+        echo "${script}"
 }
 
-# The coverage job: the suite instrumented on the stable GCC, then gcovr with the job's exclusions and thresholds.
+# The clang-tidy job: its configure, then cpp-ci's clang-tidy script with the inputs the job's stub passes it.
+tidy() {
+        local version="$1" dir="${out}/tidy-$1" script
+        script="$(cpp_ci_script clang-tidy)" || return 1
+        "${cmake}" -S "${root}" -B "${dir}" -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER="clang++-${version}" \
+                -DCMAKE_CXX_FLAGS="$(gcc_for_clang "${version}")" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+                -DCMAKE_CXX_SCAN_FOR_MODULES=OFF || return 1
+        (cd "${root}" && CLANG_TIDY_VERSION="${version}" BUILD_DIR="${dir}" TEST_DIR=test/src \
+                SELF_SUFFICIENCY_REGEX="${dir}/test/header_self_sufficiency/.*" INCLUDE_EXCLUDE='include/xstd/config/*' \
+                ADAPTED_DIRS="${dir}/_deps/absl_int128-src ${dir}/_deps/boost_int128-src/include" \
+                REPORT="${out}/tidy-${version}-report.txt" bash "${script}")
+}
+
+# The coverage job: the suite instrumented on the stable GCC, then cpp-ci's gcovr script with the job's thresholds.
 coverage() {
-        local dir="${out}/coverage"
+        local dir="${out}/coverage" script
+        script="$(cpp_ci_script gcovr)" || return 1
         "${cmake}" -S "${root}" -B "${dir}" -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++-15 \
                 -DCMAKE_CXX_FLAGS="--coverage -O0" -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
                 && "${cmake}" --build "${dir}" --parallel "${jobs}" \
                 && ctest --test-dir "${dir}" --output-on-failure --parallel "${jobs}" \
-                && (cd "${root}" && "${local_bin}/gcovr" --root . "${dir}" --gcov-executable gcov-15 --merge-lines \
-                        --exclude 'test/.*' --exclude 'build/.*' \
-                        --exclude-lines-by-pattern '^\s*assert\(' --exclude-lines-by-pattern '=\s*default;' \
-                        --exclude-lines-by-pattern '\s*\}\s*$' --exclude-branches-by-pattern '^\s*assert\(' \
-                        --exclude-branches-by-pattern '^\s*.*=\s*default;' --exclude-throw-branches --exclude-unreachable-branches \
-                        --print-summary --fail-under-line 100 --fail-under-branch 100 --txt "${dir}/coverage.txt")
+                && (cd "${root}" && PATH="${local_bin}:${PATH}" GCOV=gcov-15 BUILD_DIR="${dir}" \
+                        EXCLUDE="test/.* build/.*" FAIL_UNDER_LINE=100 FAIL_UNDER_BRANCH=100 SEARCH_PATHS="${dir}" \
+                        bash "${script}")
 }
 
 # The codegen job's FileCheck tests, on both compilers it runs.
@@ -157,10 +172,22 @@ format() {
         find "${root}/include" "${root}/test" -regex '.*\.\(hpp\|cpp\)' -print0 | xargs -0 clang-format-22 --dry-run --Werror
 }
 
+# The Pages workflow's build: MkDocs Material, pinned by hash, into a virtual environment of its own, then the site in
+# --strict mode, which fails on a link to a page or an anchor that does not exist.
+site() {
+        local dir="${out}/site"
+        if [ ! -x "${dir}/venv/bin/mkdocs" ]; then
+                python3 -m venv "${dir}/venv" \
+                        && "${dir}/venv/bin/pip" install --quiet --require-hashes -r "${root}/tools/mkdocs-requirements.txt" || return 1
+        fi
+        (cd "${root}" && PYTHONDONTWRITEBYTECODE=1 "${dir}/venv/bin/mkdocs" build --strict --site-dir "${dir}/html")
+}
+
 run_leg() {
         case "$1" in
                 format) format ;;
                 actionlint) actionlint ;;
+                site) site ;;
                 gcc-1[56]) suite "$1" "g++-${1#gcc-}" "" "${build_type}" ;;
                 clang-2[23]) suite "$1" "clang++-${1#clang-}" "$(gcc_for_clang "${1#clang-}")" "${build_type}" ;;
                 # The trunk libstdc++ is newer than the GCC 15 that built the installed Boost.Test.
