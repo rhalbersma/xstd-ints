@@ -115,9 +115,35 @@ missing=()
 for package in "${packages[@]}"; do
         dpkg-query -W -f='${Status}' "${package}" 2>/dev/null | grep -q "install ok installed" || missing+=("${package}")
 done
+# apt-get update exits 0 when a source refuses its index, and apt then reads a package name it has no index for as a
+# pattern: during a 503 brownout on ppa.launchpadcontent.net, "g++-15" installed clang-15 and flang-15 and exited 0.
+# A package counts as available only where its own name heads apt-cache policy with a candidate, and the install
+# names that exact version, which apt never reads as a pattern. The update and the install are retried together.
+candidate() {
+        apt-cache policy "$1" | awk -v header="$1:" '
+                $0 == header { found = 1; next }
+                /^[^ ]/ { found = 0 }
+                found && $1 == "Candidate:" { print $2; exit }'
+}
 if [ "${#missing[@]}" -gt 0 ] || [ "${sources_changed}" -eq 1 ]; then
-        $SUDO apt-get update -qq
-        $SUDO apt-get install -y -qq "${packages[@]}"
+        for attempt in 1 2 3 4 5; do
+                $SUDO apt-get update -qq || true
+                exact=()
+                for package in "${packages[@]}"; do
+                        version="$(candidate "${package}")"
+                        if [ -n "${version}" ] && [ "${version}" != "(none)" ]; then
+                                exact+=("${package}=${version}")
+                        fi
+                done
+                if [ "${#exact[@]}" -eq "${#packages[@]}" ] && $SUDO apt-get install -y -qq "${exact[@]}"; then
+                        break
+                fi
+                if [ "${attempt}" -eq 5 ]; then
+                        echo "error: ${packages[*]} not all installable after five attempts" >&2
+                        exit 1
+                fi
+                sleep $((attempt * 10))
+        done
 fi
 
 # GCC trunk is Jonathan Wakely's weekly binary snapshot, the one the ladders' development rung installs, under the
