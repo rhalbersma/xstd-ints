@@ -98,7 +98,7 @@ namespace {
 
 // The identity reconstructed in int: div_floor(1, -2) gives -1, and -1 * -2 is 2, which _BitInt(2) cannot hold.
 template<class T>
-auto reconstructs(T quotient, T denom, T remainder, T numer)
+[[nodiscard]] auto reconstructs(T quotient, T denom, T remainder, T numer)
         -> bool
 {
         return (static_cast<int>(quotient) * static_cast<int>(denom)) + static_cast<int>(remainder) == static_cast<int>(numer);

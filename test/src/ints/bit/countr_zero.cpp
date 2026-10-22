@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(NoexceptFollowsTheOperators, T, basis_unsigned_typ
 namespace {
 
 template<class T>
-constexpr auto agrees_with_the_oracle()
+[[nodiscard]] constexpr auto agrees_with_the_oracle()
         -> bool
 {
         auto agrees = true;

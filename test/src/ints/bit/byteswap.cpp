@@ -37,7 +37,7 @@ concept std_answers = requires (T x) { std::byteswap(x); };
 
 // The edge values at one position of the unsigned counterpart, read as T, so that no signed doubling overflows.
 template<class T>
-constexpr auto agrees_at(int k)
+[[nodiscard]] constexpr auto agrees_at(int k)
         -> bool
 {
         auto agrees = true;

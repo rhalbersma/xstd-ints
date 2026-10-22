@@ -29,29 +29,8 @@ nav:
   - Overview: index.md
   - Reference:
     - reference/index.md
-    - concepts.hpp:
-      - reference/concepts/index.md
-      - alignable.hpp: reference/concepts/alignable.md
-      - integer_class.hpp: reference/concepts/integer_class.md
-      - integer.hpp: reference/concepts/integer.md
-      - signed_integer.hpp: reference/concepts/signed_integer.md
-      - unsigned_integer.hpp: reference/concepts/unsigned_integer.md
-      - bit_mask.hpp: reference/concepts/bit_mask.md
-      - nothrow_const_operators.hpp: reference/concepts/nothrow_const_operators.md
-    - type_traits.hpp:
-      - reference/type_traits/index.md
-      - is_signed.hpp: reference/type_traits/is_signed.md
-      - is_unsigned.hpp: reference/type_traits/is_unsigned.md
-      - make_signed.hpp: reference/type_traits/make_signed.md
-      - make_unsigned.hpp: reference/type_traits/make_unsigned.md
-      - promoted.hpp: reference/type_traits/promoted.md
-    - limits.hpp:
-      - reference/limits/index.md
-      - numeric_limits.hpp: reference/limits/numeric_limits.md
-    - cstdint.hpp:
-      - reference/cstdint/index.md
-      - bit_int.hpp: reference/cstdint/bit_int.md
-      - int128.hpp: reference/cstdint/int128.md
+    - ints.hpp:
+      - reference/ints/index.md
     - bit.hpp:
       - reference/bit/index.md
       - bit_ceil.hpp: /xstd-ints/reference/bit/has_single_bit/
@@ -73,36 +52,57 @@ nav:
       - rotr.hpp: /xstd-ints/reference/bit/rotl/
       - shl.hpp: reference/bit/shl.md
       - shr.hpp: /xstd-ints/reference/bit/shl/
-    - cstdlib.hpp:
-      - reference/cstdlib/index.md
-      - div_result.hpp: reference/cstdlib/div_result.md
-      - sign.hpp: reference/cstdlib/sign.md
-      - abs.hpp: reference/cstdlib/abs.md
-      - unsigned_abs.hpp: reference/cstdlib/unsigned_abs.md
-      - div.hpp: reference/cstdlib/div.md
-      - div_euclid.hpp: reference/cstdlib/div_euclid.md
-      - div_floor.hpp: reference/cstdlib/div_floor.md
-      - div_ceil.hpp: reference/cstdlib/div_ceil.md
     - charconv.hpp:
       - reference/charconv/index.md
       - to_chars.hpp: reference/charconv/to_chars.md
+    - concepts.hpp:
+      - reference/concepts/index.md
+      - alignable.hpp: reference/concepts/alignable.md
+      - bit_mask.hpp: reference/concepts/bit_mask.md
+      - integer.hpp: reference/concepts/integer.md
+      - integer_class.hpp: reference/concepts/integer_class.md
+      - nothrow_const_operators.hpp: reference/concepts/nothrow_const_operators.md
+      - signed_integer.hpp: reference/concepts/signed_integer.md
+      - unsigned_integer.hpp: reference/concepts/unsigned_integer.md
+    - cstdint.hpp:
+      - reference/cstdint/index.md
+      - bit_int.hpp: reference/cstdint/bit_int.md
+      - int128.hpp: reference/cstdint/int128.md
+    - cstdlib.hpp:
+      - reference/cstdlib/index.md
+      - abs.hpp: reference/cstdlib/abs.md
+      - div.hpp: reference/cstdlib/div.md
+      - div_ceil.hpp: reference/cstdlib/div_ceil.md
+      - div_euclid.hpp: reference/cstdlib/div_euclid.md
+      - div_floor.hpp: reference/cstdlib/div_floor.md
+      - div_result.hpp: reference/cstdlib/div_result.md
+      - sign.hpp: reference/cstdlib/sign.md
+      - unsigned_abs.hpp: reference/cstdlib/unsigned_abs.md
+    - ext/absl.hpp:
+      - reference/absl/index.md
+      - int128.hpp: reference/absl/int128.md
+    - ext/boost.hpp:
+      - reference/boost/index.md
+      - hash2.hpp: reference/boost/hash2.md
+      - int128.hpp: reference/boost/int128.md
     - format.hpp:
       - reference/format/index.md
       - div_result.hpp: reference/format/div_result.md
+    - limits.hpp:
+      - reference/limits/index.md
+      - numeric_limits.hpp: reference/limits/numeric_limits.md
     - memory.hpp:
       - reference/memory/index.md
       - align_down.hpp: reference/memory/align_down.md
       - align_up.hpp: reference/memory/align_up.md
       - is_aligned.hpp: reference/memory/is_aligned.md
-    - ext/boost.hpp:
-      - reference/boost/index.md
-      - int128.hpp: reference/boost/int128.md
-      - hash2.hpp: reference/boost/hash2.md
-    - ext/absl.hpp:
-      - reference/absl/index.md
-      - int128.hpp: reference/absl/int128.md
-    - ints.hpp:
-      - reference/ints/index.md
+    - type_traits.hpp:
+      - reference/type_traits/index.md
+      - is_signed.hpp: reference/type_traits/is_signed.md
+      - is_unsigned.hpp: reference/type_traits/is_unsigned.md
+      - make_signed.hpp: reference/type_traits/make_signed.md
+      - make_unsigned.hpp: reference/type_traits/make_unsigned.md
+      - promoted.hpp: reference/type_traits/promoted.md
   - Design: design.md
   - Measurements: measurements.md
 
@@ -127,6 +127,10 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
 
+# The reference index's relation table keeps each entity name on one line.
+extra_css:
+  - stylesheets/reference.css
+
 markdown_extensions:
   - tables
   - toc:
@@ -134,6 +138,7 @@ markdown_extensions:
   - pymdownx.highlight
   - pymdownx.inlinehilite
   - pymdownx.superfences
+  - md_in_html
 
 validation:
   links:

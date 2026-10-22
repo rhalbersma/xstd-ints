@@ -48,7 +48,7 @@ template<class T, int Past>
 concept ceils_as_a_constant = requires { typename std::integral_constant<bool, xstd::bit_ceil(static_cast<T>(top_bit<T> + static_cast<T>(Past))) != T{0}>; };
 
 template<class T>
-constexpr auto agrees_at(int k)
+[[nodiscard]] constexpr auto agrees_at(int k)
         -> bool
 {
         auto agrees = true;

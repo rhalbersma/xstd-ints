@@ -46,15 +46,18 @@ representable.
 
 ### Remarks
 
-- (2) It is not `constexpr`, a `reinterpret_cast` being barred from constant expressions.
-- (2) The result is an address: it is not checked against the object `pointer` points into, and no object's lifetime
-  begins there.
+- (2):
+    - It is not `constexpr`, a `reinterpret_cast` being barred from constant expressions.
+    - The result is an address: it is not checked against the object `pointer` points into, and no object's lifetime
+      begins there.
 
 ### Notes
 
-- (1) It is exact up to the greatest multiple of `alignment` that `size_t` represents.
-- (1) It takes `uint128`.
-- (2) It returns a `T*`, keeping the pointee type where Boost.Align returns `void*`.
+- (1):
+    - It is exact up to the greatest multiple of `alignment` that `size_t` represents.
+    - It takes `uint128`.
+- (2):
+    - It returns a `T*`, keeping the pointee type where Boost.Align returns `void*`.
 
 ### See also
 

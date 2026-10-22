@@ -31,7 +31,7 @@ concept xstd_answers = requires (T x, S s) { xstd::shr(x, s); };
 
 // Counts that behave differently: zero, one and the width with its neighbours either way, and the int extremes.
 template<class T>
-constexpr auto counts() noexcept
+[[nodiscard]] constexpr auto counts() noexcept
 {
         constexpr auto W = xstd::numeric_limits<xstd::make_unsigned_t<T>>::digits;
         return std::array{0, 1, -1, W - 1, W, W + 1, 1 - W, -W, -W - 1, 2 * W, std::numeric_limits<int>::min(), std::numeric_limits<int>::max()};
@@ -39,7 +39,7 @@ constexpr auto counts() noexcept
 
 // A count type holds c when c survives the trip into it and back, and a negative c needs a signed type.
 template<class S>
-constexpr auto holds(int c) noexcept
+[[nodiscard]] constexpr auto holds(int c) noexcept
         -> bool
 {
         return (c >= 0 or xstd::is_signed_v<S>) and static_cast<int>(static_cast<S>(c)) == c;

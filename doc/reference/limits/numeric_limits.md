@@ -104,8 +104,8 @@ primary template.
 - `digits10` is `floor(digits * log10(2))`, the most decimal digits the type represents without change: 7 for
   `unsigned _BitInt(24)` and 6 for `signed _BitInt(24)`, and at 8 and 64 bits the value `std::numeric_limits` gives the
   exact-width type of that width. It replaces libstdc++'s zero and libc++'s value for the width of the object.
-  - *Remarks:* `digits10` is computed in 64.64 fixed point, which is exact for every `digits` up to 2^23, and the header
-    is ill-formed where `__BITINT_MAXWIDTH__` exceeds 8'388'608.
+    - *Remarks:* `digits10` is computed in 64.64 fixed point, which is exact for every `digits` up to 2^23, and the header
+      is ill-formed where `__BITINT_MAXWIDTH__` exceeds 8'388'608.
 - `is_specialized`, `is_integer` and `radix == 2` hold, as `integer_class` requires.
 - `is_signed` follows the type's signedness, `is_exact` and `is_bounded` are `true`, `is_modulo` is `false` for the
   signed type and `true` for the unsigned, and `lowest()` is `min()`.
