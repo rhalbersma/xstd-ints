@@ -37,7 +37,7 @@ concept selects_as_a_constant = requires { typename std::integral_constant<int, 
 
 // Walking x one bit at a time, each one met is the one bit_select finds at the rank it is met with.
 template<class T>
-constexpr auto selects_every_one(T x)
+[[nodiscard]] constexpr auto selects_every_one(T x)
         -> bool
 {
         auto agrees = true;
@@ -54,7 +54,7 @@ constexpr auto selects_every_one(T x)
 }
 
 template<class T>
-constexpr auto agrees_at(int k)
+[[nodiscard]] constexpr auto agrees_at(int k)
         -> bool
 {
         auto agrees = true;

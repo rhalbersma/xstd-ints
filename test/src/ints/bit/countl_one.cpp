@@ -32,7 +32,7 @@ template<class T>
 concept std_answers = requires (T x) { std::countl_one(x); };
 
 template<class T>
-constexpr auto agrees_at(int k)
+[[nodiscard]] constexpr auto agrees_at(int k)
         -> bool
 {
         auto agrees = true;

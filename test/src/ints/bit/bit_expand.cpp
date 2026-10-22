@@ -39,7 +39,7 @@ concept std_answers = requires (T x) { std::bit_expand(x, x); };
 #endif
 
 template<class T>
-constexpr auto agrees_at(int k)
+[[nodiscard]] constexpr auto agrees_at(int k)
         -> bool
 {
         auto agrees = true;
@@ -55,7 +55,7 @@ constexpr auto agrees_at(int k)
 
 // [bit.permute]'s example: bit_expand(0bABCD, 0b0101) is 0b0C0D for any bits A, B, C and D.
 template<class T>
-constexpr auto expands_as_the_example()
+[[nodiscard]] constexpr auto expands_as_the_example()
         -> bool
 {
         auto agrees = true;
