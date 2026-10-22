@@ -32,7 +32,7 @@ jobs:
   # cannot lower it without a commit in this repository. xstd-bits and tabula
   # state theirs for the same reason; tabula's is a ratchet below 100.
   coverage:
-    uses: rhalbersma/cpp-ci/.github/workflows/coverage.yml@d2d660725227972f5ac9bdd65efda9d485fb30b7 # v0.15.0
+    uses: rhalbersma/cpp-ci/.github/workflows/coverage.yml@1b5265b916e459cfe621a970e819b6b16a29c3c5 # main after rhalbersma/cpp-ci#81, whose install-gcc falls back to the Launchpad librarian when the toolchain PPA's mirror is down
     with:
       fail_under_line: 100
       fail_under_branch: 100

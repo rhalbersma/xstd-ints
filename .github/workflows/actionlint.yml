@@ -22,4 +22,4 @@ on:
 jobs:
   # No inputs: the defaults are the policy this repository already had.
   actionlint:
-    uses: rhalbersma/cpp-ci/.github/workflows/actionlint.yml@d2d660725227972f5ac9bdd65efda9d485fb30b7 # v0.15.0
+    uses: rhalbersma/cpp-ci/.github/workflows/actionlint.yml@1b5265b916e459cfe621a970e819b6b16a29c3c5 # main after rhalbersma/cpp-ci#81, whose install-gcc falls back to the Launchpad librarian when the toolchain PPA's mirror is down
