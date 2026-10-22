@@ -20,17 +20,17 @@ formatter copies out unchanged; and `formatter<basic_string_view<charT>, charT>`
 ### Member functions
 
 - `parse`:
-  - *Effects:* Where the library formats tuples, accepts the tuple specification of
-    [[format.tuple]](https://eel.is/c++draft/format.tuple), fill and align, width, and `n` or `m`, whatever `I` is.
-  - *Effects:* On a library that formats no tuple, accepts a string's specification.
-  - *Throws:* `format_error` for any other specification, which a format string checked at compile time makes an
-    ill-formed call.
+    - *Effects:* Where the library formats tuples, accepts the tuple specification of
+      [[format.tuple]](https://eel.is/c++draft/format.tuple), fill and align, width, and `n` or `m`, whatever `I` is.
+    - *Effects:* On a library that formats no tuple, accepts a string's specification.
+    - *Throws:* `format_error` for any other specification, which a format string checked at compile time makes an
+      ill-formed call.
 - `format`:
-  - *Effects:* Writes `(`, the quotient, `, `, the remainder and `)`, each member in decimal as `xstd::to_chars` writes
-    it; `n` leaves out the brackets, and `m` leaves them out and writes `: ` as the separator. The fill, alignment and
-    width then apply to the whole.
-  - *Remarks:* It is `constexpr` where `__cpp_lib_constexpr_format` is at least `202511L`, as
-    [P3391R2](https://github.com/cplusplus/papers/issues/2046) makes the base's, and not otherwise.
+    - *Effects:* Writes `(`, the quotient, `, `, the remainder and `)`, each member in decimal as `xstd::to_chars` writes
+      it; `n` leaves out the brackets, and `m` leaves them out and writes `: ` as the separator. The fill, alignment and
+      width then apply to the whole.
+    - *Remarks:* It is `constexpr` where `__cpp_lib_constexpr_format` is at least `202511L`, as
+      [P3391R2](https://github.com/cplusplus/papers/issues/2046) makes the base's, and not otherwise.
 
 ### Notes
 
