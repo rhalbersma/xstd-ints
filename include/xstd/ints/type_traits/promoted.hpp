@@ -10,7 +10,7 @@
 
 namespace xstd {
 
-// What T's own operators yield: [conv.prom] for a built-in, T itself otherwise.
+// The type of +a for an integral T, which [conv.prom] gives; T itself otherwise.
 template<class T>
 using promoted_t = ints::detail::promoted<T>::type;
 

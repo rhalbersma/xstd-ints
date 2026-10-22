@@ -499,7 +499,7 @@ The type utilities intentionally remain narrow:
 
 - `is_signed` and `is_unsigned` are open counterparts of the standard traits.
 - `make_signed` and `make_unsigned` are their open, user-specializable transformations.
-- `promoted_t` names what a type's own operators yield.
+- `promoted_t` names the type of `+a` for an integral type, and leaves every other type as it is.
 - `nothrow_const_operators` answers whether the conditional `noexcept` holds.
 
 A concept spelling is provided when the standard library has an analogous
