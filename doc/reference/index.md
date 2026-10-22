@@ -120,15 +120,24 @@ in another language where that counterpart shares its purpose. Papers are linked
     - **C23** has `_BitInt(N)`, which the aliases name, and Clang offers it in C++ as an
       [extension](https://clang.llvm.org/docs/LanguageExtensions.html#bitint-extint).
 - **`byteswap`:** [P1272R4](https://wg21.link/p1272r4), *Byteswapping for fun&&nuf* (Isabella Muerte, Corentin Jabot).
-- **`rotl`, `rotr` and the counting functions:** [P0553R4](https://wg21.link/p0553r4), *Bit operations* (Jens
-  Maurer).
+  [N3864](https://wg21.link/n3864), *A constexpr bitwise operations library for C++* (Matthew Fioravante), proposed
+  `reverse_bytes` before it, which reverses the bytes of an integer at its default arguments.
+- **`rotl`, `rotr` and the counting functions:** [P0553R4](https://wg21.link/p0553r4), *Bit operations* (Jens Maurer).
+  [N3864](https://wg21.link/n3864) proposed them before it, as `rotl`, `rotr`, `cntl0`, `cntt0`, `cntl1`, `cntt1` and
+  `popcount`.
 - **`has_single_bit`, `bit_ceil`, `bit_floor`, `bit_width`:** [P0556R3](https://wg21.link/p0556r3), *Integral
   power-of-2 operations* (Jens Maurer), under the names of [P1956R1](https://wg21.link/p1956r1), *On the naming of
   low-level bit manipulation functions* (Vincent Reverdy). [LWG 3656](https://wg21.link/LWG3656), *Inconsistent bit
-  operations returning a count*, gives `bit_width` its `int`.
+  operations returning a count*, gives `bit_width` its `int`. [N3864](https://wg21.link/n3864) proposed the first
+  three as `ispow2`, `ceilp2` and `floorp2`.
 - **`shl`, `shr`:** [P3793R2](https://wg21.link/p3793r2), *Better shifting* (Brian Bi, Jan Schultke).
+  [N3864](https://wg21.link/n3864) proposed logical and arithmetic shifts as `shll`, `shlr`, `shal` and `shar`,
+  undefined for a negative count or one past the width.
 - **`bit_reverse`, `bit_repeat`, `bit_compress`, `bit_expand`:** [P3104R6](https://wg21.link/p3104r6), *Bit
-  permutations* (Jan Schultke).
+  permutations* (Jan Schultke). [N3864](https://wg21.link/n3864) proposed `reverse_bits`, and compress and expand as
+  `deposit_bits_right` and `extract_bits_right`: its definitions and examples give `deposit_bits_right` what
+  `bit_compress` does and `extract_bits_right` what `bit_expand` does, while its table of instructions maps them to
+  `PDEP` and `PEXT`, the other way round.
 - **`bit_select`:** Sebastiano Vigna's
   [*Broadword Implementation of Rank/Select Queries*](https://vigna.di.unimi.it/ftp/papers/Broadword.pdf), whose
   broadword select it runs wherever it does not use `PDEP`.
@@ -163,6 +172,8 @@ in another language where that counterpart shares its purpose. Papers are linked
   with which they agree on values and pointers, and LLVM's
   [`alignTo` and `alignDown`](https://llvm.org/doxygen/namespacellvm.html). [N4201](https://wg21.link/n4201),
   *Alignment Helpers for C++* (Matthew Fioravante), proposes alignment helpers for the standard.
+  [N3864](https://wg21.link/n3864) proposed `is_aligned`, `align_up` and `align_down` before it, on integers and on
+  pointers.
 - **`hash_append_int`:** [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/)'s `hash_append`, which it
   calls, from [N3980](https://wg21.link/n3980), *Types Don't Know #* (Howard Hinnant, Vinnie Falco, John Bytheway).
 
