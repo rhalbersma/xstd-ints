@@ -207,7 +207,7 @@ def main():
     mca_version = subprocess.run([args.llvm_mca, "--version"], check=True, capture_output=True, text=True).stdout
     mca_version = next(line.strip() for line in mca_version.splitlines() if "version" in line)
     lines = ["# llvm-mca's cycles per iteration", "",
-             "Written by `bench/static_analysis.py`; do not edit. A kernel without a loop is one call per iteration;",
+             "Written by `benchmark/static_analysis.py`; do not edit. A kernel without a loop is one call per iteration;",
              "a kernel marked *loop* is one trip of its innermost loop, so one selected bit for `compress_by_rank`,",
              "one mask bit for the walks, and one source bit for `expand_by_select`. A blank cell is a kernel the",
              "target does not have. Each summary, with the assembly it read, is beside this file.", "",
@@ -226,8 +226,8 @@ def main():
         uica_commit = subprocess.run(["git", "-C", str(args.uica.resolve().parent), "rev-parse", "--short=12", "HEAD"],
                                      check=True, capture_output=True, text=True).stdout.strip()
         lines = ["# uiCA's cycles per iteration", "",
-                 "Written by `bench/static_analysis.py --uica`; do not edit. uiCA simulates the same regions llvm-mca",
-                 "analyses, so a row means what it means in `bench/mca/README.md`; it models Intel cores only. Each",
+                 "Written by `benchmark/static_analysis.py --uica`; do not edit. uiCA simulates the same regions llvm-mca",
+                 "analyses, so a row means what it means in `benchmark/mca/README.md`; it models Intel cores only. Each",
                  "cell is uiCA's throughput prediction and the bottleneck it names. Each full report, with the",
                  "assembly it read, is beside this file.", "",
                  f"Simulated by uiCA at commit `{uica_commit}`, with the uops.info data its setup downloaded.", ""]

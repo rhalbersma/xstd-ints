@@ -209,63 +209,63 @@ if(PROJECT_IS_TOP_LEVEL)
 
     # Off by default, and outside BUILD_TESTING: ClusterFuzzLite builds the fuzz targets
     # alone, without the test tree's Boost.Test. Clang only, libFuzzer being clang's.
-    option(${project_option_prefix}_BUILD_FUZZERS "Build the libFuzzer targets under fuzz/" OFF)
+    option(${project_option_prefix}_BUILD_FUZZERS "Build the libFuzzer targets under test/fuzz/" OFF)
 
     if(${project_option_prefix}_BUILD_FUZZERS)
-        add_subdirectory(fuzz)
+        add_subdirectory(test/fuzz)
     endif()
 
     # Off by default, and outside BUILD_TESTING: the codegen tests compile to assembly and read it with FileCheck, so
     # they need neither Boost.Test nor a test executable. enable_testing() stays here, where ctest looks for the tests.
-    option(${project_option_prefix}_BUILD_CODEGEN_TESTS "Check the assembly the bit kernels compile to, under codegen/" OFF)
+    option(${project_option_prefix}_BUILD_CODEGEN_TESTS "Check the assembly the bit kernels compile to, under test/codegen/" OFF)
 
     if(${project_option_prefix}_BUILD_CODEGEN_TESTS)
         enable_testing()
-        add_subdirectory(codegen)
+        add_subdirectory(test/codegen)
     endif()
 
     # Off by default, and outside BUILD_TESTING: each exhaustive sweep runs for minutes and needs no Boost.Test, so it
     # is a job of its own rather than a unit test. enable_testing() stays here for the reason given above.
-    option(${project_option_prefix}_BUILD_EXHAUSTIVE_TESTS "Build the exhaustive 16-bit sweeps under exhaustive/" OFF)
+    option(${project_option_prefix}_BUILD_EXHAUSTIVE_TESTS "Build the exhaustive 16-bit sweeps under test/exhaustive/" OFF)
 
     if(${project_option_prefix}_BUILD_EXHAUSTIVE_TESTS)
         enable_testing()
-        add_subdirectory(exhaustive)
+        add_subdirectory(test/exhaustive)
     endif()
 
     # Off by default, and outside BUILD_TESTING: the proofs run Z3 from Python for many minutes and need no Boost.Test.
     # enable_testing() stays here for the reason given above.
-    option(${project_option_prefix}_BUILD_PROOFS "Prove the portable bit kernels with Z3, under proofs/" OFF)
+    option(${project_option_prefix}_BUILD_PROOFS "Prove the portable bit kernels with Z3, under test/proofs/" OFF)
 
     if(${project_option_prefix}_BUILD_PROOFS)
         enable_testing()
-        add_subdirectory(proofs)
+        add_subdirectory(test/proofs)
     endif()
 
     # Off by default, and outside BUILD_TESTING: Mull's clang plugin builds its own copy of the unit tests, unoptimized and
     # instrumented, and the run takes minutes. enable_testing() stays here for the reason given above.
-    option(${project_option_prefix}_BUILD_MUTATION_TESTS "Score the unit tests by the mutants they kill, under mutation/" OFF)
+    option(${project_option_prefix}_BUILD_MUTATION_TESTS "Score the unit tests by the mutants they kill, under test/mutation/" OFF)
 
     if(${project_option_prefix}_BUILD_MUTATION_TESTS)
         enable_testing()
-        add_subdirectory(mutation)
+        add_subdirectory(test/mutation)
     endif()
 
     # Off by default, and outside BUILD_TESTING: a benchmark reports what a machine does rather than passing or failing,
     # so it is an executable to run by hand, not a test, and it fetches nanobench, which nothing else needs.
-    option(${project_option_prefix}_BUILD_BENCHMARKS "Build the bit-kernel benchmarks under bench/" OFF)
+    option(${project_option_prefix}_BUILD_BENCHMARKS "Build the bit-kernel benchmarks under benchmark/" OFF)
 
     if(${project_option_prefix}_BUILD_BENCHMARKS)
-        add_subdirectory(bench)
+        add_subdirectory(benchmark)
     endif()
 
     # Off by default, and outside BUILD_TESTING: the constant-time checks run the kernels under Valgrind, which nothing
     # else needs. enable_testing() stays here for the reason given above.
-    option(${project_option_prefix}_BUILD_CONSTANT_TIME_TESTS "Check the portable bit kernels for secret-dependent branches and addresses, under constant_time/" OFF)
+    option(${project_option_prefix}_BUILD_CONSTANT_TIME_TESTS "Check the portable bit kernels for secret-dependent branches and addresses, under test/constant_time/" OFF)
 
     if(${project_option_prefix}_BUILD_CONSTANT_TIME_TESTS)
         enable_testing()
-        add_subdirectory(constant_time)
+        add_subdirectory(test/constant_time)
     endif()
 
     # Off by default, and outside BUILD_TESTING: the examples are programs that use the library the way its users do,

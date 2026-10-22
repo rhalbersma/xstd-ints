@@ -14,7 +14,7 @@ targets=(fuzz_align fuzz_bit_permutation fuzz_div fuzz_shift fuzz_to_chars)
 cmake --build "$WORK/build" --parallel "$(nproc)" --target "${targets[@]}"
 
 for target in "${targets[@]}"; do
-        cp "$WORK/build/fuzz/$target" "$OUT/"
+        cp "$WORK/build/test/fuzz/$target" "$OUT/"
         # The checked-in seeds, which ClusterFuzzLite unpacks beside the corpus it keeps.
-        (cd "$SRC/xstd-ints/fuzz/corpus/$target" && zip -q -j "$OUT/${target}_seed_corpus.zip" ./*)
+        (cd "$SRC/xstd-ints/test/fuzz/corpus/$target" && zip -q -j "$OUT/${target}_seed_corpus.zip" ./*)
 done

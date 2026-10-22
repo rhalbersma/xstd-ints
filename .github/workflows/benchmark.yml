@@ -3,7 +3,7 @@
 #    (See accompanying file LICENSE_1_0.txt or copy at
 #          http://www.boost.org/LICENSE_1_0.txt)
 
-name: Bench
+name: Benchmark
 
 permissions:
   contents: read
@@ -20,8 +20,8 @@ on:
     branches: [ main ]
     paths:
       - 'include/xstd/ints/bit/detail/**'
-      - 'bench/**'
-      - '.github/workflows/bench.yml'
+      - 'benchmark/**'
+      - '.github/workflows/benchmark.yml'
 
 jobs:
   measure:
@@ -69,7 +69,7 @@ jobs:
         run: cmake --build build --parallel
 
       - name: Measure
-        run: build/bench/bench_bit_permutation | tee -a "${GITHUB_STEP_SUMMARY}"
+        run: build/benchmark/bench_bit_permutation | tee -a "${GITHUB_STEP_SUMMARY}"
 
   # The checked-in llvm-mca and uiCA output, regenerated; a difference is reported, not failed, since releases move it.
   analyse:
@@ -102,17 +102,17 @@ jobs:
       - name: Analyse
         env:
           UICA: ${{ runner.temp }}/uiCA
-        run: python3 bench/static_analysis.py --zp7 build/_deps/zp7-src --uica "${UICA}/uiCA.py"
+        run: python3 benchmark/static_analysis.py --zp7 build/_deps/zp7-src --uica "${UICA}/uiCA.py"
 
       - name: Compare with the checked-in analysis
         run: |
           {
             echo '```diff'
-            git status --short -- bench
-            git diff -- bench/mca/README.md bench/uica/README.md
+            git status --short -- benchmark
+            git diff -- benchmark/mca/README.md benchmark/uica/README.md
             echo '```'
-            cat bench/uica/README.md
+            cat benchmark/uica/README.md
           } | tee -a "${GITHUB_STEP_SUMMARY}"
 
       - name: Print uiCA's reports
-        run: tail -n +1 bench/uica/*.txt
+        run: tail -n +1 benchmark/uica/*.txt

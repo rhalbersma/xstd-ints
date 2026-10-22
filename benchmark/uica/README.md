@@ -1,7 +1,7 @@
 # uiCA's cycles per iteration
 
-Written by `bench/static_analysis.py --uica`; do not edit. uiCA simulates the same regions llvm-mca
-analyses, so a row means what it means in `bench/mca/README.md`; it models Intel cores only. Each
+Written by `benchmark/static_analysis.py --uica`; do not edit. uiCA simulates the same regions llvm-mca
+analyses, so a row means what it means in `benchmark/mca/README.md`; it models Intel cores only. Each
 cell is uiCA's throughput prediction and the bottleneck it names. Each full report, with the
 assembly it read, is beside this file.
 

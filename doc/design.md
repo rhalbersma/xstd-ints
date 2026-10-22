@@ -141,7 +141,7 @@ kernel:
   `XSTD_INTS_HAS_GFNI` says the target is x86-64 with `__GFNI__`, one `GF2P8AFFINEQB` against the
   matrix `0x8040201008040201`, which mirrors the bits of every byte, and a byte swap. llvm-mca puts
   that at 1.4 cycles a block on Ice Lake against 9.0 for GCC 15's code for the portable kernel, as
-  [`bench/mca`](../bench/mca/README.md) records; Clang emits the same two instructions for the
+  [`benchmark/mca`](../benchmark/mca/README.md) records; Clang emits the same two instructions for the
   portable kernel unasked, with the same matrix. MSVC
   exposes no `RBIT` intrinsic and defines no `__GFNI__`, so it keeps the portable kernel. It also holds `block_compress` and
   `block_expand`, which are `_pext_u64` and `_pdep_u64`,
@@ -171,13 +171,13 @@ kernel:
 `block_reverse`, `block_compress`, `block_expand` and `block_select`, each in a header of its own, pick between the two:
 `block_reverse` takes the builtin wherever it is declared, in a constant expression too, and `RBIT` or `GFNI` outside a constant expression
 where those are; the other three take the intrinsic outside a constant
-expression where it is declared, the portable kernel otherwise. [`bench/`](../bench) times each
+expression where it is declared, the portable kernel otherwise. [`benchmark/`](../benchmark) times each
 kernel and the alternatives it beat, in cycles per independent call on a 64-bit block of stated
-density, the harness that feeds each call included. [`bench/results/`](../bench/results) keeps
+density, the harness that feeds each call included. [`benchmark/results/`](../benchmark/results) keeps
 each run with the machine, compiler, flags and commit it names, and
 [CONTRIBUTING.md](../CONTRIBUTING.md#benchmarks) gives the command; besides this container's
-run it holds the Bench workflow's on an [Emerald Rapids](../bench/results/emerald-rapids.md)
-and a [Neoverse N2](../bench/results/neoverse-n2.md) runner. The [measurements](measurements.md#the-bit-permutation-kernels) give each kernel's cost and those of the
+run it holds the Benchmark workflow's on an [Emerald Rapids](../benchmark/results/emerald-rapids.md)
+and a [Neoverse N2](../benchmark/results/neoverse-n2.md) runner. The [measurements](measurements.md#the-bit-permutation-kernels) give each kernel's cost and those of the
 alternatives it beat, from the Cascade Lake run.
 Tests check every portable kernel against a
 bit-at-a-time oracle at compile time and at run time, and the run-time block kernels against
@@ -190,7 +190,7 @@ gives them, RBIT as the Arm ARM's ASL does, and select by its defining property,
 within the width and the select's precondition met at every call.
 Branch-free is a claim about control flow; whether a kernel's control flow or memory addresses
 depend on secret data was checked separately, per kernel and per secret argument
-([`constant_time/`](../constant_time), [results](../constant_time/results.md)). [The measurements](measurements.md#secret-dependent-control-flow) give, per kernel and secret argument, what
+([`test/constant_time/`](../test/constant_time), [results](../test/constant_time/results.md)). [The measurements](measurements.md#secret-dependent-control-flow) give, per kernel and secret argument, what
 Valgrind's memcheck reports: only the byte reversal, the walk over a public mask, and `PEXT` and `PDEP` are free of
 secret-dependent branches and addresses.
 Wider types compose the blocks: reversal sends each mirrored block to the mirror of its offset,

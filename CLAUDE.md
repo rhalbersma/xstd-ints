@@ -152,6 +152,15 @@ cases users will meet and the pitfalls they will fall into, never against a cons
 
 A fixture that runs a component over a user-shaped argument probes no concept, and stays.
 
+## Where tests live
+
+Everything that checks the code lives under `test/`: the unit tests in `test/src/`, mirroring `include/`, their shared
+helpers in `test/include/`, and each suite with a CMake option or a workflow of its own in a directory beside them, as
+`test/codegen/`, `test/fuzz/` and `test/proofs/` are. A new suite goes there too, never at the top level. What measures
+or demonstrates rather than passes or fails, as `benchmark/` and `examples/` do, stays outside. `changes.yml` counts a path
+under `test/` as built, so a suite that no compiler ladder builds is listed there as unbuilt, or each change to it runs
+the full matrix.
+
 ## The relation table
 
 The reference's relation table, in `doc/reference/index.md`, relates every public entity to the working draft, a row per

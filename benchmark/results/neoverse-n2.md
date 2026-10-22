@@ -1,6 +1,6 @@
 # Neoverse N2, a GitHub-hosted runner
 
-An `ubuntu-24.04-arm` runner of the [Bench workflow](../../.github/workflows/bench.yml), on a core that reports itself as
+An `ubuntu-24.04-arm` runner of the [Benchmark workflow](../../.github/workflows/benchmark.yml), on a core that reports itself as
 an Arm Neoverse N2. AArch64 has no bit-permute instruction outside SVE2's optional BITPERM, which this core does not
 report, so only the portable kernels and `RBIT` run. The runner exposes no performance counters, so each cell is time
 converted to cycles at the clock a chain of dependent adds ran at. Its slowest pass of a cell took at most 4% longer than

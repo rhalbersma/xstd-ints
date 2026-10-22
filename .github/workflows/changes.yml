@@ -50,8 +50,8 @@ jobs:
           # below, the suites with workflows of their own, the tools those use,
           # the site's configuration, and the workflows that are not ladders.
           # Anything else, a new directory included, builds.
-          unbuilt='\.md$|^LICENSE_1_0\.txt$|^doc/|^bench/|^codegen/|^constant_time/|^examples/|^exhaustive/|^fuzz/|^mutation/|^proofs/|^tools/|^mkdocs\.yml$|^\.clang-format$|^\.git-blame-ignore-revs$'
-          unbuilt="${unbuilt}"'|^\.github/workflows/(actionlint|bench|canary|cflite_batch|cflite_pr|clang-format|codegen|codeql|constant-time|consumption|coverage|exhaustive|mutation|pages|perft|proofs|scorecard|upstream-watch)\.yml$'
+          unbuilt='\.md$|^LICENSE_1_0\.txt$|^doc/|^benchmark/|^examples/|^test/codegen/|^test/constant_time/|^test/exhaustive/|^test/fuzz/|^test/mutation/|^test/proofs/|^tools/|^mkdocs\.yml$|^\.clang-format$|^\.git-blame-ignore-revs$'
+          unbuilt="${unbuilt}"'|^\.github/workflows/(actionlint|benchmark|canary|cflite_batch|cflite_pr|clang-format|codegen|codeql|constant-time|consumption|coverage|exhaustive|mutation|pages|perft|proofs|scorecard|upstream-watch)\.yml$'
           # The README's C++ examples, fenced as the test suite's CMake finds
           # them: a line ```cpp opens one and a line ``` closes it. Its prose
           # builds nothing; an example added, removed or changed builds.
