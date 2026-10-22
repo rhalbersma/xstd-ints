@@ -46,9 +46,20 @@ transformations are all that `<xstd/ints/ext/absl/int128.hpp>` and
 
 ## Headers
 
+The headers come at three levels:
+
+- `<xstd/ints.hpp>` includes the whole library, the adaptors aside.
+- An umbrella per standard header the library has counterparts for, named after it: `<xstd/ints/bit.hpp>` for
+  `<bit>`, `<xstd/ints/cstdlib.hpp>` for `<cstdlib>`, and so on.
+- Beneath each umbrella, in the folder of its name, a header per entity or per family of tightly related entities,
+  such as `<xstd/ints/cstdlib/div.hpp>` or `<xstd/ints/cstdint/int128.hpp>` for the 128-bit pair.
+
+The adaptors for third-party libraries sit apart, under `<xstd/ints/ext/>`. The umbrellas are:
+
+<div class="headers" markdown>
+
 | Header | Description |
 | :----- | :---------- |
-| `<xstd/ints.hpp>` | Every group below but the `ext/` adaptors, through one include. |
 | `<xstd/ints/bit.hpp>` | The `<bit>` functions, widened to every unsigned integer with the 128-bit integer classes and `_BitInt` included, with C++29's bit permutations and shifts by any count. |
 | `<xstd/ints/charconv.hpp>` | `std::to_chars`, widened to the integers it does not cover, and the buffer size that holds any value at any base. |
 | `<xstd/ints/concepts.hpp>` | Open counterparts of `std::integral` and its signed and unsigned halves that admit integer-class types, with the bitmask, alignment and `noexcept`-operator concepts. |
@@ -60,6 +71,8 @@ transformations are all that `<xstd/ints/ext/absl/int128.hpp>` and
 | `<xstd/ints/type_traits.hpp>` | Open sign traits and sign transformations, which users may specialize, and the type an integer's own operators yield. |
 | `<xstd/ints/ext/absl.hpp>` | Pairs Abseil's `int128` and `uint128`, so that each models `integer`. |
 | `<xstd/ints/ext/boost.hpp>` | Pairs Boost.Int128's 128-bit integers, and hashes any integer's value into a Boost.Hash2 algorithm. |
+
+</div>
 
 [The reference](doc/reference/index.md) lists each group's headers and specifies each entity, [the design notes](doc/design.md)
 give the rationale and how to customize an integer-class type, and [the measurements](doc/measurements.md) the evidence. [CONTRIBUTING.md](CONTRIBUTING.md) builds the library itself.
