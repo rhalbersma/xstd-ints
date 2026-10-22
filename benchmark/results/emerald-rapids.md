@@ -1,6 +1,6 @@
 # Emerald Rapids, a GitHub-hosted runner
 
-An `ubuntu-24.04` runner of the [Bench workflow](../../.github/workflows/bench.yml), on a Xeon that reports itself as an
+An `ubuntu-24.04` runner of the [Benchmark workflow](../../.github/workflows/benchmark.yml), on a Xeon that reports itself as an
 "INTEL(R) XEON(R) PLATINUM 8573C", family 6, model 207, which is Emerald Rapids. The runner exposes no performance
 counters, so each cell is time converted to cycles at the clock a chain of dependent adds ran at. Its slowest pass of a
 cell took at most 12% longer than its fastest. Runners are drawn from a pool, so another run may land on another model.

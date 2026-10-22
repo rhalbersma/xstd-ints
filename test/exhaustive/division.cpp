@@ -20,7 +20,13 @@
 
 namespace {
 
-enum class rounding : std::uint8_t { toward_zero, floor, euclid, ceil };
+enum class rounding : std::uint8_t
+{
+        toward_zero,
+        floor,
+        euclid,
+        ceil
+};
 
 constexpr auto roundings = std::array{rounding::toward_zero, rounding::floor, rounding::euclid, rounding::ceil};
 
@@ -31,10 +37,14 @@ template<class I>
         -> xstd::div_result<I>
 {
         switch (how) {
-        case rounding::toward_zero: return xstd::div(n, d);
-        case rounding::floor:       return xstd::div_floor(n, d);
-        case rounding::euclid:      return xstd::div_euclid(n, d);
-        case rounding::ceil:        return xstd::div_ceil(n, d);
+                case rounding::toward_zero:
+                        return xstd::div(n, d);
+                case rounding::floor:
+                        return xstd::div_floor(n, d);
+                case rounding::euclid:
+                        return xstd::div_euclid(n, d);
+                case rounding::ceil:
+                        return xstd::div_ceil(n, d);
         }
         return {};
 }
@@ -51,13 +61,17 @@ template<class I>
         -> bool
 {
         if constexpr (std::is_signed_v<I>) {
-                auto const bounded = std::abs(r) < std::abs(d);
+                auto const bounded   = std::abs(r) < std::abs(d);
                 auto const signed_as = [&]() -> bool {
                         switch (how) {
-                        case rounding::toward_zero: return r == 0 or sign(r) == sign(n);
-                        case rounding::floor:       return r == 0 or sign(r) == sign(d);
-                        case rounding::euclid:      return r >= 0;
-                        case rounding::ceil:        return r == 0 or sign(r) == -sign(d);
+                                case rounding::toward_zero:
+                                        return r == 0 or sign(r) == sign(n);
+                                case rounding::floor:
+                                        return r == 0 or sign(r) == sign(d);
+                                case rounding::euclid:
+                                        return r >= 0;
+                                case rounding::ceil:
+                                        return r == 0 or sign(r) == -sign(d);
                         }
                         return false;
                 }();
@@ -148,7 +162,7 @@ auto main(int argc, char* argv[]) -> int
                 std::cerr << "usage: " << argv[0] << " <reference digests>\n";
                 return 2;
         }
-        auto const path     = std::string(argv[1]);
+        auto const path        = std::string(argv[1]);
         auto const is_signed   = check<std::int16_t>("int16", path);
         auto const is_unsigned = check<std::uint16_t>("uint16", path);
         return is_signed and is_unsigned ? 0 : 1;

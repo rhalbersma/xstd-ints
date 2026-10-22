@@ -23,7 +23,7 @@ on:
     paths:
       - 'include/xstd/ints/bit/**'
       - 'include/xstd/ints/cstdlib/**'
-      - 'exhaustive/**'
+      - 'test/exhaustive/**'
       - 'test/include/test/bit/**'
       - 'tools/division_digests.py'
       - 'tools/numpy-requirements.txt'
@@ -43,7 +43,7 @@ jobs:
         run: pip install --quiet --user --break-system-packages --require-hashes -r tools/numpy-requirements.txt
 
       - name: Recompute the division digests
-        run: python3 tools/division_digests.py --check exhaustive/division_digests.txt
+        run: python3 tools/division_digests.py --check test/exhaustive/division_digests.txt
 
   sweep:
     name: ${{ matrix.name }}

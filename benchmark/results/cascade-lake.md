@@ -10,9 +10,9 @@ Both runs used the stable rung from `tools/setup-toolchain.sh`, built with the c
 `clang++-22` in place of `g++-15` for the second:
 
 ```sh
-cmake -S . -B build-bench -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_CXX_FLAGS=-march=native -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_BENCHMARKS=ON
-cmake --build build-bench
-build-bench/bench/bench_bit_permutation
+cmake -S . -B build-benchmark -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_CXX_FLAGS=-march=native -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_BENCHMARKS=ON
+cmake --build build-benchmark
+build-benchmark/benchmark/bench_bit_permutation
 ```
 
 ## GCC 15.2.0

@@ -5,12 +5,12 @@ flags, and where the full results and the code that produced them are kept.
 
 ## The bit-permutation kernels
 
-[`bench/`](../bench) times each kernel and the alternatives it beat, in cycles per independent call on a 64-bit block
-of stated density, the harness that feeds each call included. [`bench/results/`](../bench/results) keeps each run with
+[`benchmark/`](../benchmark) times each kernel and the alternatives it beat, in cycles per independent call on a 64-bit block
+of stated density, the harness that feeds each call included. [`benchmark/results/`](../benchmark/results) keeps each run with
 the machine, compiler, flags and commit it names, and [CONTRIBUTING.md](../CONTRIBUTING.md#benchmarks) gives the
 command.
 
-From the [Cascade Lake run](../bench/results/cascade-lake.md), at `-march=native -O3`, with a cost per bit
+From the [Cascade Lake run](../benchmark/results/cascade-lake.md), at `-march=native -O3`, with a cost per bit
 taken as the slope from the sparsest row of its table to the densest:
 
 | Kernel | Cost | GCC 15 | Clang 22 |
@@ -34,7 +34,7 @@ Wegner's zp7, a flat 52 to 58 and 61 to 66 without `PCLMULQDQ`, and 25 to 26 and
 ## Secret-dependent control flow
 
 Whether a kernel's control flow or memory addresses depend on secret data is checked per kernel and per secret
-argument in [`constant_time/`](../constant_time), with its [results](../constant_time/results.md). Valgrind's memcheck,
+argument in [`test/constant_time/`](../test/constant_time), with its [results](../test/constant_time/results.md). Valgrind's memcheck,
 with the secret marked undefined, reports every branch and address computed from it, the same for
 GCC 15 and Clang 22 with and without `-march=x86-64-v3`:
 

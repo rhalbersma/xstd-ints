@@ -22,7 +22,7 @@ on:
     branches: [ main ]
     paths:
       - 'include/xstd/ints/bit/detail/portable/**'
-      - 'proofs/**'
+      - 'test/proofs/**'
       - 'tools/z3-requirements.txt'
       - '.github/workflows/proofs.yml'
 

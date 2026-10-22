@@ -18,7 +18,7 @@ This repository enforces its quality bar through CI rather than through review d
 - **`clang-tidy` is clean.** The [Clang-Tidy workflow](.github/workflows/clang-tidy.yml) runs the checks in [`.clang-tidy`](.clang-tidy) with `WarningsAsErrors: '*'` over the public headers, so any finding fails the job outright - there is no "advisory, fix later" mode.
 - **Line and branch coverage stay at 100%, project-wide and for the PR's own diff.** [`codecov.yml`](.github/codecov.yml) sets both the `project` and `patch` Codecov status checks to a 100% target with zero tolerance, backed by the [Coverage workflow](.github/workflows/coverage.yml)'s own `gcovr --fail-under-line 100 --fail-under-branch 100` gate. New code needs a test that exercises every line and branch it adds; existing coverage may not regress. Excluded from this bar: `assert(...)` contract checks (their failure path is undefined behavior by design, not something a correct test can hit), compiler-synthesized `= default;` special members (gcov cannot attribute a hit counter to them regardless of how often they run), and the exception-unwinding branch gcc/gcov attaches to any call that could throw (`--exclude-throw-branches`/`--exclude-unreachable-branches`) - not a code path a test can meaningfully hit either.
 - **No new sanitizer failures.** The [sanitizers workflow](.github/workflows/sanitizers.yml) must stay green.
-- **The bit kernels compile to the instructions they exist for.** The [Codegen workflow](.github/workflows/codegen.yml) compiles [`codegen/`](codegen) to assembly with the stable rung's GCC and Clang, on an x86-64 and an AArch64 runner, and reads it with FileCheck - see [Codegen tests](#codegen-tests) below.
+- **The bit kernels compile to the instructions they exist for.** The [Codegen workflow](.github/workflows/codegen.yml) compiles [`test/codegen/`](test/codegen) to assembly with the stable rung's GCC and Clang, on an x86-64 and an AArch64 runner, and reads it with FileCheck - see [Codegen tests](#codegen-tests) below.
 - **The public headers stay self-sufficient.** Each header is compiled as its own translation unit (see `test/CMakeLists.txt`); don't rely on include order from another header.
 - **The README's examples compile.** `test/CMakeLists.txt` writes each ```` ```cpp ```` block of [README.md](README.md) to a translation unit of its own, `readme.example<n>`, built with the tests' warnings on every leg. An example that includes an `<xstd/ints/ext/>` header is built where the library it adapts resolved, as that header's own test is, and one that names `xstd::int128` or `xstd::uint128` tests `XSTD_HAS_INT128` itself, as a test source does.
 - **The documentation site builds.** The [Pages workflow](.github/workflows/pages.yml) runs `mkdocs build --strict` over the README and `doc/`, which fails on a link to a page or an anchor that does not exist, and deploys the site from `main`.
@@ -230,7 +230,7 @@ build/mkdocs/bin/mkdocs serve --strict
 
 ## Fuzzing
 
-The tests sweep fixed values and a seeded random sample; the libFuzzer targets under [`fuzz/`](fuzz) search for the inputs they miss, one per header family. `fuzz_bit_permutation` reads a source and a mask from its input bytes and checks, at one `std::size_t` block, that both portable expansions agree and each round-trips with the portable compression, that every overload of PEXT and PDEP agrees with those kernels and round-trips on its own, and that the portable select and the one through PDEP find the source's one of every rank where the oracle does. It then reads the same bytes at every width from 8 bits up, through `unsigned _BitInt(147)` where the compiler has it, and checks that `bit_compress` and `bit_expand` agree with their oracles and undo each other, that `bit_select` agrees with its oracle and inverts rank at the source's lowest and highest ones and at the rank the mask's population names, and that `bit_reverse` and `bit_repeat` agree with theirs, the period one more than the mask's population. The checks live in [`test/include/test/bit/permutation_properties.hpp`](test/include/test/bit/permutation_properties.hpp) and [`test/include/test/bit/select_properties.hpp`](test/include/test/bit/select_properties.hpp), which the unit tests run as well; a failing one aborts.
+The tests sweep fixed values and a seeded random sample; the libFuzzer targets under [`test/fuzz/`](test/fuzz) search for the inputs they miss, one per header family. `fuzz_bit_permutation` reads a source and a mask from its input bytes and checks, at one `std::size_t` block, that both portable expansions agree and each round-trips with the portable compression, that every overload of PEXT and PDEP agrees with those kernels and round-trips on its own, and that the portable select and the one through PDEP find the source's one of every rank where the oracle does. It then reads the same bytes at every width from 8 bits up, through `unsigned _BitInt(147)` where the compiler has it, and checks that `bit_compress` and `bit_expand` agree with their oracles and undo each other, that `bit_select` agrees with its oracle and inverts rank at the source's lowest and highest ones and at the rank the mask's population names, and that `bit_reverse` and `bit_repeat` agree with theirs, the period one more than the mask's population. The checks live in [`test/include/test/bit/permutation_properties.hpp`](test/include/test/bit/permutation_properties.hpp) and [`test/include/test/bit/select_properties.hpp`](test/include/test/bit/select_properties.hpp), which the unit tests run as well; a failing one aborts.
 
 The other four read each operand as an anchor byte, choosing zero, the type's minimum or its maximum, plus a 32-byte little-endian offset that wraps at the type's width. The same input therefore lands on every width's boundary at once: `INT_MIN / -1` is one seed, not one per type. They run the standard types from 8 to 64 bits, `__int128`, and the bit-precise widths `fuzz_bit_permutation` reads, each signed and unsigned. Signed starts at 4 bits, because the shift oracle halves by dividing by 2, which a signed `_BitInt(2)` cannot hold. Their oracles are computed in `_BitInt(256)` or taken from the unit tests:
 
@@ -248,10 +248,10 @@ It needs clang, which is what ships libFuzzer. `XSTD_INTS_BUILD_FUZZERS` is off 
 ```sh
 cmake -S . -B build-fuzz -DCMAKE_CXX_COMPILER=clang++-22 -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_FUZZERS=ON
 cmake --build build-fuzz --parallel 2
-mkdir -p corpus && build-fuzz/fuzz/fuzz_div -max_total_time=120 corpus fuzz/corpus/fuzz_div
+mkdir -p corpus && build-fuzz/test/fuzz/fuzz_div -max_total_time=120 corpus test/fuzz/corpus/fuzz_div
 ```
 
-The targets are built with ASan and UBSan, and `XSTD_INTS_FUZZ_COMPILE_OPTIONS` and `XSTD_INTS_FUZZ_LINK_OPTIONS` replace those flags. The first directory on the command line receives what the run discovers; the checked-in seeds under `fuzz/corpus/<target>/` are read but left alone. A crash is written as `crash-<sha1>` in the working directory, and reproduces by passing that file to the target binary. With `BUILD_TESTING` on as well, CTest replays each seed corpus once as `fuzz.<target>`. A seed named `regression-...` is a minimized input that once found a bug, and stays to keep it found.
+The targets are built with ASan and UBSan, and `XSTD_INTS_FUZZ_COMPILE_OPTIONS` and `XSTD_INTS_FUZZ_LINK_OPTIONS` replace those flags. The first directory on the command line receives what the run discovers; the checked-in seeds under `test/fuzz/corpus/<target>/` are read but left alone. A crash is written as `crash-<sha1>` in the working directory, and reproduces by passing that file to the target binary. With `BUILD_TESTING` on as well, CTest replays each seed corpus once as `fuzz.<target>`. A seed named `regression-...` is a minimized input that once found a bug, and stays to keep it found.
 
 [ClusterFuzzLite](https://google.github.io/clusterfuzzlite/) runs the same targets in CI, built by [`.clusterfuzzlite/build.sh`](.clusterfuzzlite/build.sh) in the OSS-Fuzz builder image: [`cflite_pr.yml`](.github/workflows/cflite_pr.yml) for five minutes on every pull request, under ASan and UBSan, and [`cflite_batch.yml`](.github/workflows/cflite_batch.yml) nightly for half an hour, each budget split across the targets, keeping the corpus it grows. A crash fails the job and is uploaded as an artifact.
 
@@ -259,7 +259,7 @@ The unit tests reach PEXT and PDEP only where the build targets BMI2, so [`gcc.y
 
 ## Codegen tests
 
-The unit tests and the fuzzer check that the intrinsic kernels agree with the portable ones, which they must, and which also means a detection macro that stops firing goes unseen: the portable kernel answers, every value stays right, and every test stays green. The codegen tests close that gap. Each function in [`codegen/`](codegen) wraps one public call at a fixed width; CTest compiles the file to assembly once per target configuration, with `-std=c++23 -O2 -DNDEBUG` as a consumer builds, and FileCheck reads it against the directives above each function, under the prefixes that configuration names:
+The unit tests and the fuzzer check that the intrinsic kernels agree with the portable ones, which they must, and which also means a detection macro that stops firing goes unseen: the portable kernel answers, every value stays right, and every test stays green. The codegen tests close that gap. Each function in [`test/codegen/`](test/codegen) wraps one public call at a fixed width; CTest compiles the file to assembly once per target configuration, with `-std=c++23 -O2 -DNDEBUG` as a consumer builds, and FileCheck reads it against the directives above each function, under the prefixes that configuration names:
 
 | Configuration | Flags | Expected |
 | :--- | :--- | :--- |
@@ -271,7 +271,7 @@ The unit tests and the fuzzer check that the intrinsic kernels agree with the po
 | `bmi2-excluded` | `-march=znver2` | the `x86-64-v3` checks **rejected**, which proves they see the kernels gone while BMI2 is still enabled |
 | `armv8-a` | `-march=armv8-a` | `bit_reverse` an `rbit`, two for 128 bits, without a branch |
 
-[`codegen/alignment.cpp`](codegen/alignment.cpp) puts `align_up` and `align_down` beside the complement idiom they decline, and its tests require each pair to compile to the same instructions, as often each, in whatever order and registers the compiler picks. The x86-64 configurations run on an x86-64 host and `armv8-a` on an AArch64 one; nothing cross-compiles. They need GCC or Clang with its GNU-style driver, and no Boost:
+[`test/codegen/alignment.cpp`](test/codegen/alignment.cpp) puts `align_up` and `align_down` beside the complement idiom they decline, and its tests require each pair to compile to the same instructions, as often each, in whatever order and registers the compiler picks. The x86-64 configurations run on an x86-64 host and `armv8-a` on an AArch64 one; nothing cross-compiles. They need GCC or Clang with its GNU-style driver, and no Boost:
 
 ```sh
 tools/setup-toolchain.sh
@@ -279,14 +279,14 @@ cmake -S . -B build-codegen -DCMAKE_CXX_COMPILER=clang++-22 -DBUILD_TESTING=OFF 
 ctest --test-dir build-codegen --output-on-failure
 ```
 
-Each test leaves its assembly beside it as `build-codegen/codegen/<source>.<configuration>.s`. The [Codegen workflow](.github/workflows/codegen.yml) runs them with GCC 15 and Clang 22 on `ubuntu-24.04` and `ubuntu-24.04-arm`.
+Each test leaves its assembly beside it as `build-codegen/test/codegen/<source>.<configuration>.s`. The [Codegen workflow](.github/workflows/codegen.yml) runs them with GCC 15 and Clang 22 on `ubuntu-24.04` and `ubuntu-24.04-arm`.
 
 ## Exhaustive sweeps
 
-At 16 bits every pair of operands can be tried, 2^32 of them, which the unit tests and the fuzzer only sample. The two sweeps under [`exhaustive/`](exhaustive) try them all, split across the machine's threads:
+At 16 bits every pair of operands can be tried, 2^32 of them, which the unit tests and the fuzzer only sample. The two sweeps under [`test/exhaustive/`](test/exhaustive) try them all, split across the machine's threads:
 
 - `exhaustive_bit_permutation` checks every 16-bit source against every 16-bit mask with the fuzzer's own properties: `bit_compress` and `bit_expand` against their oracles and each other, the portable kernels at `std::size_t` width, and, where the build has fast BMI2, `PEXT` and `PDEP` against those kernels.
-- `exhaustive_division` checks `div`, `div_floor`, `div_euclid` and `div_ceil` over every `int16_t` and `uint16_t` pair in their domain against their postconditions, which alone determine each result, and folds every numerator, denominator, quotient and remainder into a digest per type and function. Those eight digests must equal [`exhaustive/division_digests.txt`](exhaustive/division_digests.txt), which [`tools/division_digests.py`](tools/division_digests.py) computes with numpy's own division routines, so the postconditions are held to an implementation xstd did not write.
+- `exhaustive_division` checks `div`, `div_floor`, `div_euclid` and `div_ceil` over every `int16_t` and `uint16_t` pair in their domain against their postconditions, which alone determine each result, and folds every numerator, denominator, quotient and remainder into a digest per type and function. Those eight digests must equal [`test/exhaustive/division_digests.txt`](test/exhaustive/division_digests.txt), which [`tools/division_digests.py`](tools/division_digests.py) computes with numpy's own division routines, so the postconditions are held to an implementation xstd did not write.
 
 They take minutes each and need no Boost:
 
@@ -300,19 +300,19 @@ The reference digests need numpy, pinned by hash in [`tools/numpy-requirements.t
 
 ```sh
 pip install --user --require-hashes -r tools/numpy-requirements.txt
-python3 tools/division_digests.py --check exhaustive/division_digests.txt
+python3 tools/division_digests.py --check test/exhaustive/division_digests.txt
 ```
 
 The [Exhaustive workflow](.github/workflows/exhaustive.yml) runs the sweeps weekly, by hand, and on a pull request touching what they cover: GCC 15 with the portable kernels, Clang 22 at `-march=x86-64-v3`, GCC 15 on AArch64 and MSVC on x64, with the digests recomputed beside them. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
 
 ## Proofs
 
-The portable kernels under `include/xstd/ints/bit/detail/portable/` answer every constant expression and every target without the instructions, and the tests and the fuzzer can only sample their 2^128 pairs of inputs. [`proofs/`](proofs) proves them equal to their specifications for every input, with [Z3](https://github.com/Z3Prover/z3)'s Python bindings, at both widths `std::size_t` has, 32 and 64 bits:
+The portable kernels under `include/xstd/ints/bit/detail/portable/` answer every constant expression and every target without the instructions, and the tests and the fuzzer can only sample their 2^128 pairs of inputs. [`test/proofs/`](test/proofs) proves them equal to their specifications for every input, with [Z3](https://github.com/Z3Prover/z3)'s Python bindings, at both widths `std::size_t` has, 32 and 64 bits:
 
-- [`specifications.py`](proofs/specifications.py) transcribes what each kernel must compute from its primary source: PEXT and PDEP from the Operation pseudocode of the Intel 64 and IA-32 Architectures Software Developer's Manual, RBIT from the Arm Architecture Reference Manual's ASL, and select from its defining property.
-- [`kernels.py`](proofs/kernels.py) transcribes each kernel statement by statement, over the word operations of [`operations.py`](proofs/operations.py), with each loop given as its parts. Each kernel records what the C++ needs there to be defined: a shift within the width, the select's precondition, a table index in range and a rank that names a one of its byte.
-- [`prove.py`](proofs/prove.py) proves `block_reverse_by_swaps` directly, and each loop by an inductive invariant: it holds on entry, one pass keeps it while a variable falls, so the loop ends, and on exit it makes the result a closed form that a further claim proves equal to the SDM's pseudocode. `block_select_by_broadword` is proved in two parts that meet at its counts, the second a case for each byte and each bit within it, with the `select_in_byte` table standing in by a contract that is checked entry by entry. `block_expand_by_select` relies on the select's proved contract rather than on its code. Three mutants, each a kernel with one deliberate error, must be refuted.
-- [`drift.py`](proofs/drift.py) holds the models to the C++, since a proof is about the transcription: it runs the compiled kernels through [`drift.cpp`](proofs/drift.cpp) on edge values and pseudo-random words and requires every output to equal the model's at the same width. It runs twice where the toolchain can link a `-m32` program, once at the host's 64-bit `std::size_t` and once at 32 bits, so the models of both widths meet a build of their own. `XSTD_INTS_PROOFS_DRIFT_32` is `AUTO` by default; `ON` requires the 32-bit build, as the workflow does after installing `g++-15-multilib`, and `OFF` skips it.
+- [`specifications.py`](test/proofs/specifications.py) transcribes what each kernel must compute from its primary source: PEXT and PDEP from the Operation pseudocode of the Intel 64 and IA-32 Architectures Software Developer's Manual, RBIT from the Arm Architecture Reference Manual's ASL, and select from its defining property.
+- [`kernels.py`](test/proofs/kernels.py) transcribes each kernel statement by statement, over the word operations of [`operations.py`](test/proofs/operations.py), with each loop given as its parts. Each kernel records what the C++ needs there to be defined: a shift within the width, the select's precondition, a table index in range and a rank that names a one of its byte.
+- [`prove.py`](test/proofs/prove.py) proves `block_reverse_by_swaps` directly, and each loop by an inductive invariant: it holds on entry, one pass keeps it while a variable falls, so the loop ends, and on exit it makes the result a closed form that a further claim proves equal to the SDM's pseudocode. `block_select_by_broadword` is proved in two parts that meet at its counts, the second a case for each byte and each bit within it, with the `select_in_byte` table standing in by a contract that is checked entry by entry. `block_expand_by_select` relies on the select's proved contract rather than on its code. Three mutants, each a kernel with one deliberate error, must be refuted.
+- [`drift.py`](test/proofs/drift.py) holds the models to the C++, since a proof is about the transcription: it runs the compiled kernels through [`drift.cpp`](test/proofs/drift.cpp) on edge values and pseudo-random words and requires every output to equal the model's at the same width. It runs twice where the toolchain can link a `-m32` program, once at the host's 64-bit `std::size_t` and once at 32 bits, so the models of both widths meet a build of their own. `XSTD_INTS_PROOFS_DRIFT_32` is `AUTO` by default; `ON` requires the 32-bit build, as the workflow does after installing `g++-15-multilib`, and `OFF` skips it.
 
 Z3 is pinned by hash in [`tools/z3-requirements.txt`](tools/z3-requirements.txt):
 
@@ -323,7 +323,7 @@ cmake --build build-proofs
 ctest --test-dir build-proofs --output-on-failure --verbose
 ```
 
-`python3 proofs/prove.py --widths 16 --jobs 4` runs every claim at 16 bits in seconds, which is the quick check while editing a kernel or its model. The [Proofs workflow](.github/workflows/proofs.yml) runs both widths weekly, by hand, and on a pull request touching the portable kernels or the proofs. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
+`python3 test/proofs/prove.py --widths 16 --jobs 4` runs every claim at 16 bits in seconds, which is the quick check while editing a kernel or its model. The [Proofs workflow](.github/workflows/proofs.yml) runs both widths weekly, by hand, and on a pull request touching the portable kernels or the proofs. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
 
 ## Mutation tests
 
@@ -331,31 +331,31 @@ ctest --test-dir build-proofs --output-on-failure --verbose
 
 ## Benchmarks
 
-What [design.md](doc/design.md) says the bit kernels cost comes from [`bench/`](bench), not from figures quoted by hand. `bench_bit_permutation` times every kernel in `detail::portable`; `PEXT`, `PDEP`, and `PDEP` followed by `TZCNT` where the build enables BMI2; and the alternatives design.md names as rejected: the mask walk with an `if`, Hacker's Delight's parallel suffix, and [zp7](https://github.com/zwegner/zp7), with `PCLMULQDQ` where the build enables it. A cell is the cost of one call among 4096 independent calls on fixed pseudo-random inputs whose density its row states, the fastest of five passes. Where the system exposes performance counters, cycles and instructions are counted; elsewhere cycles are time at the clock a chain of dependent adds runs at. Every kernel must agree with its table's first on every input before any is timed, and the executable prints a Markdown page that names the compiler, the machine, the flags and the commit. CMake fetches nanobench and zp7, each pinned by commit:
+What [design.md](doc/design.md) says the bit kernels cost comes from [`benchmark/`](bench), not from figures quoted by hand. `bench_bit_permutation` times every kernel in `detail::portable`; `PEXT`, `PDEP`, and `PDEP` followed by `TZCNT` where the build enables BMI2; and the alternatives design.md names as rejected: the mask walk with an `if`, Hacker's Delight's parallel suffix, and [zp7](https://github.com/zwegner/zp7), with `PCLMULQDQ` where the build enables it. A cell is the cost of one call among 4096 independent calls on fixed pseudo-random inputs whose density its row states, the fastest of five passes. Where the system exposes performance counters, cycles and instructions are counted; elsewhere cycles are time at the clock a chain of dependent adds runs at. Every kernel must agree with its table's first on every input before any is timed, and the executable prints a Markdown page that names the compiler, the machine, the flags and the commit. CMake fetches nanobench and zp7, each pinned by commit:
 
 ```sh
 tools/setup-toolchain.sh
-cmake -S . -B build-bench -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_CXX_FLAGS=-march=native -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_BENCHMARKS=ON
-cmake --build build-bench
-build-bench/bench/bench_bit_permutation
+cmake -S . -B build-benchmark -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_CXX_FLAGS=-march=native -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_BENCHMARKS=ON
+cmake --build build-benchmark
+build-benchmark/benchmark/bench_bit_permutation
 ```
 
-A run takes about half a minute. One worth keeping goes under [`bench/results/`](bench/results), a file per machine that opens with what the machine is and how it was run, and a figure in design.md names the file it comes from. Configure afresh before a run to keep, since CMake reads the commit when it configures.
+A run takes about half a minute. One worth keeping goes under [`benchmark/results/`](benchmark/results), a file per machine that opens with what the machine is and how it was run, and a figure in design.md names the file it comes from. Configure afresh before a run to keep, since CMake reads the commit when it configures.
 
-[`bench/static_analysis.py`](bench/static_analysis.py) compiles each kernel with GCC 15 and Clang 22 for Haswell, Cascade Lake, Ice Lake and Zen 2 to 4, and with Clang for Neoverse N1, N2 and V2, and writes llvm-mca's analysis of each under [`bench/mca/`](bench/mca/README.md). It needs the build configured above, for zp7, and noble's `libstdc++-14-dev-arm64-cross` for the AArch64 targets:
+[`benchmark/static_analysis.py`](benchmark/static_analysis.py) compiles each kernel with GCC 15 and Clang 22 for Haswell, Cascade Lake, Ice Lake and Zen 2 to 4, and with Clang for Neoverse N1, N2 and V2, and writes llvm-mca's analysis of each under [`benchmark/mca/`](benchmark/mca/README.md). It needs the build configured above, for zp7, and noble's `libstdc++-14-dev-arm64-cross` for the AArch64 targets:
 
 ```sh
 sudo apt-get install libstdc++-14-dev-arm64-cross
-python3 bench/static_analysis.py --zp7 build-bench/_deps/zp7-src
+python3 benchmark/static_analysis.py --zp7 build-benchmark/_deps/zp7-src
 ```
 
-Given `--uica` and a [uiCA](https://github.com/andreas-abel/uiCA) checkout that its own `setup.sh` has prepared, the script also has uiCA simulate the same regions of the x86-64 code on the three targets it models, Haswell, Cascade Lake and Ice Lake, under [`bench/uica/`](bench/uica). llvm-mca reports its model, not the hardware, and its Zen 2 model misses the microcode behind `PEXT` and `PDEP`. A claim about how fast an instruction is cites [uops.info](https://uops.info) by instruction and microarchitecture rather than restating a number.
+Given `--uica` and a [uiCA](https://github.com/andreas-abel/uiCA) checkout that its own `setup.sh` has prepared, the script also has uiCA simulate the same regions of the x86-64 code on the three targets it models, Haswell, Cascade Lake and Ice Lake, under [`benchmark/uica/`](benchmark/uica). llvm-mca reports its model, not the hardware, and its Zen 2 model misses the microcode behind `PEXT` and `PDEP`. A claim about how fast an instruction is cites [uops.info](https://uops.info) by instruction and microarchitecture rather than restating a number.
 
-The [Bench workflow](.github/workflows/bench.yml) runs both, by hand and on a pull request that touches the kernels or `bench/`: the benchmark with GCC 15 and Clang 22 on `ubuntu-24.04` and `ubuntu-24.04-arm` at `-march=native`, `-mcpu=native` on Arm, with each job's page in its summary, and the analysis beside them, uiCA included, pinned by commit, reporting any difference from the checked-in files. A benchmark reports a number and never fails on one, so it is not a required check.
+The [Benchmark workflow](.github/workflows/benchmark.yml) runs both, by hand and on a pull request that touches the kernels or `benchmark/`: the benchmark with GCC 15 and Clang 22 on `ubuntu-24.04` and `ubuntu-24.04-arm` at `-march=native`, `-mcpu=native` on Arm, with each job's page in its summary, and the analysis beside them, uiCA included, pinned by commit, reporting any difference from the checked-in files. A benchmark reports a number and never fails on one, so it is not a required check.
 
 ## Constant-time checks
 
-"Branch-free" is a claim about control flow, and a constant-time engineer asks a sharper one: does a kernel's time depend on secret data? [`constant_time/`](constant_time) answers the part of it that control flow and memory addresses decide, per kernel and per secret argument, over the cases in [`cases.hpp`](constant_time/cases.hpp), each named `kernel.secret`. `constant_time_memcheck` marks the secret argument undefined and runs the kernel under Valgrind, which then reports every branch and every memory address computed from it, as ctgrind does. A case that should be clean is a test that passes; a case that branches on its secret or indexes memory by it is a test expected to fail, so a change either way breaks the suite.
+"Branch-free" is a claim about control flow, and a constant-time engineer asks a sharper one: does a kernel's time depend on secret data? [`test/constant_time/`](test/constant_time) answers the part of it that control flow and memory addresses decide, per kernel and per secret argument, over the cases in [`cases.hpp`](test/constant_time/cases.hpp), each named `kernel.secret`. `constant_time_memcheck` marks the secret argument undefined and runs the kernel under Valgrind, which then reports every branch and every memory address computed from it, as ctgrind does. A case that should be clean is a test that passes; a case that branches on its secret or indexes memory by it is a test expected to fail, so a change either way breaks the suite.
 
 ```sh
 sudo apt-get install valgrind
@@ -364,7 +364,7 @@ cmake --build build-ct
 ctest --test-dir build-ct --output-on-failure
 ```
 
-[`constant_time/results.md`](constant_time/results.md) keeps a run. The [Constant time workflow](.github/workflows/constant-time.yml) runs the tests with GCC 15 and Clang 22, with and without `-march=x86-64-v3`, weekly, by hand, and on a pull request that touches the portable kernels or `constant_time/`. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
+[`test/constant_time/results.md`](test/constant_time/results.md) keeps a run. The [Constant time workflow](.github/workflows/constant-time.yml) runs the tests with GCC 15 and Clang 22, with and without `-march=x86-64-v3`, weekly, by hand, and on a pull request that touches the portable kernels or `test/constant_time/`. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
 
 ## Examples
 
@@ -437,8 +437,8 @@ branch protection requires: a leg name changes whenever a rung moves, the gate n
 
 The gate is this repository's own job, carrying the required name, beside the shared ladder it waits for. On a
 pull request, [`changes.yml`](.github/workflows/changes.yml) first compares the diff with the paths no ladder
-builds: prose, `doc/`, the suites with workflows of their own (`bench/`,
-`codegen/`, `exhaustive/`, `fuzz/`, `mutation/`, `proofs/`), `tools/`, `mkdocs.yml`, and the workflows that are not
+builds: prose, `doc/`, the suites with workflows of their own (`benchmark/`,
+`test/codegen/`, `test/constant_time/`, `test/exhaustive/`, `test/fuzz/`, `test/mutation/`, `test/proofs/`), `tools/`, `mkdocs.yml`, and the workflows that are not
 ladders. The README counts as prose unless one of its ```` ```cpp ```` blocks, each compiled as a test, is added,
 removed or changed. When every changed file is one of those, the ladder is skipped and its gate passes; any other
 file, a new directory included, runs the ladder, reduced for a compiler ladder as above, and the gate passes only if

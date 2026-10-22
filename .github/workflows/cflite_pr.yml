@@ -18,7 +18,7 @@ on:
     # What the fuzzers compile: the library, the targets and their build.
     paths:
       - 'include/**'
-      - 'fuzz/**'
+      - 'test/fuzz/**'
       - 'test/include/**'
       - '.clusterfuzzlite/**'
       - 'CMakeLists.txt'

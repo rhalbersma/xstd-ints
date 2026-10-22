@@ -1,6 +1,6 @@
 # llvm-mca's cycles per iteration
 
-Written by `bench/static_analysis.py`; do not edit. A kernel without a loop is one call per iteration;
+Written by `benchmark/static_analysis.py`; do not edit. A kernel without a loop is one call per iteration;
 a kernel marked *loop* is one trip of its innermost loop, so one selected bit for `compress_by_rank`,
 one mask bit for the walks, and one source bit for `expand_by_select`. A blank cell is a kernel the
 target does not have. Each summary, with the assembly it read, is beside this file.

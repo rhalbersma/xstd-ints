@@ -12,8 +12,8 @@ Euclidean and ceiling divisions are derived from those by their defining identit
 denominator, quotient, remainder) is packed into one 64-bit word, passed through SplitMix64's finalizer, and
 summed modulo 2^64, which is the digest the C++ sweep computes over xstd's results.
 
-    division_digests.py --write exhaustive/division_digests.txt
-    division_digests.py --check exhaustive/division_digests.txt
+    division_digests.py --write test/exhaustive/division_digests.txt
+    division_digests.py --check test/exhaustive/division_digests.txt
 """
 
 import argparse

@@ -22,7 +22,7 @@ on:
     branches: [ main ]
     paths:
       - 'include/xstd/ints/bit/detail/portable/**'
-      - 'constant_time/**'
+      - 'test/constant_time/**'
       - '.github/workflows/constant-time.yml'
 
 jobs:

@@ -22,7 +22,8 @@ namespace {
 // Wide enough that every operand, quotient and product of the fuzzed types is exact, MIN / -1 included.
 using wide = xstd::bit_int<256>;
 
-enum class rounding {
+enum class rounding
+{
         toward_zero,
         floor,
         ceil,
