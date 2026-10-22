@@ -28,3 +28,4 @@ promotes as the unqualified type does, `short const` to `int`.
 | :----- | :------- |
 | [`integer_class`](../concepts/integer_class.md) | states its closure requirements against it |
 | [`bit_mask`](../concepts/bit_mask.md) | states its operators' results against it |
+| [`boost::integral_promotion_t`](https://www.boost.org/doc/libs/latest/libs/type_traits/doc/html/boost_typetraits/reference/integral_promotion.html) | Boost.TypeTraits' counterpart, which keeps cv-qualifiers, promotes enumerations and leaves `char8_t`, `char16_t` and `char32_t` alone |

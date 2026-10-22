@@ -116,7 +116,7 @@ tidy() {
         "${cmake}" -S "${root}" -B "${dir}" -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER="clang++-${version}" \
                 -DCMAKE_CXX_FLAGS="$(gcc_for_clang "${version}")" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
                 -DCMAKE_CXX_SCAN_FOR_MODULES=OFF || return 1
-        (cd "${root}" && CLANG_TIDY_VERSION="${version}" BUILD_DIR="${dir}" TEST_DIR=test/src \
+        (cd "${root}" && CLANG_TIDY_VERSION="${version}" BUILD_DIR="${dir}" TEST_DIR=test \
                 SELF_SUFFICIENCY_REGEX="${dir}/test/header_self_sufficiency/.*" INCLUDE_EXCLUDE='include/xstd/config/*' \
                 ADAPTED_DIRS="${dir}/_deps/absl_int128-src ${dir}/_deps/boost_int128-src/include" \
                 REPORT="${out}/tidy-${version}-report.txt" bash "${script}")

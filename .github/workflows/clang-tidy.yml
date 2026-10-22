@@ -34,7 +34,8 @@ jobs:
       # be named as a directory: they live in the build tree, under a path only
       # this project's CMake knows.
       self_sufficiency_regex: ${{ github.workspace }}/build/test/header_self_sufficiency/.*
-      test_dir: test/src
+      # The Boost.Test sources under src/ and the death tests under death/.
+      test_dir: test
       # config/ is generated per platform and not a public header.
       include_exclude: include/xstd/config/*
       # The ext/ headers need the library each adapts: the two int128 libraries

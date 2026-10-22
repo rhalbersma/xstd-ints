@@ -54,7 +54,7 @@ counterpart sits beside its nearest kin, citing the kin's clause where one is sh
 
 | Entity | Kind | Counterpart |
 | :-- | :-- | :-- |
-| `promoted_t` | New | [[conv.prom]](https://eel.is/c++draft/conv.prom) none: the type promotion gives `+a` for an integral type, and the type itself otherwise |
+| `promoted_t` | New | [[conv.prom]](https://eel.is/c++draft/conv.prom) none in the standard: Boost.TypeTraits' `integral_promotion_t`, as the unqualified type of `+a` for an integral type and the type itself for any other, an enumeration included |
 | `bit_mask` | Generalizes | [[bitmask.types]](https://eel.is/c++draft/bitmask.types) as a concept: an unsigned integer, or any type that is no kind of integer and has the bitmask operators |
 | `div` | Extends | [[cstdlib.syn]](https://eel.is/c++draft/cstdlib.syn) [[cinttypes.syn]](https://eel.is/c++draft/cinttypes.syn) truncated division for every `integer`, returning `div_result<I>` at the operands' own width |
 | `div_result` | Generalizes | [[cstdlib.syn]](https://eel.is/c++draft/cstdlib.syn) [[cinttypes.syn]](https://eel.is/c++draft/cinttypes.syn) one aggregate for every `integer`, with [P3724R4](https://github.com/cplusplus/papers/issues/2354)'s member names `quotient` and `remainder` |
@@ -100,8 +100,14 @@ in another language where that counterpart shares its purpose. Papers are linked
 - **`integer`, `signed_integer`, `unsigned_integer`:** [P3701R0](https://wg21.link/p3701r0), *Concepts for integer
   types, not integral types* (Jan Schultke), whose built-in boundary these follow.
 - **`promoted_t`:** Boost.TypeTraits'
-  [`integral_promotion`](https://www.boost.org/doc/libs/latest/libs/type_traits/doc/html/boost_typetraits/reference/integral_promotion.html),
-  which keeps the cv-qualifiers, where `promoted_t<short const>` is `int`.
+  [`integral_promotion_t`](https://www.boost.org/doc/libs/latest/libs/type_traits/doc/html/boost_typetraits/reference/integral_promotion.html),
+  which `promoted_t` follows for `short`, `bool`, `wchar_t`, `unsigned __int128` and `_BitInt(N)`, and departs from
+  where `integral_promotion_t` does not give the type of `+a`, or gives what an enumeration's own operators do not:
+    - it keeps the cv-qualifiers, where `promoted_t<short const>` is `int`;
+    - it leaves `char8_t`, `char16_t` and `char32_t` as they are, where `+a` and `promoted_t` give `int`;
+    - it promotes an unscoped enumeration to `int`, where one such as libstdc++'s `ios_base::fmtflags` overloads `|`,
+      `&`, `^` and `~` to return the enumeration, which `bit_mask` asks `promoted_t` to be;
+    - it does not compile for a scoped enumeration such as `std::byte` or `std::launch`, as it applies `+` to it.
 - **`int128`, `uint128`:**
     - **C++:** Abseil's [`absl::int128` and `absl::uint128`](https://abseil.io/docs/cpp/guides/numeric#128-bit-integers)
       and [Boost.Int128](https://github.com/cppalliance/int128)'s pair are 128-bit integer classes, which the `ext`
