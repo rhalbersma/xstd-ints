@@ -141,6 +141,7 @@ libraries) in both Debug and Release mode:
 | Windows  | Clang-CL   | MSVC             | 19.1.5 (VS 2022)          | 20.1.8 (VS 2026)          | 20.1.8 (VS 2026-Preview)       | [![Clang-CL](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang-cl.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/clang-cl.yml) |
 | Windows  | MSVC       | MSVC             | 2022 (17.11+)             | 2026                      | 2026-Preview                   | [![MSVC](https://github.com/rhalbersma/xstd-ints/actions/workflows/msvc.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/msvc.yml) |
 | Web      | Emscripten | libc++           | 6.0.12                    | —                         | —                              | [![Emscripten](https://github.com/rhalbersma/xstd-ints/actions/workflows/emscripten.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/emscripten.yml) |
+| s390x    | GCC        | libstdc++        | 15                        | —                         | —                              | [![s390x](https://github.com/rhalbersma/xstd-ints/actions/workflows/s390x.yml/badge.svg)](https://github.com/rhalbersma/xstd-ints/actions/workflows/s390x.yml) |
 
 [CONTRIBUTING.md](CONTRIBUTING.md#the-ci-matrix) says what each channel is, and which legs run beyond the table.
 

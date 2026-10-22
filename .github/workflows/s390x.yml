@@ -1,0 +1,29 @@
+#          Copyright Rein Halbersma 2014-2026.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+name: s390x
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow_ref }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# No push or pull_request: the tests run under QEMU, several times slower
+# than on a native leg, so this leg runs nightly alone.
+on:
+  # canary.yml dispatches this nightly on main, the run its README badge shows.
+  workflow_dispatch:
+
+jobs:
+  # Big-endian: the one leg where an integer's first byte is its highest, so
+  # a byte copy or a test that assumes otherwise fails here and nowhere else.
+  s390x:
+    uses: rhalbersma/cpp-ci/.github/workflows/s390x.yml@1b5265b916e459cfe621a970e819b6b16a29c3c5 # main after rhalbersma/cpp-ci#81, whose install-gcc falls back to the Launchpad librarian when the toolchain PPA's mirror is down
+    with:
+      # Boost.Test, which vcpkg.json keeps out of its default features so that
+      # consuming this library resolves no Boost at all.
+      vcpkg_features: test

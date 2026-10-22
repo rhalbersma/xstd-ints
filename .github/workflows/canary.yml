@@ -37,7 +37,7 @@ jobs:
         run: |
           set -euo pipefail
           for workflow in gcc.yml emscripten.yml clang.yml clang-libc++.yml mingw.yml apple-clang.yml msvc.yml \
-                          clang-cl.yml; do
+                          clang-cl.yml s390x.yml; do
             gh workflow run "$workflow" --repo "$REPO" --ref "$REF"
           done
 
@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Install the GCC trunk snapshot
-        uses: rhalbersma/cpp-ci/.github/actions/install-gcc@2a7b3577168d22d62a9119b1913c6e0122e78994 # v0.14.0
+        uses: rhalbersma/cpp-ci/.github/actions/install-gcc@1b5265b916e459cfe621a970e819b6b16a29c3c5 # main after rhalbersma/cpp-ci#81, whose install-gcc falls back to the Launchpad librarian when the toolchain PPA's mirror is down
         with:
           version: "17"
           trunk: "true"
