@@ -194,13 +194,18 @@ change is meant to be comment-only, and that every marker still sits on the line
 
 ## Pull requests and CI
 
-A push to a pull request runs the whole matrix, dozens of jobs, and so does the merge into `main`. Pull requests in
-this repository whose CI runs side by side finish no sooner for it: each waits longer for its first result, and
-every merge makes the others' runs stale. CI is therefore a queue, one pull request long, in each repository.
+A push to a pull request runs dozens of jobs, though each compiler ladder builds only its floor and ceiling rungs,
+in Debug; a merge into `main` runs the other workflows again but no compiler ladder, as the nightly canary runs the
+full matrix there. Pull requests whose CI runs side by side finish no sooner for it: each waits longer for its first
+result, and every merge makes the others' runs stale. CI is therefore a queue, one pull request long, across
+xstd-ints, xstd-bits, xstd-misc and cpp-ci, which draw on one account's runners.
 
-- **One run in flight in this repository.** Before opening a pull request, or pushing to one, check that no other
-  pull request here has a run queued or in progress. If one has, finish the change locally and push only the
+- **One run in flight across the four repositories.** Before opening a pull request, or pushing to one, check that
+  xstd-ints, xstd-bits, xstd-misc and cpp-ci have no run queued or in progress, on a pull request or from a push to
+  `main`, as a merge's push runs take the same runners. If one has, finish the change locally and push only the
   branch, which runs nothing; open the pull request when the queue is empty.
+  A pull request that changes only paths `.github/workflows/changes.yml` lets skip the ladders runs only the light
+  checks, in minutes, and may open beside a long run.
 - **A pull request is what merges or reverts as one.** Changes that touch the same files, or that are only tests or
   only documentation, go in one pull request rather than one per issue. A pull request that changes only paths no
   ladder builds, which `.github/workflows/changes.yml` lists, skips the ladders and costs minutes rather than hours.

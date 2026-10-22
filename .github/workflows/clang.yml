@@ -13,29 +13,30 @@ concurrency:
   cancel-in-progress: true
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
+  # canary.yml dispatches this nightly on main, the run its README badge shows.
   workflow_dispatch:
-  # canary.yml calls this weekly, so the stub stays callable itself.
-  workflow_call:
 
 jobs:
   # Whether this pull request can reach what the ladders build; see changes.yml.
   changes:
     uses: ./.github/workflows/changes.yml
 
-  # One input, and not about the ladder: this library builds on every rung,
-  # which is what the shared workflow defaults to.
+  # This library builds on every rung, which is what the shared workflow
+  # defaults to.
   clang_ladder:
     needs: changes
     if: needs.changes.outputs.build == 'true'
-    uses: rhalbersma/cpp-ci/.github/workflows/clang.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
+    uses: rhalbersma/cpp-ci/.github/workflows/clang.yml@1b5265b916e459cfe621a970e819b6b16a29c3c5 # main after rhalbersma/cpp-ci#81, whose install-gcc falls back to the Launchpad librarian when the toolchain PPA's mirror is down
     with:
       # Boost.Test, which vcpkg.json keeps out of its default features so that
       # consuming this library resolves no Boost at all.
       vcpkg_features: test
+      # A pull request builds only the floor and ceiling rungs, in Debug. The
+      # all gate cannot see what was skipped, so the nightly canary covers it,
+      # building every rung and build type on main.
+      reduce_on_pr: true
 
   # The hardware kernels: x86-64-v3 makes PEXT and PDEP fast, which every leg
   # above leaves to the portable kernels. One rung and one build type suffice,
@@ -43,7 +44,7 @@ jobs:
   clang_bmi2:
     needs: changes
     if: needs.changes.outputs.build == 'true'
-    uses: rhalbersma/cpp-ci/.github/workflows/clang.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
+    uses: rhalbersma/cpp-ci/.github/workflows/clang.yml@1b5265b916e459cfe621a970e819b6b16a29c3c5 # main after rhalbersma/cpp-ci#81, whose install-gcc falls back to the Launchpad librarian when the toolchain PPA's mirror is down
     with:
       tiers: stable
       build_types: Release

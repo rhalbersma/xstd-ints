@@ -31,9 +31,9 @@ endif()
 
 find_package(Boost 1.70 CONFIG REQUIRED COMPONENTS unit_test_framework)
 
-# For the reason the unit tests relax it: <bit> carries unsigned __int128 into std::unsigned_integral only outside
+# gnu++ where the unit tests are: there <bit> carries unsigned __int128 into std::unsigned_integral only outside
 # __STRICT_ANSI__, and the 128-bit column would otherwise drop out of the instantiation lists.
-set(CMAKE_CXX_EXTENSIONS ON)
+set(CMAKE_CXX_EXTENSIONS ${${project_option_prefix}_STRICT_DROPS_UINT128})
 
 set(mull_config ${CMAKE_CURRENT_SOURCE_DIR}/mull.yml)
 set(test_source_dir ${PROJECT_SOURCE_DIR}/test/src)

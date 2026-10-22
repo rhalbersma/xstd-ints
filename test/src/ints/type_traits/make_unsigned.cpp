@@ -4,9 +4,9 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <xstd/ints/type_traits/make_unsigned.hpp> // make_unsigned
+#include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
 #include <test/constexpr_check.hpp>                // XSTD_CONSTEXPR_CHECK
 #include <test/exact_width_types.hpp>              // exact-width integer types
-#include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
 #include <boost/test/unit_test.hpp>                // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
 #include <complex>                                 // complex
 #include <concepts>                                // same_as
@@ -17,7 +17,10 @@ BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(TypeTraits)
 BOOST_AUTO_TEST_SUITE(MakeUnsigned)
 
-enum class color : unsigned { red = 1 };
+enum class color : unsigned
+{
+        red = 1,
+};
 
 // A named concept: a non-dependent invalid operand is a hard error on GCC.
 template<class T>

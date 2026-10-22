@@ -35,10 +35,10 @@ foreach(target_id fuzz_align fuzz_bit_permutation fuzz_div fuzz_shift fuzz_to_ch
         xstd::ints
     )
 
-    # gnu++ as in the test tree: <bit> takes unsigned __int128 only outside __STRICT_ANSI__.
+    # gnu++ where the test tree is: there <bit> takes unsigned __int128 only outside __STRICT_ANSI__.
     set_target_properties(
         ${target_id} PROPERTIES
-        CXX_EXTENSIONS ON
+        CXX_EXTENSIONS ${${project_option_prefix}_STRICT_DROPS_UINT128}
     )
 
     target_compile_options(

@@ -3,17 +3,73 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/ints/cstdlib.hpp>                   // complete arithmetic surface
 #include <xstd/ints/cstdint.hpp>                   // XSTD_HAS_BIT_INT, bit_int, bit_uint
+#include <xstd/ints/cstdlib.hpp>                   // complete arithmetic surface
 #include <xstd/ints/limits.hpp>                    // numeric_limits
 #include <xstd/ints/type_traits/make_unsigned.hpp> // make_unsigned_t
 #include <test/boost_test_print_log_value.hpp>     // NOLINT(misc-include-cleaner): registers Boost.Test printers
-#include <test/constexpr_check.hpp>                // XSTD_CONSTEXPR_CHECK_EQUAL
+#include <test/constexpr_check.hpp>                // XSTD_CONSTEXPR_CHECK_EQUAL, XSTD_CONSTEXPR_CHECK_EQUAL_IF
 #include <test/exact_width_types.hpp>              // exact-width integer type lists, bit-precise type lists
-#include <boost/test/unit_test.hpp>                // BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE
+#include <boost/test/unit_test.hpp>                // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE
+#include <tuple>                                   // tuple, tuple_size_v
 
 BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(CStdLib)
+
+// The front door opens on every room behind it: each function and the result type, reached through the umbrella alone.
+BOOST_AUTO_TEST_CASE(ReExportsTheWholeDirectory)
+{
+        XSTD_CONSTEXPR_CHECK_EQUAL(xstd::sign(-7), -1);
+        XSTD_CONSTEXPR_CHECK_EQUAL(xstd::abs(-7), 7);
+        XSTD_CONSTEXPR_CHECK_EQUAL(xstd::unsigned_abs(-7), 7U);
+        XSTD_CONSTEXPR_CHECK_EQUAL((xstd::div(-7, 2)), (xstd::div_result{-3, -1}));
+        XSTD_CONSTEXPR_CHECK_EQUAL((xstd::div_euclid(-7, -2)), (xstd::div_result{4, 1}));
+        XSTD_CONSTEXPR_CHECK_EQUAL((xstd::div_floor(-7, 2)), (xstd::div_result{-4, 1}));
+        XSTD_CONSTEXPR_CHECK_EQUAL((xstd::div_ceil(7, 2)), (xstd::div_result{4, -1}));
+}
+
+// Named concepts, not bare requires-expressions: outside a template an invalid requirement is ill-formed, not false.
+template<class T>
+concept has_sign = requires (T x) { xstd::sign(x); };
+
+template<class T>
+concept has_abs = requires (T x) { xstd::abs(x); };
+
+template<class T>
+concept has_unsigned_abs = requires (T x) { xstd::unsigned_abs(x); };
+
+template<class T>
+concept has_div = requires (T x) { xstd::div(x, x); };
+
+template<class T>
+concept has_div_euclid = requires (T x) { xstd::div_euclid(x, x); };
+
+template<class T>
+concept has_div_floor = requires (T x) { xstd::div_floor(x, x); };
+
+template<class T>
+concept has_div_ceil = requires (T x) { xstd::div_ceil(x, x); };
+
+// Integral types a user might pass for an integer: plain char is neither signed char nor unsigned char.
+using integral_non_integer_types = std::tuple<char, char8_t, bool>;
+
+// Integral, yet no integer: a character or a truth value has no sign, magnitude or quotient of its own.
+BOOST_AUTO_TEST_CASE_TEMPLATE(TurnsAwayCharacterTypesAndBool, T, integral_non_integer_types)
+{
+        // Beside the neighbours each function takes, so the probes cannot be false for every type.
+        static_assert(has_sign<signed char> and has_abs<signed char> and has_unsigned_abs<signed char>);
+        static_assert(has_div<unsigned char> and has_div_euclid<unsigned char> and has_div_floor<unsigned char> and has_div_ceil<unsigned char>);
+
+        static_assert(not has_sign<T>);
+        static_assert(not has_abs<T>);
+        static_assert(not has_unsigned_abs<T>);
+        static_assert(not has_div<T>);
+        static_assert(not has_div_euclid<T>);
+        static_assert(not has_div_floor<T>);
+        static_assert(not has_div_ceil<T>);
+
+        BOOST_CHECK(true);
+}
 
 // Without negative values, truncated, floored and Euclidean division are the same operation.
 BOOST_AUTO_TEST_CASE_TEMPLATE(UnsignedDivisionConventionsAgree, T, test::exact_width_unsigned_integer_types)
@@ -35,14 +91,14 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(ExactDivisionConventionsAgree, T, test::exact_widt
         XSTD_CONSTEXPR_CHECK_EQUAL_IF(test::has_constexpr_division<T>, (xstd::div(T{-6}, T{3})), (xstd::div_floor(T{-6}, T{3})));
 }
 
-// The postconditions of all six over every value a narrow width holds: the one place the whole surface can be swept.
+// The four divisions' postconditions over every pair a narrow width holds: the one place they can be swept whole.
 #ifdef XSTD_HAS_BIT_INT
 
 namespace {
 
 // The identity reconstructed in int: div_floor(1, -2) gives -1, and -1 * -2 is 2, which _BitInt(2) cannot hold.
 template<class T>
-auto reconstructs(T quotient, T denom, T remainder, T numer)
+[[nodiscard]] auto reconstructs(T quotient, T denom, T remainder, T numer)
         -> bool
 {
         return (static_cast<int>(quotient) * static_cast<int>(denom)) + static_cast<int>(remainder) == static_cast<int>(numer);
@@ -59,27 +115,29 @@ auto check_truncated(T numer, T denom)
         BOOST_CHECK(remainder == T(0) or xstd::sign(remainder) == xstd::sign(numer));
 }
 
-// Floored: the same identity, and a nonzero remainder carrying the denominator's sign.
+// Floored: the same identity and bound, and a nonzero remainder carrying the denominator's sign.
 template<class T>
 auto check_floored(T numer, T denom)
         -> void
 {
         auto const [quotient, remainder] = xstd::div_floor(numer, denom);
         BOOST_CHECK(reconstructs(quotient, denom, remainder, numer));
+        BOOST_CHECK(xstd::unsigned_abs(remainder) < xstd::unsigned_abs(denom));
         BOOST_CHECK(remainder == T(0) or xstd::sign(remainder) == xstd::sign(denom));
 }
 
-// Euclidean: the same identity, and a remainder that is never negative.
+// Euclidean: the same identity and bound, and a remainder that is never negative.
 template<class T>
 auto check_euclidean(T numer, T denom)
         -> void
 {
         auto const [quotient, remainder] = xstd::div_euclid(numer, denom);
         BOOST_CHECK(reconstructs(quotient, denom, remainder, numer));
+        BOOST_CHECK(xstd::unsigned_abs(remainder) < xstd::unsigned_abs(denom));
         BOOST_CHECK(xstd::sign(remainder) >= 0);
 }
 
-// Ceiling: the identity modulo 2^N, one above the floored quotient wherever that leaves a remainder, and its sign.
+// Ceiling: the identity modulo 2^N, one above the floored quotient where that leaves a remainder, the bound and sign.
 template<class T>
 auto check_ceiled(T numer, T denom)
         -> void
@@ -89,7 +147,11 @@ auto check_ceiled(T numer, T denom)
         BOOST_CHECK(static_cast<T>((static_cast<int>(quotient) * static_cast<int>(denom)) + static_cast<int>(remainder)) == numer);
         BOOST_CHECK(static_cast<int>(quotient) == static_cast<int>(floored.quotient) + (floored.remainder == T(0) ? 0 : 1));
         if constexpr (xstd::numeric_limits<T>::is_signed) {
+                BOOST_CHECK(xstd::unsigned_abs(remainder) < xstd::unsigned_abs(denom));
                 BOOST_CHECK(remainder == T(0) or xstd::sign(remainder) == -xstd::sign(denom));
+        } else {
+                // The remainder is the modular negative of one in [0, denom), so its negation is the one bounded.
+                BOOST_CHECK(static_cast<T>(T(0) - remainder) < denom);
         }
 }
 

@@ -16,7 +16,8 @@
 
 namespace xstd::ints::detail {
 
-enum class shift_direction : bool {
+enum class shift_direction : bool
+{
         left,
         right,
 };

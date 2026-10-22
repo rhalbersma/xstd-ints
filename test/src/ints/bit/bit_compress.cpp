@@ -5,7 +5,7 @@
 
 #include <xstd/ints/bit/bit_compress.hpp>                 // bit_compress
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_INT128, bit_int, bit_uint, uint128
+#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_BIT_INT, XSTD_HAS_INT128, bit_int, bit_uint, uint128
 #include <xstd/ints/limits.hpp>                           // numeric_limits
 #include <test/bit/oracle.hpp>                            // oracle_bit_compress
 #include <test/bit/shift_count.hpp>                       // shift_count_t
@@ -14,6 +14,7 @@
 #include <boost/test/unit_test.hpp>                       // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <array>                                          // array
 #include <bit>                                            // bit_compress
+#include <concepts>                                       // same_as
 #include <cstdint>                                        // int32_t, uint64_t
 #include <ranges>                                         // iota
 #include <tuple>                                          // tuple_cat
@@ -38,7 +39,7 @@ concept std_answers = requires (T x) { std::bit_compress(x, x); };
 #endif
 
 template<class T>
-constexpr auto agrees_at(int k)
+[[nodiscard]] constexpr auto agrees_at(int k)
         -> bool
 {
         auto agrees = true;
@@ -54,7 +55,7 @@ constexpr auto agrees_at(int k)
 
 // [bit.permute]'s example: bit_compress(0bABCD, 0b0101) is 0b00BD for any bits A, B, C and D.
 template<class T>
-constexpr auto compresses_as_the_example()
+[[nodiscard]] constexpr auto compresses_as_the_example()
         -> bool
 {
         auto agrees = true;
@@ -122,6 +123,13 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsUnsignedInteger)
 BOOST_AUTO_TEST_CASE_TEMPLATE(NoexceptFollowsTheOperators, T, permutable_types)
 {
         static_assert(noexcept(xstd::bit_compress(T{1}, T{1})) == xstd::nothrow_const_operators<T>);
+        BOOST_CHECK(true);
+}
+
+// The argument's own type, never the int that integral promotion makes of a narrow one.
+BOOST_AUTO_TEST_CASE_TEMPLATE(ReturnsTheArgumentsType, T, permutable_types)
+{
+        static_assert(std::same_as<decltype(xstd::bit_compress(T{1}, T{1})), T>);
         BOOST_CHECK(true);
 }
 

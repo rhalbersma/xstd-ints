@@ -53,6 +53,7 @@ set(cxx_compile_options_warnings
         # when an element type has no std::formatter of its own, which is why
         # absl::int128 is the first to draw it. Clang 23 and 24-SVN both.
         -Wno-lifetime-safety-invalidation
+        -Wno-lifetime-safety-experimental-invalidation # the same warning, as Clang 24-SVN renames it under -Wlifetime-safety-experimental
         # xstd::to_chars takes a char* range because std::to_chars does, so
         # every pointer step inside that contract draws this.
         -Wno-unsafe-buffer-usage
@@ -305,6 +306,73 @@ endif()
 if(TARGET absl::int128)
     cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/ints/ext/absl.hpp ${${project_id}_test_absl_int128})
     cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/ints/ext/absl/int128.hpp ${${project_id}_test_absl_int128})
+endif()
+
+# Each C++ example in the README is compiled as its own translation unit, so the documentation cannot drift from the
+# code: readme.example<n> is the README's n-th ```cpp block, with an empty main appended.
+set(readme ${PROJECT_SOURCE_DIR}/README.md)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${readme})
+file(READ ${readme} readme_text)
+# A Windows checkout may carry CRLF line endings, which the fences below are matched without.
+string(REPLACE "\r\n" "\n" readme_text "${readme_text}")
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/readme)
+set(readme_example 0)
+while(TRUE)
+    string(FIND "${readme_text}" "\n```cpp\n" fence)
+    if(fence EQUAL -1)
+        break()
+    endif()
+    math(EXPR fence "${fence} + 8")
+    string(SUBSTRING "${readme_text}" ${fence} -1 readme_text)
+    string(FIND "${readme_text}" "\n```\n" fence)
+    if(fence EQUAL -1)
+        message(FATAL_ERROR "README.md: a ```cpp block is never closed")
+    endif()
+    math(EXPR fence "${fence} + 1")
+    string(SUBSTRING "${readme_text}" 0 ${fence} example_code)
+    string(SUBSTRING "${readme_text}" ${fence} -1 readme_text)
+    math(EXPR readme_example "${readme_example} + 1")
+
+    # An example naming an <xstd/ints/ext/> header, or the library behind one, builds only where that library resolved.
+    set(example_libraries)
+    if(example_code MATCHES "<xstd/ints/ext/boost([.]hpp|/int128[.]hpp)>|<boost/int128")
+        list(APPEND example_libraries Boost::int128)
+    endif()
+    if(example_code MATCHES "<xstd/ints/ext/boost([.]hpp|/hash2[.]hpp)>|<boost/hash2/")
+        list(APPEND example_libraries Boost::hash2)
+    endif()
+    if(example_code MATCHES "<xstd/ints/ext/absl([.]hpp|/int128[.]hpp)>|<absl/")
+        list(APPEND example_libraries absl::int128)
+    endif()
+    set(example_unresolved)
+    foreach(library ${example_libraries})
+        if(NOT TARGET ${library})
+            list(APPEND example_unresolved ${library})
+        endif()
+    endforeach()
+    if(example_unresolved)
+        message(STATUS "readme.example${readme_example} is not built: ${example_unresolved} did not resolve")
+        continue()
+    endif()
+
+    set(example_source ${CMAKE_CURRENT_BINARY_DIR}/readme/example${readme_example}.cpp)
+    file(WRITE ${example_source} "${example_code}\nauto main() -> int {}\n")
+    add_executable(readme.example${readme_example} ${example_source})
+    target_link_libraries(
+        readme.example${readme_example} PRIVATE
+        xstd::ints
+        ${example_libraries}
+        ${project_id}_test_options
+    )
+    # An example declares its variables at namespace scope, where a reader would declare them in a function.
+    target_compile_options(
+        readme.example${readme_example} PRIVATE
+        $<$<CXX_COMPILER_ID:Clang>:-Wno-missing-variable-declarations -Wno-exit-time-destructors -Wno-unused-const-variable>
+    )
+    add_test(NAME readme.example${readme_example} COMMAND readme.example${readme_example})
+endwhile()
+if(readme_example EQUAL 0)
+    message(FATAL_ERROR "README.md has no ```cpp block, so no example of it is compiled")
 endif()
 
 set(current_source_dir ${CMAKE_CURRENT_SOURCE_DIR}/src)

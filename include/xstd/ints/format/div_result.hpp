@@ -42,7 +42,7 @@ struct formatter<xstd::div_result<I>, CharT> : formatter<basic_string_view<CharT
                 auto widened     = std::basic_string<CharT>{};
                 auto buffer      = std::array<char, N>{};
 
-                auto const append = [&](I const value) XSTD_CONSTEXPR_FORMAT -> void {
+                auto const append = [&](I const value) -> void {
                         auto const result = xstd::to_chars(buffer.data(), buffer.data() + N, value);
                         // The buffer is sized for base 2, so decimal always fits.
                         assert(result.ec == std::errc{});

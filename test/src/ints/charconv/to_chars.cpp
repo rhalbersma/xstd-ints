@@ -7,15 +7,18 @@
 #include <xstd/ints/concepts/integer.hpp>  // integer
 #include <xstd/ints/cstdint.hpp>           // XSTD_HAS_BIT_INT, XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
 #include <xstd/ints/limits.hpp>            // numeric_limits
-#include <test/exact_width_types.hpp>      // std_signed_types, exact_width_signed_integer_types, exact_width_unsigned_integer_types
+#include <test/exact_width_types.hpp>      // std_signed_types, xstd_signed_types, boost_signed_types, absl_signed_types, exact-width integer type lists
 #include <boost/test/unit_test.hpp>        // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <array>                           // array
 #include <charconv>                        // to_chars, to_chars_result
 #include <concepts>                        // same_as
-#include <cstddef>                         // size_t
+#include <cstddef>                         // byte, size_t
 #include <string>                          // string
 #include <string_view>                     // string_view
 #include <system_error>                    // errc
+#include <tuple>                           // tuple, tuple_cat
+#include <type_traits>                     // type_identity
+#include <utility>                         // declval
 
 BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(CharConv)
@@ -27,9 +30,12 @@ concept has_std_to_chars = requires (char* p, T value, int base) {
         { std::to_chars(p, p, value, base) } -> std::same_as<std::to_chars_result>;
 };
 
-// Also pins that the constrained overload wins by partial ordering rather than tying.
+// An ambiguous call would make it false, so each positive also pins that only one template's constraints hold.
 template<class T>
 concept has_xstd_to_chars = requires (char* p, T value) { xstd::to_chars(p, p, value, 10); };
+
+template<class T>
+concept has_max_size = requires { xstd::to_chars_max_size<T>; };
 
 template<class T>
 [[nodiscard]] auto rendered(T value, int base)
@@ -63,13 +69,13 @@ BOOST_AUTO_TEST_CASE(DelegatesWhereTheStandardLibraryCovers)
         static_assert(not has_std_to_chars<bool>);
         static_assert(not has_xstd_to_chars<bool>);
         static_assert(not has_xstd_to_chars<bool const>);
+        static_assert(not has_max_size<bool>);
+        static_assert(not has_max_size<bool const>);
         static_assert(has_xstd_to_chars<int>);
 
-        // The ambiguous case reaches the digits path too, as libstdc++ produces for __int128.
-        struct not_an_integer
-        {};
-
-        static_assert(not has_std_to_chars<not_an_integer>);
+        // std::byte holds bits, not a number: neither library writes one without a cast to an integer type.
+        static_assert(not has_std_to_chars<std::byte>);
+        static_assert(not has_xstd_to_chars<std::byte>);
 
 #ifdef XSTD_HAS_INT128
         static_assert(has_xstd_to_chars<xstd::int128>);
@@ -77,25 +83,39 @@ BOOST_AUTO_TEST_CASE(DelegatesWhereTheStandardLibraryCovers)
 #endif
 }
 
-BOOST_AUTO_TEST_CASE(StandardIntegralTypesDelegate)
+// char is the one character type [charconv.to.chars] declares; a char8_t reaches std::to_chars only by promotion.
+BOOST_AUTO_TEST_CASE(TakesCharAndNoOtherCharacterType)
 {
         static_assert(not xstd::integer<char>);
-        static_assert(has_std_to_chars<char>);
-        static_assert(has_std_to_chars<wchar_t>);
-        static_assert(has_std_to_chars<char8_t>);
-        static_assert(has_std_to_chars<char16_t>);
-        static_assert(has_std_to_chars<char32_t>);
-        static_assert(has_xstd_to_chars<char>);
-        static_assert(has_xstd_to_chars<wchar_t>);
-        static_assert(has_xstd_to_chars<char8_t>);
-        static_assert(has_xstd_to_chars<char16_t>);
-        static_assert(has_xstd_to_chars<char32_t>);
+        static_assert(has_std_to_chars<char> and has_xstd_to_chars<char> and has_max_size<char>);
+        static_assert(has_std_to_chars<char8_t> and not has_xstd_to_chars<char8_t> and not has_max_size<char8_t>);
+        static_assert(not has_xstd_to_chars<char16_t> and not has_max_size<char16_t>);
+        static_assert(not has_xstd_to_chars<char32_t> and not has_max_size<char32_t>);
+        static_assert(not has_xstd_to_chars<wchar_t> and not has_max_size<wchar_t>);
 }
 
-#ifdef XSTD_HAS_INT128
+// The 128-bit types in the build, by whichever path each takes: an integer-class type always by the digits path.
+using signed_128_bit_types = decltype(std::tuple_cat(
+        std::declval<test::xstd_signed_types>(), std::declval<test::boost_signed_types>(),
+        std::declval<test::absl_signed_types>()
+));
 
-// The load-bearing property: the two paths render byte-identically, at every base.
-BOOST_AUTO_TEST_CASE_TEMPLATE(DigitsPathMatchesTheStandard, T, test::std_signed_types)
+template<class Wide, class T>
+auto check_renders_as_the_standard_does(T value, int base)
+        -> void
+{
+        BOOST_CHECK_EQUAL(rendered(static_cast<Wide>(value), base), rendered_by_std(value, base));
+}
+
+template<class... Wide, class T>
+auto check_each_renders_as_the_standard_does(std::type_identity<std::tuple<Wide...>>, T value, int base)
+        -> void
+{
+        (check_renders_as_the_standard_does<Wide>(value, base), ...);
+}
+
+// Each 128-bit type writes a standard type's value as std::to_chars writes it from that standard type, at every base.
+BOOST_AUTO_TEST_CASE_TEMPLATE(Int128RendersAsTheStandardDoes, T, test::std_signed_types)
 {
         for (auto base = 2; base <= 36; ++base) {
                 for (auto const value : {
@@ -107,12 +127,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(DigitsPathMatchesTheStandard, T, test::std_signed_
                              xstd::numeric_limits<T>::min(),
                              xstd::numeric_limits<T>::max(),
                      }) {
-                        BOOST_CHECK_EQUAL(rendered(static_cast<xstd::int128>(value), base), rendered_by_std(value, base));
+                        check_each_renders_as_the_standard_does(std::type_identity<signed_128_bit_types>{}, value, base);
                 }
         }
 }
-
-#endif
 
 // The worst case is min() in base 2, where a signed type needs two more characters.
 BOOST_AUTO_TEST_CASE_TEMPLATE(MaxSizeHoldsTheWorstCase, T, test::exact_width_signed_integer_types)
@@ -132,6 +150,20 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(MaxSizeHoldsTheWorstCase, T, test::exact_width_sig
         auto const empty = xstd::to_chars(buffer.data(), buffer.data(), xstd::numeric_limits<T>::min(), 2);
         BOOST_CHECK(empty.ec == std::errc::value_too_large);
         BOOST_CHECK(empty.ptr == buffer.data());
+}
+
+// char delegates to std::to_chars, so its worst case is base 2 too, at a signedness the platform chooses.
+BOOST_AUTO_TEST_CASE(MaxSizeHoldsTheWorstCaseChar)
+{
+        using limits     = xstd::numeric_limits<char>;
+        auto const worst = limits::is_signed ? limits::min() : limits::max();
+
+        auto buffer       = std::array<char, xstd::to_chars_max_size<char>>{};
+        auto const result = xstd::to_chars(buffer.data(), buffer.data() + buffer.size(), worst, 2);
+        BOOST_CHECK(result.ec == std::errc{});
+
+        auto const short_buffer = xstd::to_chars(buffer.data(), buffer.data() + buffer.size() - 1, worst, 2);
+        BOOST_CHECK(short_buffer.ec == std::errc::value_too_large);
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(MaxSizeHoldsTheWorstCaseUnsigned, T, test::exact_width_unsigned_integer_types)
@@ -276,6 +308,14 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(UsableInAConstantExpressionPerTypeUnsigned, T, tes
 {
         static_assert(renders_at_compile_time(xstd::numeric_limits<T>::max(), 10));
         static_assert(renders_at_compile_time(xstd::numeric_limits<T>::min(), 36));
+}
+
+// No noexcept on either path, as the standard's own to_chars promises none.
+BOOST_AUTO_TEST_CASE_TEMPLATE(IsNotNoexcept, T, test::exact_width_integer_types)
+{
+        static_assert(not noexcept(xstd::to_chars(std::declval<char*>(), std::declval<char*>(), T{})));
+
+        BOOST_CHECK(true);
 }
 
 // A buffer too small reports value_too_large and leaves ptr at last, not a truncation.
