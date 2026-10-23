@@ -45,14 +45,39 @@ jobs:
       - name: Run the suite
         run: ctest --test-dir build --output-on-failure
 
-  # The one name branch protection can require, red unless the leg above succeeded.
+  # libstdc++'s own tests of what xstd mirrors, at the tag the stable gcc rung pins, on the libstdc++ they are written for.
+  libstdcxx:
+    name: libstdc++ 15
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install the stable rung and CMake
+        run: |
+          tools/setup-toolchain.sh --stable
+          pip install --quiet --user --break-system-packages --require-hashes -r tools/cmake-requirements.txt
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-15 -DBUILD_TESTING=OFF -DXSTD_INTS_STD_TEST_SUITES=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run the suite
+        run: ctest --test-dir build --output-on-failure
+
+  # The one name branch protection can require, red unless every leg above succeeded.
   all:
     name: std_test_suite / all
     if: always()
-    needs: libcxx
+    needs: [ libcxx, libstdcxx ]
     runs-on: ubuntu-24.04
     steps:
       - name: Every leg succeeded
         env:
-          RESULT: ${{ needs.libcxx.result }}
-        run: test "${RESULT}" = success
+          LIBCXX: ${{ needs.libcxx.result }}
+          LIBSTDCXX: ${{ needs.libstdcxx.result }}
+        run: test "${LIBCXX}" = success && test "${LIBSTDCXX}" = success

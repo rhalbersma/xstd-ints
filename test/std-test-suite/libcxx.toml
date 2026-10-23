@@ -17,7 +17,7 @@ take = [
 support = [
     { path = "libcxx/test/support/charconv_test_helpers.h" },
 ]
-include = ["xstd/ints.hpp"]
+include = ["xstd_types.hpp"]
 rewrite = [
     { regex = '(?<![\w:])std::(abs|bit_ceil|bit_floor|bit_width|byteswap|countl_one|countl_zero|countr_one|countr_zero|has_single_bit|is_signed|is_signed_v|is_unsigned|is_unsigned_v|make_signed|make_signed_t|make_unsigned|make_unsigned_t|numeric_limits|popcount|rotl|rotr|to_chars)\b', to = 'xstd::\1' },
 ]
@@ -56,3 +56,236 @@ sha256 = "ebb98e9cb04b73c9b9c53aeae29c39ed211551e5059688d51599dcfd4055f035"
 line = "test_abs<SignedChar, int>();"
 drop = true
 departure = "xstd::abs takes an integer, which plain char is not: like wchar_t and the charN_t, it is neither half of its own signed and unsigned pair"
+
+# The types xstd implements itself, which libc++ cannot name, run each bit test's assertions after the standard ones.
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bit.pow.two/bit_ceil.pass.cpp"
+sha256 = "9926b931672e7003b18de075981455e78ee3dbe7573a1a13ee1e1c121da27d9a"
+line = "static_assert(test<std::size_t>());"
+to = "static_assert(test<std::size_t>()); XSTD_TYPES_UNSIGNED_CONSTEXPR(XSTD_TYPES_STATIC_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bit.pow.two/bit_ceil.pass.cpp"
+sha256 = "9926b931672e7003b18de075981455e78ee3dbe7573a1a13ee1e1c121da27d9a"
+line = "test<std::size_t>();"
+to = "test<std::size_t>(); XSTD_TYPES_UNSIGNED(XSTD_TYPES_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bit.pow.two/bit_floor.pass.cpp"
+sha256 = "1fa337c2f040bdd99edc6879e19dafa3d4b08d05a45fbb92e97d123b8e613add"
+line = "static_assert(test<std::size_t>());"
+to = "static_assert(test<std::size_t>()); XSTD_TYPES_UNSIGNED_CONSTEXPR(XSTD_TYPES_STATIC_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bit.pow.two/bit_floor.pass.cpp"
+sha256 = "1fa337c2f040bdd99edc6879e19dafa3d4b08d05a45fbb92e97d123b8e613add"
+line = "test<std::size_t>();"
+to = "test<std::size_t>(); XSTD_TYPES_UNSIGNED(XSTD_TYPES_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bit.pow.two/bit_floor.pass.cpp"
+sha256 = "1fa337c2f040bdd99edc6879e19dafa3d4b08d05a45fbb92e97d123b8e613add"
+line = "LIBCPP_ASSERT_NOEXCEPT(std::bit_floor(T()));"
+to = "static_assert(noexcept(std::bit_floor(T())) == xstd::nothrow_const_operators<T>);"
+departure = "xstd's exception specification is nothrow_const_operators<T>: noexcept for the standard types and Boost's, not for absl::uint128, whose operators declare none"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bit.pow.two/bit_width.pass.cpp"
+sha256 = "8a523471797da6a9ee0e0aeb5d7148aa0901c0d6935ba933516f12af3ede8183"
+line = "static_assert(test<std::size_t>());"
+to = "static_assert(test<std::size_t>()); XSTD_TYPES_UNSIGNED_CONSTEXPR(XSTD_TYPES_STATIC_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bit.pow.two/bit_width.pass.cpp"
+sha256 = "8a523471797da6a9ee0e0aeb5d7148aa0901c0d6935ba933516f12af3ede8183"
+line = "test<std::size_t>();"
+to = "test<std::size_t>(); XSTD_TYPES_UNSIGNED(XSTD_TYPES_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bit.pow.two/bit_width.pass.cpp"
+sha256 = "8a523471797da6a9ee0e0aeb5d7148aa0901c0d6935ba933516f12af3ede8183"
+line = "ASSERT_NOEXCEPT(std::bit_width(T()));"
+to = "static_assert(noexcept(std::bit_width(T())) == xstd::nothrow_const_operators<T>);"
+departure = "xstd's exception specification is nothrow_const_operators<T>: noexcept for the standard types and Boost's, not for absl::uint128, whose operators declare none"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bit.pow.two/has_single_bit.pass.cpp"
+sha256 = "138c794a434df654fec91a6360faa0f42e363074fd2c61791909f4418a53dcd5"
+line = "static_assert(test<std::size_t>());"
+to = "static_assert(test<std::size_t>()); XSTD_TYPES_UNSIGNED_CONSTEXPR(XSTD_TYPES_STATIC_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bit.pow.two/has_single_bit.pass.cpp"
+sha256 = "138c794a434df654fec91a6360faa0f42e363074fd2c61791909f4418a53dcd5"
+line = "test<std::size_t>();"
+to = "test<std::size_t>(); XSTD_TYPES_UNSIGNED(XSTD_TYPES_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bit.pow.two/has_single_bit.pass.cpp"
+sha256 = "138c794a434df654fec91a6360faa0f42e363074fd2c61791909f4418a53dcd5"
+line = "ASSERT_NOEXCEPT(std::has_single_bit(T()));"
+to = "static_assert(noexcept(std::has_single_bit(T())) == xstd::nothrow_const_operators<T>);"
+departure = "xstd's exception specification is nothrow_const_operators<T>: noexcept for the standard types and Boost's, not for absl::uint128, whose operators declare none"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.count/countl_one.pass.cpp"
+sha256 = "b9ee69ec1f782abb8d59956138b655b45219399606e30d8d42cad02126d20aae"
+line = "static_assert(test<std::size_t>());"
+to = "static_assert(test<std::size_t>()); XSTD_TYPES_UNSIGNED_CONSTEXPR(XSTD_TYPES_STATIC_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.count/countl_one.pass.cpp"
+sha256 = "b9ee69ec1f782abb8d59956138b655b45219399606e30d8d42cad02126d20aae"
+line = "test<std::size_t>();"
+to = "test<std::size_t>(); XSTD_TYPES_UNSIGNED(XSTD_TYPES_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.count/countl_one.pass.cpp"
+sha256 = "b9ee69ec1f782abb8d59956138b655b45219399606e30d8d42cad02126d20aae"
+line = "ASSERT_NOEXCEPT(std::countl_one(T()));"
+to = "static_assert(noexcept(std::countl_one(T())) == xstd::nothrow_const_operators<T>);"
+departure = "xstd's exception specification is nothrow_const_operators<T>: noexcept for the standard types and Boost's, not for absl::uint128, whose operators declare none"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.count/countl_zero.pass.cpp"
+sha256 = "7a96942b7304b2f7f0876e777a8203f5f7919a76fe4682f997292feb5909d7dc"
+line = "static_assert(test<std::size_t>());"
+to = "static_assert(test<std::size_t>()); XSTD_TYPES_UNSIGNED_CONSTEXPR(XSTD_TYPES_STATIC_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.count/countl_zero.pass.cpp"
+sha256 = "7a96942b7304b2f7f0876e777a8203f5f7919a76fe4682f997292feb5909d7dc"
+line = "test<std::size_t>();"
+to = "test<std::size_t>(); XSTD_TYPES_UNSIGNED(XSTD_TYPES_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.count/countl_zero.pass.cpp"
+sha256 = "7a96942b7304b2f7f0876e777a8203f5f7919a76fe4682f997292feb5909d7dc"
+line = "ASSERT_NOEXCEPT(std::countl_zero(T()));"
+to = "static_assert(noexcept(std::countl_zero(T())) == xstd::nothrow_const_operators<T>);"
+departure = "xstd's exception specification is nothrow_const_operators<T>: noexcept for the standard types and Boost's, not for absl::uint128, whose operators declare none"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.count/countr_one.pass.cpp"
+sha256 = "5ae4fd04d70b4e5b5d483647aaf46f78fd126b2ae074e3d5a99a6eedfac7a876"
+line = "static_assert(test<std::size_t>());"
+to = "static_assert(test<std::size_t>()); XSTD_TYPES_UNSIGNED_CONSTEXPR(XSTD_TYPES_STATIC_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.count/countr_one.pass.cpp"
+sha256 = "5ae4fd04d70b4e5b5d483647aaf46f78fd126b2ae074e3d5a99a6eedfac7a876"
+line = "test<std::size_t>();"
+to = "test<std::size_t>(); XSTD_TYPES_UNSIGNED(XSTD_TYPES_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.count/countr_one.pass.cpp"
+sha256 = "5ae4fd04d70b4e5b5d483647aaf46f78fd126b2ae074e3d5a99a6eedfac7a876"
+line = "ASSERT_NOEXCEPT(std::countr_one(T()));"
+to = "static_assert(noexcept(std::countr_one(T())) == xstd::nothrow_const_operators<T>);"
+departure = "xstd's exception specification is nothrow_const_operators<T>: noexcept for the standard types and Boost's, not for absl::uint128, whose operators declare none"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.count/countr_zero.pass.cpp"
+sha256 = "a45bec6090f94d42c464ec21d8c4c22ac839821cacfa5c3334bb57e287022c45"
+line = "static_assert(test<std::size_t>());"
+to = "static_assert(test<std::size_t>()); XSTD_TYPES_UNSIGNED_CONSTEXPR(XSTD_TYPES_STATIC_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.count/countr_zero.pass.cpp"
+sha256 = "a45bec6090f94d42c464ec21d8c4c22ac839821cacfa5c3334bb57e287022c45"
+line = "test<std::size_t>();"
+to = "test<std::size_t>(); XSTD_TYPES_UNSIGNED(XSTD_TYPES_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.count/countr_zero.pass.cpp"
+sha256 = "a45bec6090f94d42c464ec21d8c4c22ac839821cacfa5c3334bb57e287022c45"
+line = "ASSERT_NOEXCEPT(std::countr_zero(T()));"
+to = "static_assert(noexcept(std::countr_zero(T())) == xstd::nothrow_const_operators<T>);"
+departure = "xstd's exception specification is nothrow_const_operators<T>: noexcept for the standard types and Boost's, not for absl::uint128, whose operators declare none"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.count/popcount.pass.cpp"
+sha256 = "310f09b1e7752effd26244e9e49505768f48861400765811bd6146b23145fd3b"
+line = "static_assert(test<std::size_t>());"
+to = "static_assert(test<std::size_t>()); XSTD_TYPES_UNSIGNED_CONSTEXPR(XSTD_TYPES_STATIC_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.count/popcount.pass.cpp"
+sha256 = "310f09b1e7752effd26244e9e49505768f48861400765811bd6146b23145fd3b"
+line = "test<std::size_t>();"
+to = "test<std::size_t>(); XSTD_TYPES_UNSIGNED(XSTD_TYPES_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.count/popcount.pass.cpp"
+sha256 = "310f09b1e7752effd26244e9e49505768f48861400765811bd6146b23145fd3b"
+line = "ASSERT_NOEXCEPT(std::popcount(T()));"
+to = "static_assert(noexcept(std::popcount(T())) == xstd::nothrow_const_operators<T>);"
+departure = "xstd's exception specification is nothrow_const_operators<T>: noexcept for the standard types and Boost's, not for absl::uint128, whose operators declare none"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.rot/rotl.pass.cpp"
+sha256 = "9a2c66bacbe6ad78eda6a5d8a619b8e116d85851f04f3f2836960e0c89dff6ea"
+line = "static_assert(test<std::size_t>());"
+to = "static_assert(test<std::size_t>()); XSTD_TYPES_UNSIGNED_CONSTEXPR(XSTD_TYPES_STATIC_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.rot/rotl.pass.cpp"
+sha256 = "9a2c66bacbe6ad78eda6a5d8a619b8e116d85851f04f3f2836960e0c89dff6ea"
+line = "test<std::size_t>();"
+to = "test<std::size_t>(); XSTD_TYPES_UNSIGNED(XSTD_TYPES_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.rot/rotl.pass.cpp"
+sha256 = "9a2c66bacbe6ad78eda6a5d8a619b8e116d85851f04f3f2836960e0c89dff6ea"
+line = "ASSERT_NOEXCEPT(std::rotl(T(), 0));"
+to = "static_assert(noexcept(std::rotl(T(), 0)) == xstd::nothrow_const_operators<T>);"
+departure = "xstd's exception specification is nothrow_const_operators<T>: noexcept for the standard types and Boost's, not for absl::uint128, whose operators declare none"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.rot/rotr.pass.cpp"
+sha256 = "8812fe2a13042f66f0884b56bcdb1056953853a0ba3df69104e117cd9b059991"
+line = "static_assert(test<std::size_t>());"
+to = "static_assert(test<std::size_t>()); XSTD_TYPES_UNSIGNED_CONSTEXPR(XSTD_TYPES_STATIC_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.rot/rotr.pass.cpp"
+sha256 = "8812fe2a13042f66f0884b56bcdb1056953853a0ba3df69104e117cd9b059991"
+line = "test<std::size_t>();"
+to = "test<std::size_t>(); XSTD_TYPES_UNSIGNED(XSTD_TYPES_TEST)"
+departure = "the types xstd implements itself run the same assertions: bit-precise widths to 256 and the 128-bit classes"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/bit/bitops.rot/rotr.pass.cpp"
+sha256 = "8812fe2a13042f66f0884b56bcdb1056953853a0ba3df69104e117cd9b059991"
+line = "ASSERT_NOEXCEPT(std::rotr(T(), 0));"
+to = "static_assert(noexcept(std::rotr(T(), 0)) == xstd::nothrow_const_operators<T>);"
+departure = "xstd's exception specification is nothrow_const_operators<T>: noexcept for the standard types and Boost's, not for absl::uint128, whose operators declare none"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/c.math/abs.pass.cpp"
+sha256 = "ebb98e9cb04b73c9b9c53aeae29c39ed211551e5059688d51599dcfd4055f035"
+line = "test_abs<std::int64_t, correct_size_int<std::int64_t>::type>();"
+to = "test_abs<std::int64_t, correct_size_int<std::int64_t>::type>(); XSTD_TYPES_SIGNED(XSTD_TYPES_TEST_ABS)"
+departure = "the signed types xstd implements itself run the same assertions, each its own promoted type"

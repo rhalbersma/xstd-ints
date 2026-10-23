@@ -270,7 +270,7 @@ if(PROJECT_IS_TOP_LEVEL)
 
     # Off by default, and outside BUILD_TESTING: the standard libraries' own test suites, fetched at the tags the stable
     # rungs pin and rewritten onto xstd's functions. enable_testing() stays here for the reason given above.
-    option(${project_option_prefix}_STD_TEST_SUITES "Run libc++'s tests of what xstd mirrors against it, under test/std-test-suite/" OFF)
+    option(${project_option_prefix}_STD_TEST_SUITES "Run libc++'s or libstdc++'s tests of what xstd mirrors against it, under test/std-test-suite/" OFF)
 
     if(${project_option_prefix}_STD_TEST_SUITES)
         enable_testing()

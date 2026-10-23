@@ -21,4 +21,22 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(cpp-ci)
 include(${cpp-ci_SOURCE_DIR}/cmake/StdTestSuite.cmake)
 
-std_test_suite(libcxx MAPPING libcxx.toml LINK_LIBRARIES xstd::ints)
+# The 128-bit class types the tests also run over, beside the bit-precise widths include/xstd_types.hpp names.
+include(${PROJECT_SOURCE_DIR}/test/cmake/int128.cmake)
+if(NOT ${project_id}_test_boost_int128 OR NOT ${project_id}_test_absl_int128)
+    message(FATAL_ERROR "The standard library test suites run over Boost.Int128's and Abseil's 128-bit types; find or fetch both")
+endif()
+
+add_library(${project_id}_std_test_suite_types INTERFACE)
+target_include_directories(${project_id}_std_test_suite_types INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(${project_id}_std_test_suite_types INTERFACE xstd::ints ${${project_id}_test_boost_int128} ${${project_id}_test_absl_int128})
+
+# Each suite against the standard library it is written for: libc++'s tests reach libc++'s own extensions, and
+# libstdc++'s support headers include its internal ones.
+include(CheckCXXSymbolExists)
+check_cxx_symbol_exists(_LIBCPP_VERSION version ${project_id}_std_test_suite_libcpp)
+if(${project_id}_std_test_suite_libcpp)
+    std_test_suite(libcxx MAPPING libcxx.toml LINK_LIBRARIES ${project_id}_std_test_suite_types)
+else()
+    std_test_suite(libstdcxx MAPPING libstdcxx.toml LINK_LIBRARIES ${project_id}_std_test_suite_types)
+endif()
