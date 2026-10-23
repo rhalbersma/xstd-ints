@@ -20,8 +20,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  # libc++'s own <bit> tests, fetched at the tag the stable clang rung pins and rewritten onto xstd's functions, on the
-  # libc++ they are written for. The fetch is sparse and the tests are small, so the leg takes about a minute.
+  # libc++'s own tests of what xstd mirrors, fetched at the tag the stable clang rung pins and rewritten onto xstd, on
+  # the libc++ they are written for. The fetch is sparse and the tests are small, so the leg takes about a minute.
   libcxx:
     name: libc++ 22
     runs-on: ubuntu-24.04

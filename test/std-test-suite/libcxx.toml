@@ -3,15 +3,19 @@
 #    (See accompanying file LICENSE_1_0.txt or copy at
 #          http://www.boost.org/LICENSE_1_0.txt)
 
-# libc++'s <bit> tests, rewritten from std:: onto the functions xstd mirrors, with each departure from them named.
+# libc++'s tests of what xstd mirrors, rewritten from std:: onto xstd::, with each departure from them named.
 
 [libcxx]
 take = [
     { path = "libcxx/test/std/numerics/bit", select = 'std::(bit_ceil|bit_floor|bit_width|byteswap|countl_one|countl_zero|countr_one|countr_zero|has_single_bit|popcount|rotl|rotr)\b' },
+    { path = "libcxx/test/std/numerics/c.math", select = 'struct correct_size_int' },
+    { path = "libcxx/test/std/utilities/meta/meta.trans/meta.trans.sign" },
+    { path = "libcxx/test/std/utilities/meta/meta.unary/meta.unary.prop", select = 'std::is_(un)?signed\b' },
+    { path = "libcxx/test/std/language.support/support.limits/limits" },
 ]
-include = ["xstd/ints/bit.hpp"]
+include = ["xstd/ints.hpp"]
 rewrite = [
-    { regex = 'std::(bit_ceil|bit_floor|bit_width|byteswap|countl_one|countl_zero|countr_one|countr_zero|has_single_bit|popcount|rotl|rotr)\b', to = 'xstd::\1' },
+    { regex = '(?<![\w:])std::(abs|bit_ceil|bit_floor|bit_width|byteswap|countl_one|countl_zero|countr_one|countr_zero|has_single_bit|is_signed|is_signed_v|is_unsigned|is_unsigned_v|make_signed|make_signed_t|make_unsigned|make_unsigned_t|numeric_limits|popcount|rotl|rotr)\b', to = 'xstd::\1' },
 ]
 
 [[libcxx.assertion]]
@@ -20,3 +24,38 @@ sha256 = "9926b931672e7003b18de075981455e78ee3dbe7573a1a13ee1e1c121da27d9a"
 line = "LIBCPP_ASSERT_NOEXCEPT(std::bit_ceil(T()));"
 drop = true
 departure = "[bit.pow.two] gives bit_ceil a precondition and no noexcept, which libc++ adds as an extension and xstd does not"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/c.math/abs.pass.cpp"
+sha256 = "ebb98e9cb04b73c9b9c53aeae29c39ed211551e5059688d51599dcfd4055f035"
+line = "ASSERT_SAME_TYPE(decltype(std::abs(neg_val)), Result);"
+to = "ASSERT_SAME_TYPE(decltype(std::abs(neg_val)), Source);"
+departure = "xstd::abs returns its argument's type, where [c.math.abs] promotes one narrower than int"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/c.math/abs.pass.cpp"
+sha256 = "ebb98e9cb04b73c9b9c53aeae29c39ed211551e5059688d51599dcfd4055f035"
+line = "test_abs<long double, long double>();"
+drop = true
+departure = "xstd::abs takes integers only; [c.math.abs]'s floating-point overloads stay <cmath>'s"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/c.math/abs.pass.cpp"
+sha256 = "ebb98e9cb04b73c9b9c53aeae29c39ed211551e5059688d51599dcfd4055f035"
+line = "test_abs<double, double>();"
+drop = true
+departure = "xstd::abs takes integers only; [c.math.abs]'s floating-point overloads stay <cmath>'s"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/c.math/abs.pass.cpp"
+sha256 = "ebb98e9cb04b73c9b9c53aeae29c39ed211551e5059688d51599dcfd4055f035"
+line = "test_abs<float, float>();"
+drop = true
+departure = "xstd::abs takes integers only; [c.math.abs]'s floating-point overloads stay <cmath>'s"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/numerics/c.math/abs.pass.cpp"
+sha256 = "ebb98e9cb04b73c9b9c53aeae29c39ed211551e5059688d51599dcfd4055f035"
+line = "test_abs<SignedChar, int>();"
+drop = true
+departure = "xstd::abs takes an integer, which plain char is not: like wchar_t and the charN_t, it is neither half of its own signed and unsigned pair"

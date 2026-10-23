@@ -147,7 +147,7 @@ codegen() {
         return "${status}"
 }
 
-# The std-test-suite job: libc++'s own <bit> tests, rewritten onto xstd, on the libc++ they are written for.
+# The std-test-suite job: libc++'s tests of what xstd mirrors, rewritten onto it, on the libc++ they are written for.
 std_test_suite() {
         local dir="${out}/std-test-suite"
         "${cmake}" -S "${root}" -B "${dir}" -G Ninja -DCMAKE_CXX_COMPILER=clang++-22 -DCMAKE_CXX_FLAGS=-stdlib=libc++ \
