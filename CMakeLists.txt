@@ -268,6 +268,15 @@ if(PROJECT_IS_TOP_LEVEL)
         add_subdirectory(test/constant_time)
     endif()
 
+    # Off by default, and outside BUILD_TESTING: the standard libraries' own test suites, fetched at the tags the stable
+    # rungs pin and rewritten onto xstd's functions. enable_testing() stays here for the reason given above.
+    option(${project_option_prefix}_STD_TEST_SUITES "Run libc++'s <bit> tests against the bit functions, under test/std-test-suite/" OFF)
+
+    if(${project_option_prefix}_STD_TEST_SUITES)
+        enable_testing()
+        add_subdirectory(test/std-test-suite)
+    endif()
+
     # Off by default, and outside BUILD_TESTING: the examples are programs that use the library the way its users do,
     # each checking its own output. enable_testing() stays here for the reason given above.
     option(${project_option_prefix}_BUILD_EXAMPLES "Build the example programs under examples/" OFF)

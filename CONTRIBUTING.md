@@ -19,6 +19,7 @@ This repository enforces its quality bar through CI rather than through review d
 - **Line and branch coverage stay at 100%, project-wide and for the PR's own diff.** [`codecov.yml`](.github/codecov.yml) sets both the `project` and `patch` Codecov status checks to a 100% target with zero tolerance, backed by the [Coverage workflow](.github/workflows/coverage.yml)'s own `gcovr --fail-under-line 100 --fail-under-branch 100` gate. New code needs a test that exercises every line and branch it adds; existing coverage may not regress. Excluded from this bar: `assert(...)` contract checks (their failure path is undefined behavior by design, not something a correct test can hit), compiler-synthesized `= default;` special members (gcov cannot attribute a hit counter to them regardless of how often they run), and the exception-unwinding branch gcc/gcov attaches to any call that could throw (`--exclude-throw-branches`/`--exclude-unreachable-branches`) - not a code path a test can meaningfully hit either.
 - **No new sanitizer failures.** The [sanitizers workflow](.github/workflows/sanitizers.yml) must stay green.
 - **The bit kernels compile to the instructions they exist for.** The [Codegen workflow](.github/workflows/codegen.yml) compiles [`test/codegen/`](test/codegen) to assembly with the stable rung's GCC and Clang, on an x86-64 and an AArch64 runner, and reads it with FileCheck - see [Codegen tests](#codegen-tests) below.
+- **The standard library's own tests pass.** The [Std test suite workflow](.github/workflows/std-test-suite.yml) runs libc++'s tests of the `<bit>` functions against xstd's, on clang 22 with libc++ - see [Standard library test suites](#standard-library-test-suites) below.
 - **The public headers stay self-sufficient.** Each header is compiled as its own translation unit (see `test/CMakeLists.txt`); don't rely on include order from another header.
 - **The README's examples compile.** `test/CMakeLists.txt` writes each ```` ```cpp ```` block of [README.md](README.md) to a translation unit of its own, `readme.example<n>`, built with the tests' warnings on every leg. An example that includes an `<xstd/ints/ext/>` header is built where the library it adapts resolved, as that header's own test is, and one that names `xstd::int128` or `xstd::uint128` tests `XSTD_HAS_INT128` itself, as a test source does.
 - **The documentation site builds.** The [Pages workflow](.github/workflows/pages.yml) runs `mkdocs build --strict` over the README and `doc/`, which fails on a link to a page or an anchor that does not exist, and deploys the site from `main`.
@@ -198,7 +199,8 @@ run-clang-tidy -quiet -p build "$PWD/build/test/header_self_sufficiency/.*"
 - the suite on GCC 15, 16 and 17-SVN, and on clang 22, 23 and 24-SVN, each clang on its own rung's libstdc++;
 - the libc++ 22, i686 and BMI2 legs;
 - clang-tidy 22, 23 and 24-SVN, with the clang-tidy job's passes;
-- the codegen tests on GCC 15 and clang 22, and the three consumption models;
+- the codegen tests on GCC 15 and clang 22, libc++'s `<bit>` tests on clang 22 with libc++, and the three consumption
+  models;
 - the coverage gate, gcovr over GCC 15's instrumented suite at 100% of lines and branches;
 - the sanitizer ladder's five kinds on the stable rung: ASan and LSan, and UBSan, on GCC 15; UBSan and implicit conversions on clang 22.
 
@@ -280,6 +282,22 @@ ctest --test-dir build-codegen --output-on-failure
 ```
 
 Each test leaves its assembly beside it as `build-codegen/test/codegen/<source>.<configuration>.s`. The [Codegen workflow](.github/workflows/codegen.yml) runs them with GCC 15 and Clang 22 on `ubuntu-24.04` and `ubuntu-24.04-arm`.
+
+## Standard library test suites
+
+libc++, libstdc++ and the MSVC STL each test their `<bit>` against the standard's paragraphs, written by people with no stake in xstd. [`test/std-test-suite/`](test/std-test-suite) runs libc++'s tests against xstd's functions through cpp-ci's [`std_test_suite`](https://github.com/rhalbersma/cpp-ci#standard-library-test-suites) adapter, which fetches the suite at the tag the stable clang rung pins, `llvmorg-22.1.8`, sparse and shallow, and rewrites a copy of each test in the build tree. The cpp-ci commit is the one [`clang.yml`](.github/workflows/clang.yml) pins, read from that file, so moving the pin moves the suite.
+
+[`libcxx.toml`](test/std-test-suite/libcxx.toml) is the mapping: it takes `libcxx/test/std/numerics/bit/`, keeps the files that call one of the twelve functions xstd mirrors there (`bit_ceil`, `bit_floor`, `bit_width`, `byteswap`, `countl_one`, `countl_zero`, `countr_one`, `countr_zero`, `has_single_bit`, `popcount`, `rotl`, `rotr`), and rewrites each `std::` call to `xstd::`. All twelve run, their negative cases included: `bool`, the character types, the signed types, enumerations and class types must stay uncallable. One assertion is dropped, with its reason in the mapping: `bit_ceil.pass.cpp`'s `LIBCPP_ASSERT_NOEXCEPT`, since [[bit.pow.two]](https://eel.is/c++draft/bit.pow.two) gives `bit_ceil` a precondition and no `noexcept`, which libc++ adds as an extension. An upstream edit to a mapped file fails configuration, so it is reviewed rather than carried.
+
+It needs git and Python 3.11 or later, and no Boost:
+
+```sh
+cmake -S . -B build-std -DCMAKE_CXX_COMPILER=clang++-22 -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ -DBUILD_TESTING=OFF -DXSTD_INTS_STD_TEST_SUITES=ON
+cmake --build build-std --parallel
+ctest --test-dir build-std --output-on-failure
+```
+
+`build-std/test/std-test-suite/std-test-suite/libcxx/manifest.json` lists every file under the taken directory with what became of it. The [Std test suite workflow](.github/workflows/std-test-suite.yml) runs it on every pull request and push to `main`.
 
 ## Exhaustive sweeps
 
@@ -425,6 +443,7 @@ The names to tick under branch protection, exactly as GitHub reports them:
 | `msvc_analyze / all` | `/analyze` on the same three rungs |
 | `sanitizers / all` | all fifteen sanitizer legs |
 | `site` | `mkdocs build --strict`: every page and anchor a link names exists |
+| `std_test_suite / all` | libc++'s `<bit>` tests against xstd, on clang 22 with libc++ |
 
 Codecov posts two more, `codecov/project` and `codecov/patch`, which carry the same 100% bar for the whole
 tree and for the diff.
@@ -438,7 +457,7 @@ branch protection requires: a leg name changes whenever a rung moves, the gate n
 The gate is this repository's own job, carrying the required name, beside the shared ladder it waits for. On a
 pull request, [`changes.yml`](.github/workflows/changes.yml) first compares the diff with the paths no ladder
 builds: prose, `doc/`, the suites with workflows of their own (`benchmark/`,
-`test/codegen/`, `test/constant_time/`, `test/exhaustive/`, `test/fuzz/`, `test/mutation/`, `test/proofs/`), `tools/`, `mkdocs.yml`, and the workflows that are not
+`test/codegen/`, `test/constant_time/`, `test/exhaustive/`, `test/fuzz/`, `test/mutation/`, `test/proofs/`, `test/std-test-suite/`), `tools/`, `mkdocs.yml`, and the workflows that are not
 ladders. The README counts as prose unless one of its ```` ```cpp ```` blocks, each compiled as a test, is added,
 removed or changed. When every changed file is one of those, the ladder is skipped and its gate passes; any other
 file, a new directory included, runs the ladder, reduced for a compiler ladder as above, and the gate passes only if

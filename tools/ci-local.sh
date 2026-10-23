@@ -33,7 +33,7 @@ cmake="${local_bin}/cmake"
 readonly cmake
 
 # Cheapest first, so a slip in formatting or a workflow fails in seconds rather than after an hour of compiling.
-readonly all_legs=(format actionlint site gcc-15 clang-22 tidy-22 codegen consumption gcc-16 clang-23 gcc-17 clang-24
+readonly all_legs=(format actionlint site gcc-15 clang-22 tidy-22 codegen std-test-suite consumption gcc-16 clang-23 gcc-17 clang-24
                    libcxx-22 i686 gcc-bmi2 clang-bmi2 tidy-23 tidy-24 coverage asan-gcc ubsan-gcc ubsan-clang
                    implicit-conversion)
 readonly quick_legs=(format actionlint gcc-15 clang-22 tidy-22)
@@ -147,6 +147,15 @@ codegen() {
         return "${status}"
 }
 
+# The std-test-suite job: libc++'s own <bit> tests, rewritten onto xstd, on the libc++ they are written for.
+std_test_suite() {
+        local dir="${out}/std-test-suite"
+        "${cmake}" -S "${root}" -B "${dir}" -G Ninja -DCMAKE_CXX_COMPILER=clang++-22 -DCMAKE_CXX_FLAGS=-stdlib=libc++ \
+                -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ -DBUILD_TESTING=OFF -DXSTD_INTS_STD_TEST_SUITES=ON \
+                && "${cmake}" --build "${dir}" --parallel "${jobs}" \
+                && ctest --test-dir "${dir}" --output-on-failure --parallel "${jobs}"
+}
+
 # The consumption job: install the library, then build and run each consumer model under test/consumer.
 consumption() {
         local dir="${out}/consumption" model
@@ -201,6 +210,7 @@ run_leg() {
                 clang-bmi2) suite "$1" clang++-22 "$(gcc_for_clang 22) -march=x86-64-v3" Release ;;
                 tidy-2[234]) tidy "${1#tidy-}" ;;
                 codegen) codegen ;;
+                std-test-suite) std_test_suite ;;
                 consumption) consumption ;;
                 coverage) coverage ;;
                 asan-gcc) sanitizer "$1" g++-15 "-fsanitize=address -fno-omit-frame-pointer" ASAN_OPTIONS=detect_leaks=1 ;;
