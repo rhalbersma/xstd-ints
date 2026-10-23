@@ -80,7 +80,7 @@ jobs:
           persist-credentials: false
 
       - name: Install the GCC trunk snapshot
-        uses: rhalbersma/cpp-ci/.github/actions/install-gcc@30a05bf5457c28e3e0f2e394fbcb89fc3c45b405 # main after rhalbersma/cpp-ci#84, which rewrites the support headers a mapping names
+        uses: rhalbersma/cpp-ci/.github/actions/install-gcc@8d989e750414e76f4832e755e1439ccf449f904c # main after rhalbersma/cpp-ci#85, which reads dg-xfail-run-if and pins GCC trunk's test suite
         with:
           version: "17"
           trunk: "true"
