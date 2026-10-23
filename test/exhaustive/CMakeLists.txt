@@ -48,7 +48,14 @@ FetchContent_Declare(
     GIT_TAG 529dfac199191a7eb8a5eb7f47256eff6d0db993 # boost-1.90.0
     SOURCE_SUBDIR headers-only
 )
-FetchContent_MakeAvailable(simde multiprecision)
+# Boost.Multiprecision's standalone mode still includes <boost/config.hpp>, which a runner without Boost lacks.
+FetchContent_Declare(
+    boost_config
+    GIT_REPOSITORY https://github.com/boostorg/config.git
+    GIT_TAG a7d5a9b05d70c9cfea980dc3539ca3d3461411b3 # boost-1.90.0
+    SOURCE_SUBDIR headers-only
+)
+FetchContent_MakeAvailable(simde multiprecision boost_config)
 
 add_executable(exhaustive_differential differential.cpp)
 target_include_directories(exhaustive_differential PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -56,6 +63,7 @@ target_include_directories(
     exhaustive_differential SYSTEM PRIVATE
     ${simde_SOURCE_DIR}
     ${multiprecision_SOURCE_DIR}/include
+    ${boost_config_SOURCE_DIR}/include
 )
 target_link_libraries(
     exhaustive_differential PRIVATE
