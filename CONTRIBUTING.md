@@ -301,10 +301,11 @@ ctest --test-dir build-std --output-on-failure
 
 ## Exhaustive sweeps
 
-At 16 bits every pair of operands can be tried, 2^32 of them, which the unit tests and the fuzzer only sample. The two sweeps under [`test/exhaustive/`](test/exhaustive) try them all, split across the machine's threads:
+At 16 bits every pair of operands can be tried, 2^32 of them, which the unit tests and the fuzzer only sample. Two sweeps under [`test/exhaustive/`](test/exhaustive) try them all, split across the machine's threads, and a third holds xstd to implementations it did not write:
 
 - `exhaustive_bit_permutation` checks every 16-bit source against every 16-bit mask with the fuzzer's own properties: `bit_compress` and `bit_expand` against their oracles and each other, the portable kernels at `std::size_t` width, and, where the build has fast BMI2, `PEXT` and `PDEP` against those kernels.
 - `exhaustive_division` checks `div`, `div_floor`, `div_euclid` and `div_ceil` over every `int16_t` and `uint16_t` pair in their domain against their postconditions, which alone determine each result, and folds every numerator, denominator, quotient and remainder into a digest per type and function. Those eight digests must equal [`test/exhaustive/division_digests.txt`](test/exhaustive/division_digests.txt), which [`tools/division_digests.py`](tools/division_digests.py) computes with numpy's own division routines, so the postconditions are held to an implementation xstd did not write.
+- `exhaustive_differential` compares the portable kernels with code from elsewhere: [SIMDe](https://github.com/simd-everywhere/simde)'s portable `_pext_u64` and `_pdep_u64` over every 16-bit pair and 2^26 pseudo-random 64-bit pairs, [sux](https://github.com/vigna/sux)'s `select64` with `bit_select` at every rank, and, where Clang offers `unsigned _BitInt(1024)`, [Boost.Multiprecision](https://github.com/boostorg/multiprecision)'s `cpp_int` with every `<bit>` function and the four permutations from 129 to 1024 bits. CMake fetches each library, pinned by commit, as headers only; sux needs GCC or Clang, and a comparison whose library is missing is skipped.
 
 They take minutes each and need no Boost:
 
