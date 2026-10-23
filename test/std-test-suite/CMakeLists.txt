@@ -3,8 +3,12 @@
 #    (See accompanying file LICENSE_1_0.txt or copy at
 #          http://www.boost.org/LICENSE_1_0.txt)
 
-# The dialect the suites' markers are read against, and the one the library's own tests build at.
-set(CMAKE_CXX_STANDARD 23)
+# The dialect the suites' markers are read against: the library's own C++23, or a -std= that names one, GNU mode and all.
+if(CMAKE_CXX_FLAGS MATCHES "-std=gnu")
+    set(CMAKE_CXX_EXTENSIONS ON)
+elseif(NOT CMAKE_CXX_FLAGS MATCHES "-std=")
+    set(CMAKE_CXX_STANDARD 23)
+endif()
 
 # cpp-ci at the commit the clang ladder pins, so libc++'s tag is the one its stable rung builds with.
 file(STRINGS "${PROJECT_SOURCE_DIR}/.github/workflows/clang.yml" cpp_ci_uses REGEX "uses: rhalbersma/cpp-ci/[^@]+@[0-9a-f]+" LIMIT_COUNT 1)
@@ -35,8 +39,13 @@ target_link_libraries(${project_id}_std_test_suite_types INTERFACE xstd::ints ${
 # libstdc++'s support headers include its internal ones.
 include(CheckCXXSymbolExists)
 check_cxx_symbol_exists(_LIBCPP_VERSION version ${project_id}_std_test_suite_libcpp)
+# The development rung reads GCC trunk's tests of what only trunk has, which are C++29's: -std=gnu++2d in the flags.
+set(${project_option_prefix}_STD_TEST_SUITE_RUNG stable CACHE STRING "The cpp-ci rung whose pinned suite runs: stable, or development")
+set(rung ${${project_option_prefix}_STD_TEST_SUITE_RUNG})
 if(${project_id}_std_test_suite_libcpp)
-    std_test_suite(libcxx MAPPING libcxx.toml LINK_LIBRARIES ${project_id}_std_test_suite_types)
+    std_test_suite(libcxx MAPPING libcxx.toml LINK_LIBRARIES ${project_id}_std_test_suite_types RUNG ${rung})
+elseif(rung STREQUAL "development")
+    std_test_suite(libstdcxx MAPPING libstdcxx-trunk.toml LINK_LIBRARIES ${project_id}_std_test_suite_types RUNG ${rung})
 else()
-    std_test_suite(libstdcxx MAPPING libstdcxx.toml LINK_LIBRARIES ${project_id}_std_test_suite_types)
+    std_test_suite(libstdcxx MAPPING libstdcxx.toml LINK_LIBRARIES ${project_id}_std_test_suite_types RUNG ${rung})
 endif()

@@ -69,15 +69,43 @@ jobs:
       - name: Run the suite
         run: ctest --test-dir build --output-on-failure
 
+  # GCC trunk's tests of what only trunk has, the bit permutations and the shifts, at the commit the development gcc
+  # rung pins. They are C++29's, which CMake cannot yet name, so the flags carry the dialect. Each is a compile test.
+  libstdcxx_trunk:
+    name: libstdc++ 17-SVN
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install the GCC trunk snapshot
+        uses: rhalbersma/cpp-ci/.github/actions/install-gcc@30a05bf5457c28e3e0f2e394fbcb89fc3c45b405 # main after rhalbersma/cpp-ci#84, which rewrites the support headers a mapping names
+        with:
+          version: "17"
+          trunk: "true"
+
+      - name: Install CMake
+        run: |
+          pip install --quiet --user --break-system-packages --require-hashes -r tools/cmake-requirements.txt
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-17 -DCMAKE_CXX_FLAGS=-std=gnu++2d -DBUILD_TESTING=OFF -DXSTD_INTS_STD_TEST_SUITES=ON -DXSTD_INTS_STD_TEST_SUITE_RUNG=development
+
+      - name: Build the suite
+        run: cmake --build build --parallel
+
   # The one name branch protection can require, red unless every leg above succeeded.
   all:
     name: std_test_suite / all
     if: always()
-    needs: [ libcxx, libstdcxx ]
+    needs: [ libcxx, libstdcxx, libstdcxx_trunk ]
     runs-on: ubuntu-24.04
     steps:
       - name: Every leg succeeded
         env:
           LIBCXX: ${{ needs.libcxx.result }}
           LIBSTDCXX: ${{ needs.libstdcxx.result }}
-        run: test "${LIBCXX}" = success && test "${LIBSTDCXX}" = success
+          LIBSTDCXX_TRUNK: ${{ needs.libstdcxx_trunk.result }}
+        run: test "${LIBCXX}" = success && test "${LIBSTDCXX}" = success && test "${LIBSTDCXX_TRUNK}" = success

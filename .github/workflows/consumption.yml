@@ -21,4 +21,4 @@ on:
 
 jobs:
   consumption:
-    uses: rhalbersma/cpp-ci/.github/workflows/consumption.yml@6f431bb43037778af31b6a7010498e0a2145b381 # main after rhalbersma/cpp-ci#84, which rewrites the support headers a mapping names
+    uses: rhalbersma/cpp-ci/.github/workflows/consumption.yml@30a05bf5457c28e3e0f2e394fbcb89fc3c45b405 # main after rhalbersma/cpp-ci#84, which rewrites the support headers a mapping names
