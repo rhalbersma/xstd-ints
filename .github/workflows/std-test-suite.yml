@@ -1,0 +1,58 @@
+#          Copyright Rein Halbersma 2014-2026.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+name: Std test suite
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  # libc++'s own <bit> tests, fetched at the tag the stable clang rung pins and rewritten onto xstd's functions, on the
+  # libc++ they are written for. The fetch is sparse and the tests are small, so the leg takes about a minute.
+  libcxx:
+    name: libc++ 22
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install the stable rung and CMake
+        run: |
+          tools/setup-toolchain.sh --stable
+          pip install --quiet --user --break-system-packages --require-hashes -r tools/cmake-requirements.txt
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_CXX_COMPILER=clang++-22 -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ -DBUILD_TESTING=OFF -DXSTD_INTS_STD_TEST_SUITES=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run the suite
+        run: ctest --test-dir build --output-on-failure
+
+  # The one name branch protection can require, red unless the leg above succeeded.
+  all:
+    name: std_test_suite / all
+    if: always()
+    needs: libcxx
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Every leg succeeded
+        env:
+          RESULT: ${{ needs.libcxx.result }}
+        run: test "${RESULT}" = success
