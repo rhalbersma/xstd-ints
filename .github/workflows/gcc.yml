@@ -28,7 +28,7 @@ jobs:
   gcc_ladder:
     needs: changes
     if: needs.changes.outputs.build == 'true'
-    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@acbf0f0b3ed85dcabf95cd0d4806c0fa7c451ecf # main after rhalbersma/cpp-ci#83, which adds the standard library test suites' adapters
+    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@6f431bb43037778af31b6a7010498e0a2145b381 # main after rhalbersma/cpp-ci#84, which rewrites the support headers a mapping names
     with:
       # Boost.Test, which vcpkg.json keeps out of its default features so that
       # consuming this library resolves no Boost at all.
@@ -43,7 +43,7 @@ jobs:
   i686:
     needs: changes
     if: needs.changes.outputs.build == 'true'
-    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@acbf0f0b3ed85dcabf95cd0d4806c0fa7c451ecf # main after rhalbersma/cpp-ci#83, which adds the standard library test suites' adapters
+    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@6f431bb43037778af31b6a7010498e0a2145b381 # main after rhalbersma/cpp-ci#84, which rewrites the support headers a mapping names
     with:
       arch: x86
       tiers: stable
@@ -56,7 +56,7 @@ jobs:
   gcc_bmi2:
     needs: changes
     if: needs.changes.outputs.build == 'true'
-    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@acbf0f0b3ed85dcabf95cd0d4806c0fa7c451ecf # main after rhalbersma/cpp-ci#83, which adds the standard library test suites' adapters
+    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@6f431bb43037778af31b6a7010498e0a2145b381 # main after rhalbersma/cpp-ci#84, which rewrites the support headers a mapping names
     with:
       tiers: stable
       build_types: Release
@@ -72,7 +72,7 @@ jobs:
   gcc_cxx29:
     needs: changes
     if: needs.changes.outputs.build == 'true'
-    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@acbf0f0b3ed85dcabf95cd0d4806c0fa7c451ecf # main after rhalbersma/cpp-ci#83, which adds the standard library test suites' adapters
+    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@6f431bb43037778af31b6a7010498e0a2145b381 # main after rhalbersma/cpp-ci#84, which rewrites the support headers a mapping names
     with:
       tiers: development
       build_types: Debug

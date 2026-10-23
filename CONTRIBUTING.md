@@ -296,15 +296,16 @@ libc++, libstdc++ and the MSVC STL each test their standard library against the 
 | `utilities/meta/meta.trans/meta.trans.sign/` | 2 | `make_signed`, `make_unsigned` |
 | `utilities/meta/meta.unary/meta.unary.prop/` | 2 | `is_signed`, `is_unsigned` |
 | `language.support/support.limits/limits/` | 34 | `numeric_limits` |
+| `utilities/charconv/charconv.to.chars/` | 1 | `to_chars`, through the support header `charconv_test_helpers.h` |
 
-All 51 run, their negative cases included: `bool`, the character types, the signed types, enumerations and class types must stay out of the bit functions. Where xstd departs from what a test asserts, the mapping replaces or drops that one line and names the departure:
+All 52 run, their negative cases included: `bool`, the character types, the signed types, enumerations and class types must stay out of the bit functions. Where xstd departs from what a test asserts, the mapping replaces or drops that one line and names the departure:
 
 - `bit_ceil.pass.cpp`'s `LIBCPP_ASSERT_NOEXCEPT` is dropped: [[bit.pow.two]](https://eel.is/c++draft/bit.pow.two) gives `bit_ceil` a precondition and no `noexcept`, which libc++ adds as an extension.
 - `abs.pass.cpp` drops the plain `char` case and the three floating-point ones, since `xstd::abs` takes an `integer`; its return type, the promoted one, is [[c.math.abs]](https://eel.is/c++draft/c.math.abs)'s.
 
 An upstream edit to a mapped file fails configuration, so it is reviewed rather than carried. Three of these tests check libc++'s own choices, `make_signed` and `make_unsigned` of its enumerations and `numeric_limits<T>::traps`, and fail against libstdc++ with or without xstd; the suite is run on libc++, the library it is written for.
 
-libc++'s `to_chars` tests are not taken: every `std::to_chars` call in `charconv.to.chars/integral.pass.cpp` sits in the support header `charconv_test_helpers.h`, which the adapter puts on the include path as it is, so no rewrite would reach one.
+Every `std::to_chars` call in `charconv.to.chars/integral.pass.cpp` sits in the support header `charconv_test_helpers.h`, which the mapping's `support` key names: the adapter rewrites a copy of it as it does a test and puts the copy ahead of the original on the include path.
 
 It needs git and Python 3.11 or later, and no Boost:
 

@@ -12,10 +12,14 @@ take = [
     { path = "libcxx/test/std/utilities/meta/meta.trans/meta.trans.sign" },
     { path = "libcxx/test/std/utilities/meta/meta.unary/meta.unary.prop", select = 'std::is_(un)?signed\b' },
     { path = "libcxx/test/std/language.support/support.limits/limits" },
+    { path = "libcxx/test/std/utilities/charconv/charconv.to.chars" },
+]
+support = [
+    { path = "libcxx/test/support/charconv_test_helpers.h" },
 ]
 include = ["xstd/ints.hpp"]
 rewrite = [
-    { regex = '(?<![\w:])std::(abs|bit_ceil|bit_floor|bit_width|byteswap|countl_one|countl_zero|countr_one|countr_zero|has_single_bit|is_signed|is_signed_v|is_unsigned|is_unsigned_v|make_signed|make_signed_t|make_unsigned|make_unsigned_t|numeric_limits|popcount|rotl|rotr)\b', to = 'xstd::\1' },
+    { regex = '(?<![\w:])std::(abs|bit_ceil|bit_floor|bit_width|byteswap|countl_one|countl_zero|countr_one|countr_zero|has_single_bit|is_signed|is_signed_v|is_unsigned|is_unsigned_v|make_signed|make_signed_t|make_unsigned|make_unsigned_t|numeric_limits|popcount|rotl|rotr|to_chars)\b', to = 'xstd::\1' },
 ]
 
 [[libcxx.assertion]]
