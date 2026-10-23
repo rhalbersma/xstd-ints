@@ -53,6 +53,7 @@ set(cxx_compile_options_warnings
         # when an element type has no std::formatter of its own, which is why
         # absl::int128 is the first to draw it. Clang 23 and 24-SVN both.
         -Wno-lifetime-safety-invalidation
+        -Wno-lifetime-safety-experimental-invalidation # the same warning, as Clang 24-SVN renames it under -Wlifetime-safety-experimental
         # xstd::to_chars takes a char* range because std::to_chars does, so
         # every pointer step inside that contract draws this.
         -Wno-unsafe-buffer-usage
@@ -210,7 +211,8 @@ find_package(
 )
 
 # The one 128-bit type the suite tests against that xstd knows nothing about,
-# and not a hard dependency. Ships with Boost 1.92; until then the fetch below.
+# and not a hard dependency. A pre-release library in no Boost release yet,
+# so CI and a local build alike take the fetch below.
 option(${project_option_prefix}_TEST_FETCH_BOOST_INT128 "Fetch Boost.Int128 when no installed copy is found" ON)
 
 find_package(boost_int128 CONFIG QUIET)
@@ -306,6 +308,73 @@ if(TARGET absl::int128)
     cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/ints/ext/absl/int128.hpp ${${project_id}_test_absl_int128})
 endif()
 
+# Each C++ example in the README is compiled as its own translation unit, so the documentation cannot drift from the
+# code: readme.example<n> is the README's n-th ```cpp block, with an empty main appended.
+set(readme ${PROJECT_SOURCE_DIR}/README.md)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${readme})
+file(READ ${readme} readme_text)
+# A Windows checkout may carry CRLF line endings, which the fences below are matched without.
+string(REPLACE "\r\n" "\n" readme_text "${readme_text}")
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/readme)
+set(readme_example 0)
+while(TRUE)
+    string(FIND "${readme_text}" "\n```cpp\n" fence)
+    if(fence EQUAL -1)
+        break()
+    endif()
+    math(EXPR fence "${fence} + 8")
+    string(SUBSTRING "${readme_text}" ${fence} -1 readme_text)
+    string(FIND "${readme_text}" "\n```\n" fence)
+    if(fence EQUAL -1)
+        message(FATAL_ERROR "README.md: a ```cpp block is never closed")
+    endif()
+    math(EXPR fence "${fence} + 1")
+    string(SUBSTRING "${readme_text}" 0 ${fence} example_code)
+    string(SUBSTRING "${readme_text}" ${fence} -1 readme_text)
+    math(EXPR readme_example "${readme_example} + 1")
+
+    # An example naming an <xstd/ints/ext/> header, or the library behind one, builds only where that library resolved.
+    set(example_libraries)
+    if(example_code MATCHES "<xstd/ints/ext/boost([.]hpp|/int128[.]hpp)>|<boost/int128")
+        list(APPEND example_libraries Boost::int128)
+    endif()
+    if(example_code MATCHES "<xstd/ints/ext/boost([.]hpp|/hash2[.]hpp)>|<boost/hash2/")
+        list(APPEND example_libraries Boost::hash2)
+    endif()
+    if(example_code MATCHES "<xstd/ints/ext/absl([.]hpp|/int128[.]hpp)>|<absl/")
+        list(APPEND example_libraries absl::int128)
+    endif()
+    set(example_unresolved)
+    foreach(library ${example_libraries})
+        if(NOT TARGET ${library})
+            list(APPEND example_unresolved ${library})
+        endif()
+    endforeach()
+    if(example_unresolved)
+        message(STATUS "readme.example${readme_example} is not built: ${example_unresolved} did not resolve")
+        continue()
+    endif()
+
+    set(example_source ${CMAKE_CURRENT_BINARY_DIR}/readme/example${readme_example}.cpp)
+    file(WRITE ${example_source} "${example_code}\nauto main() -> int {}\n")
+    add_executable(readme.example${readme_example} ${example_source})
+    target_link_libraries(
+        readme.example${readme_example} PRIVATE
+        xstd::ints
+        ${example_libraries}
+        ${project_id}_test_options
+    )
+    # An example declares its variables at namespace scope, where a reader would declare them in a function.
+    target_compile_options(
+        readme.example${readme_example} PRIVATE
+        $<$<CXX_COMPILER_ID:Clang>:-Wno-missing-variable-declarations -Wno-exit-time-destructors -Wno-unused-const-variable>
+    )
+    add_test(NAME readme.example${readme_example} COMMAND readme.example${readme_example})
+endwhile()
+if(readme_example EQUAL 0)
+    message(FATAL_ERROR "README.md has no ```cpp block, so no example of it is compiled")
+endif()
+
 set(current_source_dir ${CMAKE_CURRENT_SOURCE_DIR}/src)
 file(
     GLOB_RECURSE targets
@@ -333,3 +402,44 @@ foreach(t ${targets})
 
     add_test(NAME ${target_id} COMMAND ${target_id} --log_level=all)
 endforeach()
+
+# Each source under death/ calls one function once with an argument its precondition refuses, and
+# passes only by failing that assert, which death/expect_assert.cmake checks as its test launcher.
+# They are registered only where assert is live, so where neither CMAKE_CXX_FLAGS nor the
+# build type's own flags define NDEBUG, and not under a multi-config generator, whose build type is
+# chosen after configuring. Not on Windows either, where a failed assert in the debug runtime opens a
+# dialog that no CI runner dismisses.
+get_property(${project_id}_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+string(TOUPPER "${CMAKE_BUILD_TYPE}" build_type_id)
+if(NOT WIN32 AND NOT ${project_id}_is_multi_config AND NOT "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${build_type_id}}" MATCHES "NDEBUG")
+    set(death_source_dir ${CMAKE_CURRENT_SOURCE_DIR}/death)
+    file(
+        GLOB_RECURSE death_sources
+        CONFIGURE_DEPENDS
+        RELATIVE ${death_source_dir}
+        ${death_source_dir}/*.cpp
+    )
+    foreach(d ${death_sources})
+        # A case over Boost.Int128, the one type outside <bit> and std::to_chars on every platform, needs it resolved.
+        file(STRINGS ${death_source_dir}/${d} death_needs_boost_int128 REGEX "#include[ \t]*<boost/int128")
+        if(death_needs_boost_int128 AND NOT TARGET Boost::int128)
+            continue()
+        endif()
+
+        # death/ints/cstdlib/div/zero_denominator.cpp is death.ints.cstdlib.div.zero_denominator.
+        string(REGEX REPLACE "[.]cpp$" "" death_id ${d})
+        string(REPLACE "/" "." death_id death.${death_id})
+
+        add_executable(${death_id} death/${d})
+        target_link_libraries(
+            ${death_id} PRIVATE
+            xstd::ints
+            ${${project_id}_test_boost_int128}
+            ${project_id}_test_options
+        )
+
+        # The launcher comes before the cross-compiling emulator, so the script runs whatever the test would.
+        set_target_properties(${death_id} PROPERTIES TEST_LAUNCHER "${CMAKE_COMMAND};-P;${death_source_dir}/expect_assert.cmake;--")
+        add_test(NAME ${death_id} COMMAND ${death_id})
+    endforeach()
+endif()

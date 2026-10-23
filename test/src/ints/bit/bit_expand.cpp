@@ -5,7 +5,7 @@
 
 #include <xstd/ints/bit/bit_expand.hpp>                   // bit_expand
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_INT128, bit_int, bit_uint, uint128
+#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_BIT_INT, XSTD_HAS_INT128, bit_int, bit_uint, uint128
 #include <xstd/ints/limits.hpp>                           // numeric_limits
 #include <test/bit/oracle.hpp>                            // oracle_bit_expand
 #include <test/bit/shift_count.hpp>                       // shift_count_t
@@ -13,6 +13,8 @@
 #include <test/exact_width_types.hpp>                     // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>                       // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <array>                                          // array
+#include <bit>                                            // bit_expand
+#include <concepts>                                       // same_as
 #include <cstdint>                                        // int32_t, uint64_t
 #include <ranges>                                         // iota
 #include <tuple>                                          // tuple_cat
@@ -29,8 +31,15 @@ using permutable_types = decltype(std::tuple_cat(
 template<class T>
 concept xstd_answers = requires (T x) { xstd::bit_expand(x, x); };
 
+#if defined(__cpp_lib_bitops) and __cpp_lib_bitops >= 202607L
+
 template<class T>
-constexpr auto agrees_at(int k)
+concept std_answers = requires (T x) { std::bit_expand(x, x); };
+
+#endif
+
+template<class T>
+[[nodiscard]] constexpr auto agrees_at(int k)
         -> bool
 {
         auto agrees = true;
@@ -46,7 +55,7 @@ constexpr auto agrees_at(int k)
 
 // [bit.permute]'s example: bit_expand(0bABCD, 0b0101) is 0b0C0D for any bits A, B, C and D.
 template<class T>
-constexpr auto expands_as_the_example()
+[[nodiscard]] constexpr auto expands_as_the_example()
         -> bool
 {
         auto agrees = true;
@@ -126,6 +135,13 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(NoexceptFollowsTheOperators, T, permutable_types)
         BOOST_CHECK(true);
 }
 
+// The argument's own type, never the int that integral promotion makes of a narrow one.
+BOOST_AUTO_TEST_CASE_TEMPLATE(ReturnsTheArgumentsType, T, permutable_types)
+{
+        static_assert(std::same_as<decltype(xstd::bit_expand(T{1}, T{1})), T>);
+        BOOST_CHECK(true);
+}
+
 // An empty mask deposits nothing, a full one everything, and the top bit alone receives the bottom bit.
 BOOST_AUTO_TEST_CASE_TEMPLATE(TheExtremeMasks, T, permutable_types)
 {
@@ -150,6 +166,23 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheOracle, T, permutable_types)
         test::for_each_sweep_pair<T>([&](T x, T m) -> void { mismatches += xstd::bit_expand(x, m) == test::oracle_bit_expand(x, m) ? 0UZ : 1UZ; });
         BOOST_CHECK_EQUAL(mismatches, 0UZ);
 }
+
+#if defined(__cpp_lib_bitops) and __cpp_lib_bitops >= 202607L
+
+// Where <bit> answers, xstd either forwards to it or keeps its own faster kernels, and either way agrees with it.
+BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithStdWhereStdAnswers, T, permutable_types)
+{
+        if constexpr (std_answers<T>) {
+                static_assert(xstd::bit_expand(xstd::numeric_limits<T>::max(), test::alternating_ones<T>()) == std::bit_expand(xstd::numeric_limits<T>::max(), test::alternating_ones<T>()));
+                auto mismatches = 0UZ;
+                test::for_each_sweep_pair<T>([&](T x, T m) -> void { mismatches += xstd::bit_expand(x, m) == std::bit_expand(x, m) ? 0UZ : 1UZ; });
+                BOOST_CHECK_EQUAL(mismatches, 0UZ);
+        } else {
+                BOOST_CHECK(true);
+        }
+}
+
+#endif
 
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()

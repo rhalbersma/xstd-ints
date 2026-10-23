@@ -1,0 +1,1019 @@
+# g++-15 (Ubuntu 15.2.0-14ubuntu1~24~ppa1) 15.2.0, -march=haswell -O3, analysed by llvm-mca -mcpu=haswell
+
+## reverse_by_swaps, whole function
+
+	movabsq $1085102592571150095, %rdx
+	movq %rdi, %rax
+	movabsq $6148914691236517205, %rcx
+	bswap %rax
+	movq %rax, %rdi
+	salq $4, %rax
+	shrq $4, %rdi
+	andq %rdx, %rdi
+	movabsq $-1085102592571150096, %rdx
+	andq %rdx, %rax
+	orq %rax, %rdi
+	movabsq $3689348814741910323, %rax
+	movq %rdi, %rdx
+	salq $2, %rdi
+	shrq $2, %rdx
+	andq %rax, %rdx
+	movabsq $-3689348814741910324, %rax
+	andq %rax, %rdi
+	orq %rdi, %rdx
+	movq %rdx, %rax
+	addq %rdx, %rdx
+	shrq %rax
+	andq %rcx, %rax
+	movabsq $-6148914691236517206, %rcx
+	andq %rcx, %rdx
+	orq %rdx, %rax
+
+Iterations:        1000
+Instructions:      26000
+Total Cycles:      9011
+Total uOps:        27000
+
+Dispatch Width:    4
+uOps Per Cycle:    3.00
+IPC:               2.89
+Block RThroughput: 6.8
+
+## compress_by_rank, loop body
+
+	leaq -1(%rdi), %rdx
+	andn %rdx, %rdi, %rax
+	andq %rsi, %rax
+	popcntq %rax, %rax
+	shlx %rax, %r8, %rax
+	orq %rax, %rcx
+	andq %rdx, %rdi
+	jne .L15
+
+Iterations:        1000
+Instructions:      8000
+Total Cycles:      2009
+Total uOps:        8000
+
+Dispatch Width:    4
+uOps Per Cycle:    3.98
+IPC:               3.98
+Block RThroughput: 2.0
+
+## compress_pext, whole function
+
+	pext %rsi, %rdi, %rax
+
+Iterations:        1000
+Instructions:      1000
+Total Cycles:      1005
+Total uOps:        1000
+
+Dispatch Width:    4
+uOps Per Cycle:    1.00
+IPC:               1.00
+Block RThroughput: 1.0
+
+## compress_by_walk_with_if, loop body
+
+	movq %rsi, %r8
+	movq %r9, %rdi
+	movq %rax, %rcx
+	andq %rsi, %rdi
+	negq %r8
+	orq %rdx, %rcx
+	testq %rdi, %r8
+	cmovne %rcx, %rax
+	addq %rdx, %rdx
+	blsr %rsi, %rsi
+	jne .L21
+
+Iterations:        1000
+Instructions:      11000
+Total Cycles:      4004
+Total uOps:        12000
+
+Dispatch Width:    4
+uOps Per Cycle:    3.00
+IPC:               2.75
+Block RThroughput: 3.0
+
+## compress_by_parallel_suffix, whole function
+
+	movq %rsi, %rax
+	andq %rsi, %rdi
+	notq %rax
+	movq %rdi, %rcx
+	leaq (%rax,%rax), %rdi
+	salq $2, %rax
+	xorq %rdi, %rax
+	leaq 0(,%rax,4), %rdx
+	xorq %rdx, %rax
+	movq %rax, %rdx
+	salq $4, %rdx
+	xorq %rdx, %rax
+	movq %rax, %rdx
+	salq $8, %rdx
+	xorq %rdx, %rax
+	movq %rax, %rdx
+	salq $16, %rdx
+	xorq %rdx, %rax
+	movq %rax, %rdx
+	salq $32, %rdx
+	xorq %rdx, %rax
+	movq %rsi, %rdx
+	andq %rax, %rdx
+	andn %rsi, %rax, %rsi
+	andn %rdi, %rax, %rax
+	movq %rdx, %r8
+	shrq %r8
+	orq %r8, %rsi
+	movq %rcx, %r8
+	andq %rdx, %r8
+	andn %rcx, %rdx, %rdx
+	shrq %r8
+	orq %rdx, %r8
+	leaq (%rax,%rax), %rdx
+	xorq %rax, %rdx
+	movq %r8, %r9
+	leaq 0(,%rdx,4), %rcx
+	xorq %rcx, %rdx
+	movq %rdx, %rcx
+	salq $4, %rcx
+	xorq %rcx, %rdx
+	movq %rdx, %rcx
+	salq $8, %rcx
+	xorq %rcx, %rdx
+	movq %rdx, %rcx
+	salq $16, %rcx
+	xorq %rcx, %rdx
+	movq %rdx, %rcx
+	salq $32, %rcx
+	xorq %rcx, %rdx
+	movq %rsi, %rcx
+	andq %rdx, %rcx
+	andn %rsi, %rdx, %rsi
+	andn %rax, %rdx, %rdx
+	leaq (%rdx,%rdx), %rax
+	andq %rcx, %r9
+	xorq %rdx, %rax
+	movq %rcx, %rdi
+	andn %r8, %rcx, %rcx
+	shrq $2, %r9
+	shrq $2, %rdi
+	orq %rcx, %r9
+	leaq 0(,%rax,4), %rcx
+	orq %rsi, %rdi
+	xorq %rcx, %rax
+	movq %r9, %r8
+	movq %rax, %rcx
+	salq $4, %rcx
+	xorq %rcx, %rax
+	movq %rax, %rcx
+	salq $8, %rcx
+	xorq %rcx, %rax
+	movq %rax, %rcx
+	salq $16, %rcx
+	xorq %rcx, %rax
+	movq %rax, %rcx
+	salq $32, %rcx
+	xorq %rcx, %rax
+	movq %rdi, %rcx
+	andq %rax, %rcx
+	andn %rdi, %rax, %rdi
+	andn %rdx, %rax, %rax
+	leaq (%rax,%rax), %rdx
+	andq %rcx, %r8
+	xorq %rax, %rdx
+	movq %rcx, %rsi
+	andn %r9, %rcx, %rcx
+	shrq $4, %r8
+	shrq $4, %rsi
+	orq %rcx, %r8
+	leaq 0(,%rdx,4), %rcx
+	orq %rdi, %rsi
+	xorq %rcx, %rdx
+	movq %rdx, %rcx
+	salq $4, %rcx
+	xorq %rcx, %rdx
+	movq %rdx, %rcx
+	salq $8, %rcx
+	xorq %rcx, %rdx
+	movq %rdx, %rcx
+	salq $16, %rcx
+	xorq %rcx, %rdx
+	movq %rdx, %rcx
+	salq $32, %rcx
+	xorq %rcx, %rdx
+	movq %rsi, %rcx
+	andq %rdx, %rcx
+	andn %rsi, %rdx, %rsi
+	andn %rax, %rdx, %rdx
+	leaq (%rdx,%rdx), %rax
+	movq %rcx, %rdi
+	xorq %rdx, %rax
+	shrq $8, %rdi
+	orq %rdi, %rsi
+	movq %r8, %rdi
+	andq %rcx, %rdi
+	andn %r8, %rcx, %rcx
+	shrq $8, %rdi
+	orq %rcx, %rdi
+	leaq 0(,%rax,4), %rcx
+	xorq %rcx, %rax
+	movq %rax, %rcx
+	salq $4, %rcx
+	xorq %rcx, %rax
+	movq %rax, %rcx
+	salq $8, %rcx
+	xorq %rcx, %rax
+	movq %rax, %rcx
+	salq $16, %rcx
+	xorq %rcx, %rax
+	movq %rax, %rcx
+	salq $32, %rcx
+	xorq %rcx, %rax
+	movq %rsi, %rcx
+	andq %rax, %rcx
+	andn %rsi, %rax, %r8
+	andn %rdx, %rax, %rax
+	movq %rdi, %rsi
+	leaq (%rax,%rax), %rdx
+	andq %rcx, %rsi
+	andn %rdi, %rcx, %rdi
+	xorq %rdx, %rax
+	shrq $16, %rsi
+	leaq 0(,%rax,4), %rdx
+	orq %rdi, %rsi
+	xorq %rdx, %rax
+	shrq $16, %rcx
+	movq %rax, %rdx
+	orq %r8, %rcx
+	salq $4, %rdx
+	andq %rsi, %rcx
+	xorq %rdx, %rax
+	movq %rax, %rdx
+	salq $8, %rdx
+	xorq %rdx, %rax
+	movq %rax, %rdx
+	salq $16, %rdx
+	xorq %rdx, %rax
+	movq %rax, %rdx
+	salq $32, %rdx
+	xorq %rdx, %rax
+	andq %rcx, %rax
+	xorq %rax, %rsi
+	shrq $32, %rax
+	orq %rsi, %rax
+
+Iterations:        1000
+Instructions:      165000
+Total Cycles:      105504
+Total uOps:        165000
+
+Dispatch Width:    4
+uOps Per Cycle:    1.56
+IPC:               1.56
+Block RThroughput: 41.3
+
+## compress_by_zp7, whole function
+
+	movq %rsi, %r8
+	andq %rsi, %rdi
+	notq %r8
+	leaq 0(,%r8,4), %rax
+	leaq (%r8,%r8), %rsi
+	xorq %rax, %rsi
+	leaq 0(,%rsi,4), %rax
+	xorq %rax, %rsi
+	movq %rsi, %rax
+	salq $4, %rax
+	xorq %rax, %rsi
+	movq %rsi, %rax
+	salq $8, %rax
+	xorq %rax, %rsi
+	movq %rsi, %rax
+	salq $16, %rax
+	xorq %rax, %rsi
+	movq %rsi, %rax
+	salq $32, %rax
+	xorq %rax, %rsi
+	andq %rsi, %r8
+	leaq 0(,%r8,4), %rax
+	leaq (%r8,%r8), %rcx
+	xorq %rax, %rcx
+	leaq 0(,%rcx,4), %rax
+	xorq %rax, %rcx
+	movq %rcx, %rax
+	salq $4, %rax
+	xorq %rax, %rcx
+	movq %rcx, %rax
+	salq $8, %rax
+	xorq %rax, %rcx
+	movq %rcx, %rax
+	salq $16, %rax
+	xorq %rax, %rcx
+	movq %rcx, %rax
+	salq $32, %rax
+	xorq %rax, %rcx
+	andq %rcx, %r8
+	leaq 0(,%r8,4), %rdx
+	leaq (%r8,%r8), %rax
+	xorq %rdx, %rax
+	leaq 0(,%rax,4), %rdx
+	xorq %rdx, %rax
+	movq %rax, %rdx
+	salq $4, %rdx
+	xorq %rdx, %rax
+	movq %rax, %rdx
+	salq $8, %rdx
+	xorq %rdx, %rax
+	movq %rax, %rdx
+	salq $16, %rdx
+	xorq %rdx, %rax
+	movq %rax, %rdx
+	salq $32, %rdx
+	xorq %rdx, %rax
+	andn %rdi, %rsi, %r10
+	andq %rdi, %rsi
+	andq %rax, %r8
+	shrq %rsi
+	leaq 0(,%r8,4), %r9
+	leaq (%r8,%r8), %rdx
+	orq %r10, %rsi
+	xorq %r9, %rdx
+	andn %rsi, %rcx, %rdi
+	andq %rsi, %rcx
+	leaq 0(,%rdx,4), %r9
+	xorq %r9, %rdx
+	movq %rdx, %r9
+	salq $4, %r9
+	xorq %r9, %rdx
+	movq %rdx, %r9
+	salq $8, %r9
+	xorq %r9, %rdx
+	movq %rdx, %r9
+	salq $16, %r9
+	xorq %r9, %rdx
+	movq %rdx, %r9
+	salq $32, %r9
+	xorq %r9, %rdx
+	andq %rdx, %r8
+	leaq 0(,%r8,4), %r11
+	leaq (%r8,%r8), %r9
+	xorq %r11, %r9
+	leaq 0(,%r9,4), %r11
+	xorq %r11, %r9
+	movq %r9, %r11
+	salq $4, %r11
+	xorq %r11, %r9
+	movq %r9, %r11
+	salq $8, %r11
+	xorq %r11, %r9
+	movq %r9, %r11
+	salq $16, %r11
+	xorq %r11, %r9
+	movq %r9, %r11
+	salq $32, %r11
+	xorq %r11, %r9
+	andq %r9, %r8
+	negq %r8
+	addq %r8, %r8
+	shrq $2, %rcx
+	orq %rdi, %rcx
+	andn %rcx, %rax, %rsi
+	andq %rcx, %rax
+	shrq $4, %rax
+	orq %rsi, %rax
+	andn %rax, %rdx, %rcx
+	andq %rax, %rdx
+	shrq $8, %rdx
+	orq %rcx, %rdx
+	andn %rdx, %r9, %rax
+	andq %r9, %rdx
+	shrq $16, %rdx
+	orq %rax, %rdx
+	andn %rdx, %r8, %rax
+	andq %rdx, %r8
+	shrq $32, %r8
+	orq %r8, %rax
+
+Iterations:        1000
+Instructions:      119000
+Total Cycles:      55040
+Total uOps:        119000
+
+Dispatch Width:    4
+uOps Per Cycle:    2.16
+IPC:               2.16
+Block RThroughput: 29.8
+
+## compress_by_zp7_clmul, whole function
+
+	movq %rsi, %rax
+	vmovdqa .LC0(%rip), %xmm0
+	andq %rsi, %rdi
+	notq %rax
+	vmovq %rax, %xmm1
+	vpclmulqdq $0, %xmm0, %xmm1, %xmm2
+	vmovq %xmm2, %r9
+	vpand %xmm2, %xmm1, %xmm1
+	andn %rdi, %r9, %r10
+	andq %r9, %rdi
+	vpclmulqdq $0, %xmm0, %xmm1, %xmm2
+	shrq %rdi
+	vmovq %xmm2, %rax
+	vpand %xmm1, %xmm2, %xmm1
+	orq %r10, %rdi
+	vpclmulqdq $0, %xmm0, %xmm1, %xmm2
+	andn %rdi, %rax, %r9
+	andq %rdi, %rax
+	vmovq %xmm2, %r8
+	vpand %xmm1, %xmm2, %xmm2
+	shrq $2, %rax
+	vpclmulqdq $0, %xmm0, %xmm2, %xmm1
+	orq %r9, %rax
+	vmovq %xmm1, %rsi
+	vpand %xmm2, %xmm1, %xmm1
+	andn %rax, %r8, %rdi
+	andq %r8, %rax
+	vpclmulqdq $0, %xmm0, %xmm1, %xmm0
+	shrq $4, %rax
+	vmovq %xmm0, %rcx
+	vpand %xmm1, %xmm0, %xmm0
+	orq %rdi, %rax
+	vmovq %xmm0, %rdx
+	andn %rax, %rsi, %rdi
+	andq %rsi, %rax
+	movq %rdi, %rsi
+	negq %rdx
+	shrq $8, %rax
+	addq %rdx, %rdx
+	orq %rax, %rsi
+	andn %rsi, %rcx, %rax
+	andq %rsi, %rcx
+	shrq $16, %rcx
+	orq %rax, %rcx
+	andn %rcx, %rdx, %rax
+	andq %rcx, %rdx
+	shrq $32, %rdx
+	orq %rdx, %rax
+
+Iterations:        1000
+Instructions:      48000
+Total Cycles:      55020
+Total uOps:        58000
+
+Dispatch Width:    4
+uOps Per Cycle:    1.05
+IPC:               0.87
+Block RThroughput: 16.0
+
+## expand_by_walk, loop body
+
+	movq %rdi, %rdx
+	blsi %rsi, %rax
+	shrq %rdi
+	andl $1, %edx
+	negq %rdx
+	andq %rdx, %rax
+	orq %rax, %rcx
+	blsr %rsi, %rsi
+	jne .L29
+
+Iterations:        1000
+Instructions:      9000
+Total Cycles:      2256
+Total uOps:        9000
+
+Dispatch Width:    4
+uOps Per Cycle:    3.99
+IPC:               3.99
+Block RThroughput: 2.3
+
+## expand_by_select, loop body
+
+	xorl %edx, %edx
+	tzcntq %rcx, %rdx
+	movq %rdx, %rax
+	imulq %r10, %rax
+	orq %rdi, %rax
+	subq %r8, %rax
+	andq %rdi, %rax
+	popcntq %rax, %rax
+	sall $3, %eax
+	shrx %rax, %rbp, %r12
+	movzbl %r12b, %r12d
+	subl %r12d, %edx
+	shrx %rax, %r9, %r12
+	movzbl %r12b, %r12d
+	sall $8, %edx
+	orq %r12, %rdx
+	addb (%rbx,%rdx), %al
+	shlx %rax, %r11, %rax
+	orq %rax, %rsi
+	blsr %rcx, %rcx
+	jne .L35
+
+Iterations:        1000
+Instructions:      21000
+Total Cycles:      5820
+Total uOps:        22000
+
+Dispatch Width:    4
+uOps Per Cycle:    3.78
+IPC:               3.61
+Block RThroughput: 5.5
+
+## expand_pdep, whole function
+
+	pdep %rsi, %rdi, %rax
+
+Iterations:        1000
+Instructions:      1000
+Total Cycles:      1005
+Total uOps:        1000
+
+Dispatch Width:    4
+uOps Per Cycle:    1.00
+IPC:               1.00
+Block RThroughput: 1.0
+
+## expand_by_walk_with_if, loop body
+
+	blsi %rsi, %rax
+	orq %rdx, %rax
+	testb $1, %dil
+	cmovne %rax, %rdx
+	shrq %rdi
+	blsr %rsi, %rsi
+	jne .L45
+
+Iterations:        1000
+Instructions:      7000
+Total Cycles:      3004
+Total uOps:        8000
+
+Dispatch Width:    4
+uOps Per Cycle:    2.66
+IPC:               2.33
+Block RThroughput: 2.0
+
+## expand_by_parallel_suffix, whole function
+
+	movq %rsi, %rax
+	movq %rdi, %r8
+	pushq %r12
+	notq %rax
+	pushq %rbp
+	leaq (%rax,%rax), %rdx
+	salq $2, %rax
+	pushq %rbx
+	xorq %rdx, %rax
+	leaq 0(,%rax,4), %rcx
+	xorq %rcx, %rax
+	movq %rax, %rcx
+	salq $4, %rcx
+	xorq %rcx, %rax
+	movq %rax, %rcx
+	salq $8, %rcx
+	xorq %rcx, %rax
+	movq %rax, %rcx
+	salq $16, %rcx
+	xorq %rcx, %rax
+	movq %rax, %rcx
+	salq $32, %rcx
+	xorq %rcx, %rax
+	movq %rsi, %rcx
+	andq %rax, %rcx
+	andn %rsi, %rax, %r9
+	andn %rdx, %rax, %rax
+	leaq (%rax,%rax), %rdx
+	movq %rcx, %rdi
+	xorq %rax, %rdx
+	shrq %rdi
+	orq %rdi, %r9
+	leaq 0(,%rdx,4), %rdi
+	xorq %rdi, %rdx
+	movq %rdx, %rdi
+	salq $4, %rdi
+	xorq %rdi, %rdx
+	movq %rdx, %rdi
+	salq $8, %rdi
+	xorq %rdi, %rdx
+	movq %rdx, %rdi
+	salq $16, %rdi
+	xorq %rdi, %rdx
+	movq %rdx, %rdi
+	salq $32, %rdi
+	xorq %rdi, %rdx
+	movq %r9, %rdi
+	andq %rdx, %rdi
+	andn %rax, %rdx, %rax
+	andn %r9, %rdx, %r9
+	leaq (%rax,%rax), %rdx
+	movq %rdi, %r10
+	xorq %rax, %rdx
+	shrq $2, %r10
+	orq %r9, %r10
+	leaq 0(,%rdx,4), %r9
+	xorq %r9, %rdx
+	movq %rdx, %r9
+	salq $4, %r9
+	xorq %r9, %rdx
+	movq %rdx, %r9
+	salq $8, %r9
+	xorq %r9, %rdx
+	movq %rdx, %r9
+	salq $16, %r9
+	xorq %r9, %rdx
+	movq %rdx, %r9
+	salq $32, %r9
+	xorq %r9, %rdx
+	movq %r10, %r9
+	andq %rdx, %r9
+	andn %r10, %rdx, %r10
+	andn %rax, %rdx, %rdx
+	leaq (%rdx,%rdx), %rax
+	movq %r9, %r11
+	xorq %rdx, %rax
+	shrq $4, %r11
+	orq %r10, %r11
+	leaq 0(,%rax,4), %r10
+	xorq %r10, %rax
+	movq %rax, %r10
+	salq $4, %r10
+	xorq %r10, %rax
+	movq %rax, %r10
+	salq $8, %r10
+	xorq %r10, %rax
+	movq %rax, %r10
+	salq $16, %r10
+	xorq %r10, %rax
+	movq %rax, %r10
+	salq $32, %r10
+	xorq %r10, %rax
+	movq %r11, %r10
+	andq %rax, %r10
+	andn %r11, %rax, %r11
+	andn %rdx, %rax, %rax
+	leaq (%rax,%rax), %rdx
+	movq %r10, %rbx
+	xorq %rax, %rdx
+	shrq $8, %rbx
+	orq %r11, %rbx
+	leaq 0(,%rdx,4), %r11
+	xorq %r11, %rdx
+	movq %rdx, %r11
+	salq $4, %r11
+	xorq %r11, %rdx
+	movq %rdx, %r11
+	salq $8, %r11
+	xorq %r11, %rdx
+	movq %rdx, %r11
+	salq $16, %r11
+	xorq %r11, %rdx
+	movq %rdx, %r11
+	salq $32, %r11
+	xorq %r11, %rdx
+	movq %rbx, %r11
+	andq %rdx, %r11
+	andn %rbx, %rdx, %rbx
+	andn %rax, %rdx, %rdx
+	leaq (%rdx,%rdx), %rax
+	xorq %rax, %rdx
+	movq %r11, %rbp
+	leaq 0(,%rdx,4), %rax
+	shrq $16, %rbp
+	xorq %rax, %rdx
+	orq %rbp, %rbx
+	movq %rdx, %rax
+	salq $4, %rax
+	xorq %rax, %rdx
+	movq %rdx, %rax
+	salq $8, %rax
+	xorq %rax, %rdx
+	movq %rdx, %rax
+	salq $16, %rax
+	xorq %rax, %rdx
+	movq %r8, %rax
+	movq %rdx, %r12
+	salq $32, %rax
+	salq $32, %r12
+	xorq %r8, %rax
+	xorq %r12, %rdx
+	andq %rbx, %rax
+	popq %rbx
+	popq %rbp
+	andq %rdx, %rax
+	popq %r12
+	xorq %r8, %rax
+	movq %rax, %rdx
+	salq $16, %rdx
+	xorq %rax, %rdx
+	andq %r11, %rdx
+	xorq %rdx, %rax
+	movq %rax, %rdx
+	salq $8, %rdx
+	xorq %rax, %rdx
+	andq %r10, %rdx
+	xorq %rdx, %rax
+	movq %rax, %rdx
+	salq $4, %rdx
+	xorq %rax, %rdx
+	andq %r9, %rdx
+	xorq %rdx, %rax
+	leaq 0(,%rax,4), %rdx
+	xorq %rax, %rdx
+	andq %rdi, %rdx
+	xorq %rdx, %rax
+	leaq (%rax,%rax), %rdx
+	xorq %rax, %rdx
+	andq %rcx, %rdx
+	xorq %rdx, %rax
+	andq %rsi, %rax
+
+Iterations:        1000
+Instructions:      171000
+Total Cycles:      77056
+Total uOps:        180000
+
+Dispatch Width:    4
+uOps Per Cycle:    2.34
+IPC:               2.22
+Block RThroughput: 45.0
+
+## expand_by_zp7, whole function
+
+	movq %rsi, %rax
+	movq %rdi, %r8
+	xorl %r9d, %r9d
+	notq %rax
+	popcntq %rsi, %r9
+	leaq (%rax,%rax), %rcx
+	leaq 0(,%rax,4), %rdx
+	xorq %rcx, %rdx
+	leaq 0(,%rdx,4), %rdi
+	xorq %rdx, %rdi
+	movq %rdi, %rdx
+	salq $4, %rdx
+	xorq %rdx, %rdi
+	movq %rdi, %rdx
+	salq $8, %rdx
+	xorq %rdx, %rdi
+	movq %rdi, %rdx
+	salq $16, %rdx
+	xorq %rdx, %rdi
+	movq %rdi, %rdx
+	salq $32, %rdx
+	xorq %rdx, %rdi
+	andq %rdi, %rax
+	leaq 0(,%rax,4), %rdx
+	leaq (%rax,%rax), %rsi
+	xorq %rdx, %rsi
+	leaq 0(,%rsi,4), %rdx
+	xorq %rdx, %rsi
+	movq %rsi, %rdx
+	salq $4, %rdx
+	xorq %rdx, %rsi
+	movq %rsi, %rdx
+	salq $8, %rdx
+	xorq %rdx, %rsi
+	movq %rsi, %rdx
+	salq $16, %rdx
+	xorq %rdx, %rsi
+	movq %rsi, %rdx
+	salq $32, %rdx
+	xorq %rdx, %rsi
+	andq %rsi, %rax
+	leaq 0(,%rax,4), %rcx
+	leaq (%rax,%rax), %rdx
+	xorq %rcx, %rdx
+	leaq 0(,%rdx,4), %rcx
+	xorq %rcx, %rdx
+	movq %rdx, %rcx
+	salq $4, %rcx
+	xorq %rcx, %rdx
+	movq %rdx, %rcx
+	salq $8, %rcx
+	xorq %rcx, %rdx
+	movq %rdx, %rcx
+	salq $16, %rcx
+	xorq %rcx, %rdx
+	movq %rdx, %rcx
+	salq $32, %rcx
+	bzhi %r9, %r8, %r8
+	movq %r8, %r9
+	xorq %rcx, %rdx
+	andq %rdx, %rax
+	leaq 0(,%rax,4), %r10
+	leaq (%rax,%rax), %rcx
+	xorq %r10, %rcx
+	leaq 0(,%rcx,4), %r10
+	xorq %r10, %rcx
+	movq %rcx, %r10
+	salq $4, %r10
+	xorq %r10, %rcx
+	movq %rcx, %r10
+	salq $8, %r10
+	xorq %r10, %rcx
+	movq %rcx, %r10
+	salq $16, %r10
+	xorq %r10, %rcx
+	movq %rcx, %r10
+	salq $32, %r10
+	xorq %rcx, %r10
+	andq %r10, %rax
+	leaq 0(,%rax,4), %r11
+	leaq (%rax,%rax), %rcx
+	xorq %r11, %rcx
+	leaq 0(,%rcx,4), %r11
+	xorq %r11, %rcx
+	movq %rcx, %r11
+	salq $4, %r11
+	xorq %r11, %rcx
+	movq %rcx, %r11
+	salq $8, %r11
+	xorq %r11, %rcx
+	movq %rcx, %r11
+	salq $16, %r11
+	xorq %r11, %rcx
+	movq %rcx, %r11
+	salq $32, %r11
+	xorq %r11, %rcx
+	andq %rcx, %rax
+	negq %rax
+	addq %rax, %rax
+	shrq $32, %rax
+	andq %rax, %r9
+	andn %r8, %rax, %rax
+	salq $32, %r9
+	addq %r9, %rax
+	shrq $16, %rcx
+	andn %rax, %rcx, %r8
+	shrq $4, %rdx
+	andq %rax, %rcx
+	shrq $2, %rsi
+	salq $16, %rcx
+	shrq %rdi
+	leaq (%rcx,%r8), %rax
+	movq %r10, %rcx
+	shrq $8, %rcx
+	andn %rax, %rcx, %r8
+	andq %rax, %rcx
+	salq $8, %rcx
+	leaq (%rcx,%r8), %rax
+	andn %rax, %rdx, %rcx
+	andq %rax, %rdx
+	salq $4, %rdx
+	leaq (%rdx,%rcx), %rax
+	andn %rax, %rsi, %rdx
+	andq %rax, %rsi
+	leaq (%rdx,%rsi,4), %rax
+	andn %rax, %rdi, %rdx
+	andq %rax, %rdi
+	leaq (%rdx,%rdi,2), %rax
+
+Iterations:        1000
+Instructions:      128000
+Total Cycles:      104006
+Total uOps:        128000
+
+Dispatch Width:    4
+uOps Per Cycle:    1.23
+IPC:               1.23
+Block RThroughput: 32.0
+
+## expand_by_zp7_clmul, whole function
+
+	movq %rsi, %rax
+	vmovdqa .LC0(%rip), %xmm1
+	popcntq %rsi, %rsi
+	bzhi %rsi, %rdi, %rdi
+	notq %rax
+	movq %rdi, %rdx
+	vmovq %rax, %xmm0
+	vpclmulqdq $0, %xmm1, %xmm0, %xmm3
+	vpand %xmm3, %xmm0, %xmm0
+	vpclmulqdq $0, %xmm1, %xmm0, %xmm4
+	vpand %xmm0, %xmm4, %xmm0
+	vpclmulqdq $0, %xmm1, %xmm0, %xmm5
+	vpand %xmm0, %xmm5, %xmm0
+	vpclmulqdq $0, %xmm1, %xmm0, %xmm2
+	vpand %xmm0, %xmm2, %xmm0
+	vpclmulqdq $0, %xmm1, %xmm0, %xmm1
+	vpand %xmm0, %xmm1, %xmm0
+	vmovq %xmm0, %rax
+	negq %rax
+	addq %rax, %rax
+	shrq $32, %rax
+	andq %rax, %rdx
+	andn %rdi, %rax, %rax
+	salq $32, %rdx
+	addq %rax, %rdx
+	vmovq %xmm1, %rax
+	shrq $16, %rax
+	andn %rdx, %rax, %rcx
+	andq %rdx, %rax
+	vmovq %xmm2, %rdx
+	salq $16, %rax
+	shrq $8, %rdx
+	addq %rcx, %rax
+	andn %rax, %rdx, %rcx
+	andq %rax, %rdx
+	salq $8, %rdx
+	leaq (%rdx,%rcx), %rax
+	vmovq %xmm5, %rdx
+	shrq $4, %rdx
+	andn %rax, %rdx, %rcx
+	andq %rdx, %rax
+	salq $4, %rax
+	leaq (%rcx,%rax), %rdx
+	vmovq %xmm4, %rax
+	shrq $2, %rax
+	andn %rdx, %rax, %rcx
+	andq %rax, %rdx
+	vmovq %xmm3, %rax
+	leaq (%rcx,%rdx,4), %rdx
+	shrq %rax
+	andn %rdx, %rax, %rcx
+	andq %rdx, %rax
+	leaq (%rcx,%rax,2), %rax
+
+Iterations:        1000
+Instructions:      53000
+Total Cycles:      37044
+Total uOps:        63000
+
+Dispatch Width:    4
+uOps Per Cycle:    1.70
+IPC:               1.43
+Block RThroughput: 16.0
+
+## select_by_broadword, whole function
+
+	movabsq $6148914691236517205, %rax
+	movq %rdi, %rdx
+	movabsq $3689348814741910323, %rcx
+	shrq %rdx
+	andq %rax, %rdx
+	movq %rdi, %rax
+	subq %rdx, %rax
+	movq %rax, %rdx
+	shrq $2, %rax
+	andq %rcx, %rax
+	andq %rcx, %rdx
+	movabsq $72340172838076673, %rcx
+	addq %rax, %rdx
+	movq %rdx, %rax
+	shrq $4, %rax
+	addq %rdx, %rax
+	movabsq $1085102592571150095, %rdx
+	andq %rdx, %rax
+	movl %esi, %edx
+	imulq %rcx, %rdx
+	imulq %rcx, %rax
+	movabsq $-9187201950435737472, %rcx
+	orq %rcx, %rdx
+	subq %rax, %rdx
+	salq $8, %rax
+	andq %rcx, %rdx
+	popcntq %rdx, %rdx
+	sall $3, %edx
+	shrx %rdx, %rax, %rax
+	movzbl %al, %eax
+	shrx %rdx, %rdi, %rdi
+	movzbl %dil, %edi
+	subl %eax, %esi
+	leaq _ZN4xstd4ints6detail8portable14select_in_byteE(%rip), %rax
+	sall $8, %esi
+	orq %rdi, %rsi
+	movzbl (%rax,%rsi), %eax
+	addl %edx, %eax
+
+Iterations:        1000
+Instructions:      38000
+Total Cycles:      22012
+Total uOps:        38000
+
+Dispatch Width:    4
+uOps Per Cycle:    1.73
+IPC:               1.73
+Block RThroughput: 9.5
+
+## select_pdep, whole function
+
+	movl $1, %eax
+	shlx %rsi, %rax, %rax
+	pdep %rdi, %rax, %rax
+	tzcntq %rax, %rax
+
+Iterations:        1000
+Instructions:      4000
+Total Cycles:      2009
+Total uOps:        4000
+
+Dispatch Width:    4
+uOps Per Cycle:    1.99
+IPC:               1.99
+Block RThroughput: 2.0

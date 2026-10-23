@@ -27,7 +27,7 @@ on:
       - 'test/include/**'
       - 'test/src/ints/bit/**'
       - 'test/src/ints/cstdlib/**'
-      - 'mutation/**'
+      - 'test/mutation/**'
       - '.github/workflows/mutation.yml'
 
 jobs:

@@ -22,7 +22,7 @@ namespace {
 
 namespace portable = xstd::ints::detail::portable;
 
-constexpr auto kernels_agree(std::size_t x, std::size_t m)
+[[nodiscard]] constexpr auto kernels_agree(std::size_t x, std::size_t m)
         -> bool
 {
         return portable::block_compress_by_rank(x, m) == test::oracle_bit_compress(x, m) and
@@ -31,7 +31,7 @@ constexpr auto kernels_agree(std::size_t x, std::size_t m)
                portable::block_reverse_by_swaps(x) == test::oracle_bit_reverse(x);
 }
 
-constexpr auto agrees_at(int k)
+[[nodiscard]] constexpr auto agrees_at(int k)
         -> bool
 {
         constexpr auto ones = std::numeric_limits<std::size_t>::max();

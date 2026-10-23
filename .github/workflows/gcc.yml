@@ -13,28 +13,37 @@ concurrency:
   cancel-in-progress: true
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
+  # canary.yml dispatches this nightly on main, the run its README badge shows.
   workflow_dispatch:
-  # canary.yml calls this weekly, so the stub stays callable itself.
-  workflow_call:
 
 jobs:
-  # One input, and not about the ladder: this library builds on every rung,
-  # which is what the shared workflow defaults to.
-  gcc:
-    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
+  # Whether this pull request can reach what the ladders build; see changes.yml.
+  changes:
+    uses: ./.github/workflows/changes.yml
+
+  # This library builds on every rung, which is what the shared workflow
+  # defaults to.
+  gcc_ladder:
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
+    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@acbf0f0b3ed85dcabf95cd0d4806c0fa7c451ecf # main after rhalbersma/cpp-ci#83, which adds the standard library test suites' adapters
     with:
       # Boost.Test, which vcpkg.json keeps out of its default features so that
       # consuming this library resolves no Boost at all.
       vcpkg_features: test
+      # A pull request builds only the floor and ceiling rungs, in Debug. The
+      # all gate cannot see what was skipped, so the nightly canary covers it,
+      # building every rung and build type on main.
+      reduce_on_pr: true
 
   # 32-bit x86: a 32-bit size_t, 4-byte alignment for 64-bit integers, and no
   # __int128. One rung in Debug, since what is under test is the target.
   i686:
-    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
+    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@acbf0f0b3ed85dcabf95cd0d4806c0fa7c451ecf # main after rhalbersma/cpp-ci#83, which adds the standard library test suites' adapters
     with:
       arch: x86
       tiers: stable
@@ -45,9 +54,41 @@ jobs:
   # above leaves to the portable kernels. One rung and one build type suffice,
   # the instructions being the processor's rather than the compiler's.
   gcc_bmi2:
-    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
+    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@acbf0f0b3ed85dcabf95cd0d4806c0fa7c451ecf # main after rhalbersma/cpp-ci#83, which adds the standard library test suites' adapters
     with:
       tiers: stable
       build_types: Release
       cxx_flags: -march=x86-64-v3
       vcpkg_features: test
+
+  # C++29 on the trunk snapshot, the one mode in which libstdc++ declares
+  # std::shl and std::shr, and P3104's permutations after them: the only leg
+  # where the overloads forwarding to <bit> compile and their agreement tests
+  # run. A flag rather than a CMake standard, since CMake knows no C++29 yet;
+  # seeing the mode in CMAKE_CXX_FLAGS, it adds no -std of its own. One build
+  # type, since what is under test is the standard library's.
+  gcc_cxx29:
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
+    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@acbf0f0b3ed85dcabf95cd0d4806c0fa7c451ecf # main after rhalbersma/cpp-ci#83, which adds the standard library test suites' adapters
+    with:
+      tiers: development
+      build_types: Debug
+      cxx_flags: -std=gnu++2d
+      vcpkg_features: test
+
+  # The name branch protection requires: green when the ladder passed, or when
+  # the pull request changes nothing the ladder builds.
+  all:
+    name: gcc / all
+    needs: [ changes, gcc_ladder ]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Every leg succeeded, or none was needed
+        env:
+          BUILD: ${{ needs.changes.outputs.build }}
+          RESULT: ${{ needs.gcc_ladder.result }}
+        run: test "${BUILD}" = false || test "${RESULT}" = success

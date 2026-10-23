@@ -10,5 +10,5 @@
 /coverage.txt
 /coverage.xml
 
-# Written beside proofs/kernels.py whenever the proofs import it.
+# Written beside test/proofs/kernels.py whenever the proofs import it.
 __pycache__/

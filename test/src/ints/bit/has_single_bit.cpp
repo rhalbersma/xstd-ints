@@ -5,7 +5,7 @@
 
 #include <xstd/ints/bit/has_single_bit.hpp>               // has_single_bit
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
+#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_BIT_INT, XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
 #include <xstd/ints/limits.hpp>                           // numeric_limits
 #include <test/bit/oracle.hpp>                            // oracle_has_single_bit
 #include <test/bit/sweep.hpp>                             // bit_precise_sweep_types, for_each_edge_value_at, for_each_sweep_value, holds_at_every_position
@@ -32,7 +32,7 @@ template<class T>
 concept std_answers = requires (T x) { std::has_single_bit(x); };
 
 template<class T>
-constexpr auto agrees_at(int k)
+[[nodiscard]] constexpr auto agrees_at(int k)
         -> bool
 {
         auto agrees = true;

@@ -6,14 +6,20 @@
 #include <xstd/ints/cstdint.hpp>            // XSTD_HAS_INT128, int128
 #include <xstd/ints/cstdlib/div_result.hpp> // div_result
 #include <xstd/ints/format/div_result.hpp>  // IWYU pragma: keep; formatter<div_result>
-#include <test/exact_width_types.hpp>       // exact_width_signed_integer_types
+#include <test/exact_width_types.hpp>       // exact_width_signed_integer_types, exact_width_unsigned_integer_types
 #include <boost/test/unit_test.hpp>         // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
-#include <format>                           // format
+#include <format>                           // format, format_error, make_format_args, vformat
 #include <limits>                           // numeric_limits
 #include <string_view>                      // wstring_view
 
 #ifdef __cpp_lib_constexpr_format
 #include <test/constexpr_check.hpp> // XSTD_CONSTEXPR_CHECK_EQUAL
+#endif
+
+// A 128-bit class with no std::formatter of its own, reached the way a consumer reaches it.
+#if __has_include(<absl/numeric/int128.h>)
+#define TEST_HAS_ABSL_INT128
+#include <xstd/ints/ext/absl/int128.hpp> // int128
 #endif
 
 BOOST_AUTO_TEST_SUITE(Ints)
@@ -34,6 +40,12 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(Formatter, T, test::exact_width_signed_integer_typ
         XSTD_CONSTEXPR_FORMAT_CHECK_EQUAL(std::format("{}", xstd::div_result<T>{1, -2}), "(1, -2)");
 }
 
+// std::uint8_t is unsigned char, and renders as a number rather than as the character 65 encodes.
+BOOST_AUTO_TEST_CASE_TEMPLATE(FormatterOnUnsigned, T, test::exact_width_unsigned_integer_types)
+{
+        XSTD_CONSTEXPR_FORMAT_CHECK_EQUAL(std::format("{}", xstd::div_result<T>{65, 1}), "(65, 1)");
+}
+
 // Rendered by xstd where the library has no 128-bit formatter, so the value must come out.
 BOOST_AUTO_TEST_CASE(Boundaries)
 {
@@ -49,9 +61,38 @@ BOOST_AUTO_TEST_CASE(FillAndAlign)
         BOOST_CHECK_EQUAL(std::format("{:*^12}", xstd::div_result<int>{1, -2}), "**(1, -2)***");
 }
 
+// The tuple's n and m, which a type the library cannot format takes as well wherever the library formats tuples.
+BOOST_AUTO_TEST_CASE(TupleSpecs)
+{
+        BOOST_CHECK_EQUAL(std::format("{:n}", xstd::div_result<int>{1, -2}), "1, -2");
+        BOOST_CHECK_EQUAL(std::format("{:m}", xstd::div_result<int>{1, -2}), "1: -2");
+#ifdef TEST_HAS_ABSL_INT128
+        BOOST_CHECK_EQUAL(std::format("{:n}", xstd::div_result<absl::int128>{1, -2}), "1, -2");
+        BOOST_CHECK_EQUAL(std::format("{:m}", xstd::div_result<absl::int128>{1, -2}), "1: -2");
+        BOOST_CHECK_EQUAL(std::format("{:*^12}", xstd::div_result<absl::int128>{1, -2}), "**(1, -2)***");
+#endif
+}
+
+// A member's own spec, such as hex or a precision, is no tuple spec, so it throws rather than reach the members.
+BOOST_AUTO_TEST_CASE(RejectsAnElementSpec)
+{
+        auto narrow = xstd::div_result<int>{1, -2};
+        BOOST_CHECK_THROW(static_cast<void>(std::vformat("{:x}", std::make_format_args(narrow))), std::format_error);
+        BOOST_CHECK_THROW(static_cast<void>(std::vformat("{:.3}", std::make_format_args(narrow))), std::format_error);
+#ifdef TEST_HAS_ABSL_INT128
+        auto wide = xstd::div_result<absl::int128>{1, -2};
+        BOOST_CHECK_THROW(static_cast<void>(std::vformat("{:x}", std::make_format_args(wide))), std::format_error);
+        BOOST_CHECK_THROW(static_cast<void>(std::vformat("{:.3}", std::make_format_args(wide))), std::format_error);
+#endif
+}
+
+// Each character widened, whether the library writes the members or copies the digits xstd::to_chars wrote.
 BOOST_AUTO_TEST_CASE(WideFormatter)
 {
         BOOST_CHECK(std::format(L"{}", xstd::div_result<int>{1, -2}) == std::wstring_view{L"(1, -2)"});
+#ifdef TEST_HAS_ABSL_INT128
+        BOOST_CHECK(std::format(L"{}", xstd::div_result<absl::int128>{1, -2}) == std::wstring_view{L"(1, -2)"});
+#endif
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -6,23 +6,13 @@
 #ifndef XSTD_INTS_TYPE_TRAITS_PROMOTED_HPP
 #define XSTD_INTS_TYPE_TRAITS_PROMOTED_HPP
 
-#include <concepts>    // integral
-#include <type_traits> // conditional_t, type_identity
-#include <utility>     // declval
+#include <xstd/ints/type_traits/detail/promoted.hpp> // promoted
 
 namespace xstd {
 
-// Held apart because std::conditional forms both type arguments before selecting one.
+// The type of +a for an integral T, which [conv.prom] gives; T itself otherwise.
 template<class T>
-struct integral_promoted : std::type_identity<decltype(+std::declval<T const&>())>
-{};
-
-// What T's own operators yield: [conv.prom] for a built-in, T itself otherwise.
-template<class T>
-using promoted = std::conditional_t<std::integral<T>, integral_promoted<T>, std::type_identity<T>>;
-
-template<class T>
-using promoted_t = promoted<T>::type;
+using promoted_t = ints::detail::promoted<T>::type;
 
 } // namespace xstd
 

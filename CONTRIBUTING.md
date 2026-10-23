@@ -7,18 +7,22 @@ When adding or changing a public utility:
 1. Add or update the relevant header under `include/xstd/`.
 2. Add or update matching tests under `test/src/`; CMake creates one test executable per `.cpp` file in that directory.
 3. Build and test locally (see below).
-4. Update the feature table and examples in [README.md](README.md) when the public API changes.
+4. Update the feature table and examples in [README.md](README.md) when the public API changes. Each ```` ```cpp ```` block
+   there is compiled as a test, so an example includes what it uses and declares what it names.
 
 ## What a PR must satisfy before it can merge
 
 This repository enforces its quality bar through CI rather than through review discretion. A PR is mergeable once every required check below is green; none of these are aspirational:
 
-- **Every compiler/platform leg passes.** See the table in [README.md](README.md) for the current matrix (GCC, Clang, Clang-CL, MSVC, MinGW, Apple Clang). Every leg is required, including every `Development` leg (`17-SVN`, `24-SVN`, `2026-Preview`) and the `libc++` leg: xstd tracks the development channel deliberately and none of these are advisory.
+- **Every compiler/platform leg passes.** See the table in [README.md](README.md) for the current matrix (GCC, Clang, Clang-CL, MSVC, MinGW, Apple Clang). Every leg is required, including every `Development` leg (`17-SVN`, `24-SVN`, `2026-Preview`) and the `libc++` leg: xstd tracks the development channel deliberately and none of these are advisory. On a pull request each ladder builds only its floor and ceiling rungs, in Debug, while the single-purpose legs beside it run as they are; the nightly canary builds every rung and build type on `main`.
 - **`clang-tidy` is clean.** The [Clang-Tidy workflow](.github/workflows/clang-tidy.yml) runs the checks in [`.clang-tidy`](.clang-tidy) with `WarningsAsErrors: '*'` over the public headers, so any finding fails the job outright - there is no "advisory, fix later" mode.
 - **Line and branch coverage stay at 100%, project-wide and for the PR's own diff.** [`codecov.yml`](.github/codecov.yml) sets both the `project` and `patch` Codecov status checks to a 100% target with zero tolerance, backed by the [Coverage workflow](.github/workflows/coverage.yml)'s own `gcovr --fail-under-line 100 --fail-under-branch 100` gate. New code needs a test that exercises every line and branch it adds; existing coverage may not regress. Excluded from this bar: `assert(...)` contract checks (their failure path is undefined behavior by design, not something a correct test can hit), compiler-synthesized `= default;` special members (gcov cannot attribute a hit counter to them regardless of how often they run), and the exception-unwinding branch gcc/gcov attaches to any call that could throw (`--exclude-throw-branches`/`--exclude-unreachable-branches`) - not a code path a test can meaningfully hit either.
 - **No new sanitizer failures.** The [sanitizers workflow](.github/workflows/sanitizers.yml) must stay green.
-- **The bit kernels compile to the instructions they exist for.** The [Codegen workflow](.github/workflows/codegen.yml) compiles [`codegen/`](codegen) to assembly with the stable rung's GCC and Clang, on an x86-64 and an AArch64 runner, and reads it with FileCheck - see [Codegen tests](#codegen-tests) below.
+- **The bit kernels compile to the instructions they exist for.** The [Codegen workflow](.github/workflows/codegen.yml) compiles [`test/codegen/`](test/codegen) to assembly with the stable rung's GCC and Clang, on an x86-64 and an AArch64 runner, and reads it with FileCheck - see [Codegen tests](#codegen-tests) below.
+- **The standard library's own tests pass.** The [Std test suite workflow](.github/workflows/std-test-suite.yml) runs libc++'s tests of the `<bit>` functions against xstd's, on clang 22 with libc++ - see [Standard library test suites](#standard-library-test-suites) below.
 - **The public headers stay self-sufficient.** Each header is compiled as its own translation unit (see `test/CMakeLists.txt`); don't rely on include order from another header.
+- **The README's examples compile.** `test/CMakeLists.txt` writes each ```` ```cpp ```` block of [README.md](README.md) to a translation unit of its own, `readme.example<n>`, built with the tests' warnings on every leg. An example that includes an `<xstd/ints/ext/>` header is built where the library it adapts resolved, as that header's own test is, and one that names `xstd::int128` or `xstd::uint128` tests `XSTD_HAS_INT128` itself, as a test source does.
+- **The documentation site builds.** The [Pages workflow](.github/workflows/pages.yml) runs `mkdocs build --strict` over the README and `doc/`, which fails on a link to a page or an anchor that does not exist, and deploys the site from `main`.
 - **`clang-format` is clean.** The [Clang-Format workflow](.github/workflows/clang-format.yml) runs `clang-format --dry-run --Werror` over every header and test source against [`.clang-format`](.clang-format), so any diff fails the job. Run `clang-format -i` on changed files before pushing, with **version 22 or newer**: before 22, clang-format reads `{ a * b }` in a requires-expression as a pointer declaration and rewrites the binary-operator rows of `integer_class.hpp` and `nothrow_const_operators.hpp`. The remaining `// clang-format off` / `// clang-format on` guards are the hand-laid-out test-data tables, which clang-format cannot express; don't add new guards without a comparable reason.
 - **Workflow files pass `actionlint`.** The [Actionlint workflow](.github/workflows/actionlint.yml) validates GitHub Actions syntax and expressions.
 - **The documented consumption methods work.** The [Consumption workflow](.github/workflows/consumption.yml) builds a consumer using `find_package`, `add_subdirectory`, and `FetchContent`.
@@ -26,39 +30,84 @@ This repository enforces its quality bar through CI rather than through review d
 
 Match the surrounding code's style by eye where `.clang-format` doesn't have an opinion, including the Boost Software License header comment at the top of every source and workflow file.
 
+## The CI matrix
+
+The matrix follows the channel model used by [apt.llvm.org](https://apt.llvm.org/): **stable** is the established
+release, **qualification** the newest release still being qualified, and **development** the current development
+branch. The [README](README.md#continuous-integration) records the versions assigned to each channel.
+
+The `Web` row runs one Emscripten release on the stable rung, in Debug: wasm32 under node,
+where `size_t` is 32 bits but 64-bit integers keep their 8-byte alignment. The GCC workflow
+adds a second 32-bit leg, i686 with GCC `-m32`, where `size_t` is 32 bits and there is no
+`__int128`. The MSVC workflow adds a third, x86 with VS 2026 in Debug and Release, where
+`xstd::uint128` is the MSVC STL's portable 128-bit class and the bit permutations take their
+portable kernels. One more GCC leg runs the trunk snapshot in C++29 mode,
+`-std=gnu++2d`, the one mode in which libstdc++ declares `shl` and `shr`: it is where the
+overloads forwarding to `<bit>` compile and their agreement tests run.
+
+The `s390x` row is the one big-endian leg: GCC 15's s390x cross compiler, in Debug, with the
+tests run under QEMU's user-mode emulator. Emulation is several times slower than native, so
+the nightly canary dispatches it, and no pull request runs it.
+
+The tests compile in the library's strictly conforming dialect wherever that
+dialect keeps the 128-bit column. `<bit>`'s functions take
+`std::unsigned_integral`, which libstdc++ 15 and older grant `unsigned __int128`
+only outside `__STRICT_ANSI__`; there `xstd::uint128` would drop out of the bit
+functions' instantiation lists rather than fail to compile. A configure-time
+probe asks the toolchain whether strict mode drops the type, and only where it
+does, on libstdc++ 15 whether under GCC or Clang, do the tests, the fuzz targets
+and the mutation build compile as `gnu++23`. libstdc++ 16 and later, libc++,
+MSVC and the 32-bit legs build them strictly.
+
 ## Test suite requirements
 
 Keep a focused test source for each public function, concept, and trait, mirroring its header path under `test/src/`. A source matching an umbrella header (for example, `cstdlib.cpp`, `concepts.cpp`, or `type_traits.cpp`) tests only identities that span several focused facilities. Integer-generic tests use the signed, unsigned, or combined exact-width type tuples in `test/include/test/exact_width_types.hpp` so the standard, xstd, optional third-party, and compiler bit-precise implementations stay in the same test matrix.
 
-The library itself has no dependencies outside `<xstd/ext/>`, whose headers each need the library they adapt - see [README.md](README.md). Its test suite has more, and none of those are needed to *use* xstd:
+Every precondition the library checks with `assert` is held by a death test as well: a source under `test/death/`, at its header's path as under `test/src/` and named for the mistake, whose `main` makes one call that violates it. [`test/death/expect_assert.cmake`](test/death/expect_assert.cmake) runs each as its test launcher and passes it only when the process fails an assert under `xstd/ints/`, so a call that returns, or a sanitizer that stops it first, fails the test. They exist only where `assert` does: CMake registers them where neither `CMAKE_CXX_FLAGS` nor the build type's flags define `NDEBUG`, as in a Debug build, and not on Windows or under a multi-config generator. `ctest --test-dir build -R '^death\.'` runs them alone.
+
+The library itself has no dependencies outside `<xstd/ints/ext/>`, whose headers each need the library they adapt - see [README.md](README.md). Its test suite has more, and none of those are needed to *use* xstd:
 
 | Tool | Needed for | Notes |
 | :--- | :--------- | :---- |
 | A conforming C++23 compiler | everything | Same requirement as the library; see the table in [README.md](README.md) for the versions under CI |
-| [CMake](https://cmake.org/) 3.28+ | configuring and building | `cmake_minimum_required` in [`CMakeLists.txt`](CMakeLists.txt); CTest ships with it |
-| [Boost.Test](https://www.boost.org/doc/libs/release/libs/test/) 1.70+ | the unit tests under `test/src/` | 1.70 introduced arbitrary type-list support for `BOOST_AUTO_TEST_CASE_TEMPLATE`, which the tests use with `std::tuple`; declared under the opt-in `test` feature of the checked-in [`vcpkg.json`](vcpkg.json) manifest, which the `*-vcpkg` presets select from a `VCPKG_ROOT`-configured vcpkg, or install it with your system package manager |
-| [Boost.Int128](https://github.com/cppalliance/int128) | testing the integer-class extension points against a type from outside the library, and the `<xstd/ext/boost/int128.hpp>` associations that pair it | Optional, and resolved without a manual step: `test/CMakeLists.txt` uses an installed copy where `find_package(boost_int128 CONFIG)` finds one - Boost 1.92 ships it - and otherwise fetches a pinned upstream commit. Configure with `-DXSTD_INTS_TEST_FETCH_BOOST_INT128=OFF` to build offline without it; the affected cases then run over xstd's own types alone |
-| [Abseil](https://github.com/abseil/abseil-cpp) | testing the same extension points against a type that declares no `noexcept` anywhere, and the `<xstd/ext/absl/int128.hpp>` associations that pair it | Optional, and resolved the same way: an installed copy where `find_package(absl CONFIG)` finds one, and otherwise a pinned release tag, of which only `absl/numeric/int128.cc` is compiled. Configure with `-DXSTD_INTS_TEST_FETCH_ABSL_INT128=OFF` to build offline without it; the affected cases then do not run, no other type in the suite leaving `noexcept` off |
-| [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) | testing `<xstd/ints/ext/boost/hash2.hpp>`, and the `<xstd/ints/ext/boost.hpp>` umbrella that exports it | Optional: `test/CMakeLists.txt` uses an installed copy where `find_package(boost_hash2 CONFIG)` finds one - Boost ships it from 1.88, and the `test` feature of [`vcpkg.json`](vcpkg.json) names it - and fetches nothing otherwise, its own Boost dependencies being too many to fetch alone; the hashing cases then do not run |
-| [gcovr](https://gcovr.com/) | reproducing the coverage gate | Only for the workflow below; `pip install gcovr` |
+| [CMake](https://cmake.org/) 3.30+ | configuring and building | `cmake_minimum_required` in [`CMakeLists.txt`](CMakeLists.txt); CTest ships with it. Noble's is 3.28; `setup-toolchain.sh` installs the version the workflows pin, from [`tools/cmake-requirements.txt`](tools/cmake-requirements.txt) |
+| [Boost.Test](https://www.boost.org/doc/libs/latest/libs/test/) 1.70+ | the unit tests under `test/src/` | 1.70 introduced arbitrary type-list support for `BOOST_AUTO_TEST_CASE_TEMPLATE`, which the tests use with `std::tuple`; declared under the opt-in `test` feature of the checked-in [`vcpkg.json`](vcpkg.json) manifest, which the `*-vcpkg` presets select from a `VCPKG_ROOT`-configured vcpkg, or install it with your system package manager |
+| [Boost.Int128](https://github.com/cppalliance/int128) | testing the integer-class extension points against a type from outside the library, and the `<xstd/ints/ext/boost/int128.hpp>` associations that pair it | Optional, and resolved without a manual step: `test/CMakeLists.txt` uses an installed copy where `find_package(boost_int128 CONFIG)` finds one and otherwise fetches a pinned commit from GitHub, as CI does: it is a pre-release library, in no Boost release yet. Configure with `-DXSTD_INTS_TEST_FETCH_BOOST_INT128=OFF` to build offline without it; the affected cases then run over xstd's own types alone |
+| [Abseil](https://github.com/abseil/abseil-cpp) | testing the same extension points against a type that declares no `noexcept` anywhere, and the `<xstd/ints/ext/absl/int128.hpp>` associations that pair it | Optional, and resolved the same way: an installed copy where `find_package(absl CONFIG)` finds one, and otherwise a pinned release tag, of which only `absl/numeric/int128.cc` is compiled. Configure with `-DXSTD_INTS_TEST_FETCH_ABSL_INT128=OFF` to build offline without it; the affected cases then do not run, no other type in the suite leaving `noexcept` off |
+| [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) | testing `<xstd/ints/ext/boost/hash2.hpp>`, and the `<xstd/ints/ext/boost.hpp>` umbrella that exports it | Optional: `test/CMakeLists.txt` uses an installed copy where `find_package(boost_hash2 CONFIG)` finds one - Boost ships it from 1.88, and the `test` feature of [`vcpkg.json`](vcpkg.json) names it - and fetches nothing otherwise, its own Boost dependencies being too many to fetch alone; the hashing cases then do not run |
+| [gcovr](https://gcovr.com/) | reproducing the coverage gate | Pinned by hash in [`tools/gcovr-requirements.txt`](tools/gcovr-requirements.txt) as the coverage job pins it; `setup-toolchain.sh` installs it, and `tools/ci-local.sh coverage` runs the gate |
 | `clang-tidy` and `run-clang-tidy` | reproducing the clang-tidy gate | Only for the workflow below |
 | `clang-format` 22+ | the formatting gate | Run `clang-format -i` on changed files before pushing; older versions rewrite the requires-expressions in `concepts/` |
 | [FileCheck](https://pypi.org/project/filecheck/) | the codegen tests | The pure-Python port of LLVM's, pinned by hash in [`tools/filecheck-requirements.txt`](tools/filecheck-requirements.txt), which `setup-toolchain.sh` installs; LLVM's own `FileCheck` reads the same directives |
+| [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) | building the documentation site | Hash-pinned in [`tools/mkdocs-requirements.txt`](tools/mkdocs-requirements.txt); `ci-local.sh`'s site leg installs it into a virtual environment of its own |
 
 ## Getting a toolchain
 
-Ubuntu 24.04 ships GCC 13 and clang 18, neither of which can build this library: GCC 13 rejects `-std=c++2c`, and
-clang-format before 22 reads `{ a * b }` in a requires-expression as a pointer declaration, so it calls files dirty
-that are clean against [`.clang-format`](.clang-format). [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh)
-installs the `stable` column of [README.md](README.md)'s matrix — GCC 15, clang 22, libc++ 22, clang-format 22, and Boost with
-Boost.Test — from apt.llvm.org and the Ubuntu toolchain PPA:
+Ubuntu 24.04 ships GCC 13, clang 18, CMake 3.28 and Boost 1.83, and none of them is what CI builds with: GCC 13
+rejects `-std=c++2c`, `CMakeLists.txt` asks for CMake 3.30, clang-format before 22 reads `{ a * b }` in a
+requires-expression as a pointer declaration, so it calls files dirty that are clean against
+[`.clang-format`](.clang-format), and Boost 1.83 has neither the [Boost.Align](https://www.boost.org/doc/libs/latest/libs/align/) package the test suite asks for nor
+[Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/). [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) brings a container as close to the GitHub Actions
+ladders as an Ubuntu box gets, every rung of [README.md](README.md)'s matrix and the Boost CI resolves:
+
+- GCC 15 and 16 from the Ubuntu toolchain PPA, and the GCC trunk snapshot the development rung uses, as `g++-17`;
+- clang 22, 23 and trunk, as `clang++-24`, each with its clang-tidy, and clang-format 22 and libc++ 22, from apt.llvm.org;
+- GCC 15's 32-bit multilib, for the i686 leg;
+- the same clang-format 22 as an unversioned `clang-format`, FileCheck, gcovr and CMake, from PyPI, pinned by hash;
+- actionlint at the release the actionlint job installs, checked against its published SHA-256;
+- Boost 1.92's Align, Hash2 and Test, built by GCC 15 from Boost's CMake release tarball, checked against the SHA-256
+  Boost publishes, into `/usr/local`.
 
 ```sh
 tools/setup-toolchain.sh
 ```
 
-`XSTD_TOOLCHAIN_FULL=1` adds GCC 16, the qualification rung, whose libstdc++ is the oldest carrying
-`<inplace_vector>`. The script is idempotent, so re-running it on a warm container is safe.
+apt's libc++ packages exclude one another, so libc++ stays at 22; the script names the command that swaps in another
+for a libc++ leg of a newer rung. The script is idempotent, so re-running it on a warm container is safe.
+
+`tools/setup-toolchain.sh --stable` installs the stable rung alone: GCC 15, clang 22 with its clang-tidy and libc++,
+clang-format 22, FileCheck and CMake. The codegen, benchmark, exhaustive and proof workflows build on that rung and
+nothing else, so they call it that way rather than spend minutes on the rest.
 
 In a [Claude Code cloud](https://code.claude.com/docs/en/claude-code-on-the-web) environment, the environment's
 setup script runs it, so every session starts with the rung already in place. That field holds a script rather than
@@ -89,20 +138,27 @@ cmake --preset no-tests
 cmake --build --preset no-tests
 ```
 
-The full suite needs Boost.Test, from the table above:
+The full suite needs [Boost.Test](https://www.boost.org/doc/libs/latest/libs/test/), from the table above, and a compiler from the ladders. Name it: on Ubuntu 24.04 the default `c++` is GCC 13, which rejects `-std=c++2c`. With what `setup-toolchain.sh` installs, no vcpkg is needed:
 
 ```sh
-cmake -S . -B build
-cmake --build build
-ctest --test-dir build --output-on-failure
+cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-15
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure --parallel
 ```
 
-The repository also provides CMake presets for common local configurations:
+The repository also provides CMake presets for common local configurations. They name no compiler, so `CXX` picks it on the first configure:
 
 ```sh
-cmake --preset dev
+CXX=g++-15 cmake --preset dev
 cmake --build --preset dev
 ctest --preset dev
+```
+
+The Boost.Test that `setup-toolchain.sh` builds is GCC 15's, and serves the released rungs, GCC 15 and 16 and clang 22 and 23. A compiler on another standard library, or on the trunk snapshot's libstdc++, needs a Boost.Test built against it: linked with libc++ or with GCC 17's libstdc++, GCC 15's fails before the first test, on a corrupted parameter. CI gets one from vcpkg, which builds Boost with the compiler under test. Locally, [`tools/boost-test.sh`](tools/boost-test.sh) builds the framework from the installed headers with the compiler and flags given, in about a minute, and prints the `-D` that makes the suite use it:
+
+```sh
+cmake -S . -B build-libcxx -DCMAKE_CXX_COMPILER=clang++-22 -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ \
+      "$(tools/boost-test.sh build-boost-test-libcxx clang++-22 -stdlib=libc++)"
 ```
 
 The `*-vcpkg` presets additionally resolve the Boost dependencies through vcpkg, using the toolchain at `VCPKG_ROOT`:
@@ -138,27 +194,74 @@ cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 run-clang-tidy -quiet -p build "$PWD/build/test/header_self_sufficiency/.*"
 ```
 
+[`tools/ci-local.sh`](tools/ci-local.sh) runs the CI jobs' Linux legs on what `setup-toolchain.sh` installs, so a change fails here, fast, rather than after hours in CI's queue:
+- the format gate and actionlint, and the site, built as the Pages workflow builds it;
+- the suite on GCC 15, 16 and 17-SVN, and on clang 22, 23 and 24-SVN, each clang on its own rung's libstdc++;
+- the libc++ 22, i686 and BMI2 legs;
+- clang-tidy 22, 23 and 24-SVN, with the clang-tidy job's passes;
+- the codegen tests on GCC 15 and clang 22, libc++'s `<bit>` tests on clang 22 with libc++, and the three consumption
+  models;
+- the coverage gate, gcovr over GCC 15's instrumented suite at 100% of lines and branches;
+- the sanitizer ladder's five kinds on the stable rung: ASan and LSan, and UBSan, on GCC 15; UBSan and implicit conversions on clang 22.
+
+Legs run cheapest first, so a formatting slip fails in seconds, and the run stops at the first failure; `--keep-going` runs them all regardless. `--quick` is the set to pass before a commit, and a full run is the one to pass before a push or a pull request. Each leg logs to `build/ci-local/<leg>.log`, and the run ends in one line per leg. The suite legs build in Debug, or in `CI_LOCAL_BUILD_TYPE`; CI builds both.
+
+```sh
+tools/ci-local.sh --quick          # before a commit
+tools/ci-local.sh                  # before a push or a pull request
+tools/ci-local.sh gcc-17 tidy-24   # the legs named
+tools/ci-local.sh --list           # every leg, in the order a full run takes them
+```
+
+MSVC, clang-cl, MinGW and Apple Clang have no Linux equivalent, and Emscripten, CodeQL and the sanitizer ladder's other rungs stay CI's.
+
+### Building the documentation
+
+[`mkdocs.yml`](mkdocs.yml) serves the README as the site's index and the pages under `doc/` beside it, leaving out the
+WG21 papers and the ideas kept there, and [`tools/mkdocs_hooks.py`](tools/mkdocs_hooks.py) points each relative link,
+written for GitHub, at the page the site serves for it, or at its file on GitHub. The hook also fails the build on a
+citation left unlinked in prose: a section of the working draft, such as `[iterator.concept.winc]/3`, links to it at
+[eel.is/c++draft](https://eel.is/c++draft/), a WG21 paper to its [cplusplus/papers](https://github.com/cplusplus/papers)
+issue (`wg21.link/P3104/github` finds it), and a paper without one, or an N-numbered document, to `wg21.link`. A Boost
+library links to its documentation under `boost.org/doc/libs/latest/`. To preview the site as it is edited:
+
+```sh
+python3 -m venv build/mkdocs && build/mkdocs/bin/pip install --require-hashes -r tools/mkdocs-requirements.txt
+build/mkdocs/bin/mkdocs serve --strict
+```
+
 ## Fuzzing
 
-The tests sweep fixed values and a seeded random sample; the libFuzzer target under [`fuzz/`](fuzz) searches for the inputs they miss. `fuzz_bit_permutation` reads a source and a mask from its input bytes and checks, at one `std::size_t` block, that both portable expansions agree and each round-trips with the portable compression, that every overload of PEXT and PDEP agrees with those kernels and round-trips on its own, and that the portable select and the one through PDEP find the source's one of every rank where the oracle does. It then reads the same bytes at every width from 8 bits up, through `unsigned _BitInt(147)` where the compiler has it, and checks that `bit_compress` and `bit_expand` agree with their oracles and undo each other, and that `bit_select` agrees with its oracle and inverts rank at the source's lowest and highest ones and at the rank the mask's population names. The checks live in [`test/include/test/bit/permutation_properties.hpp`](test/include/test/bit/permutation_properties.hpp) and [`test/include/test/bit/select_properties.hpp`](test/include/test/bit/select_properties.hpp), which the unit tests run as well; a failing one aborts.
+The tests sweep fixed values and a seeded random sample; the libFuzzer targets under [`test/fuzz/`](test/fuzz) search for the inputs they miss, one per header family. `fuzz_bit_permutation` reads a source and a mask from its input bytes and checks, at one `std::size_t` block, that both portable expansions agree and each round-trips with the portable compression, that every overload of PEXT and PDEP agrees with those kernels and round-trips on its own, and that the portable select and the one through PDEP find the source's one of every rank where the oracle does. It then reads the same bytes at every width from 8 bits up, through `unsigned _BitInt(147)` where the compiler has it, and checks that `bit_compress` and `bit_expand` agree with their oracles and undo each other, that `bit_select` agrees with its oracle and inverts rank at the source's lowest and highest ones and at the rank the mask's population names, and that `bit_reverse` and `bit_repeat` agree with theirs, the period one more than the mask's population. The checks live in [`test/include/test/bit/permutation_properties.hpp`](test/include/test/bit/permutation_properties.hpp) and [`test/include/test/bit/select_properties.hpp`](test/include/test/bit/select_properties.hpp), which the unit tests run as well; a failing one aborts.
 
-It needs clang, which is what ships libFuzzer. `XSTD_INTS_BUILD_FUZZERS` is off by default and independent of `BUILD_TESTING`. On x86-64, `XSTD_INTS_FUZZ_BMI2` is on by default and builds the target with `-mbmi2`, so it runs only on a processor with BMI2:
+The other four read each operand as an anchor byte, choosing zero, the type's minimum or its maximum, plus a 32-byte little-endian offset that wraps at the type's width. The same input therefore lands on every width's boundary at once: `INT_MIN / -1` is one seed, not one per type. They run the standard types from 8 to 64 bits, `__int128`, and the bit-precise widths `fuzz_bit_permutation` reads, each signed and unsigned. Signed starts at 4 bits, because the shift oracle halves by dividing by 2, which a signed `_BitInt(2)` cannot hold. Their oracles are computed in `_BitInt(256)` or taken from the unit tests:
+
+| target | checks |
+| :-- | :-- |
+| `fuzz_div` | `div`, `div_floor`, `div_ceil` and `div_euclid` give the quotient the exact one rounds to, and the remainder that leaves, skipping only a zero denominator and `MIN / -1` |
+| `fuzz_shift` | `shl` and `shr` agree with `test::oracle_shift` for `int`, `std::size_t`, `long long` and `std::int8_t` counts, the extremes included; `rotl` and `rotr` agree with `test::oracle_rotl` for every `int` count |
+| `fuzz_align` | `align_down` and `is_aligned` at every power-of-two alignment up to 2⁶³, and `align_up` wherever its answer fits the type |
+| `fuzz_to_chars` | `to_chars` in every base writes the digits long division gives, at buffer lengths from 0 to 255: it fails with `value_too_large` and `ptr == last` when the buffer is short, and writes nothing past its answer or past `last` |
+
+`fuzz_to_chars` found a bug in its first run. For a bit-precise type narrower than 6 bits, `to_chars` converted the base to the type's own unsigned counterpart, which wraps base 16 to 0 in `unsigned _BitInt(4)`. `to_chars(first, last, xstd::bit_uint<4>{15}, 16)` reported `value_too_large` into a 1-character buffer, and divided by zero into a longer one.
+
+It needs clang, which is what ships libFuzzer. `XSTD_INTS_BUILD_FUZZERS` is off by default and independent of `BUILD_TESTING`. On x86-64, `XSTD_INTS_FUZZ_BMI2` is on by default and builds the targets with `-mbmi2`, so they run only on a processor with BMI2:
 
 ```sh
 cmake -S . -B build-fuzz -DCMAKE_CXX_COMPILER=clang++-22 -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_FUZZERS=ON
 cmake --build build-fuzz --parallel 2
-mkdir -p corpus && build-fuzz/fuzz/fuzz_bit_permutation -max_total_time=120 corpus fuzz/corpus/fuzz_bit_permutation
+mkdir -p corpus && build-fuzz/test/fuzz/fuzz_div -max_total_time=120 corpus test/fuzz/corpus/fuzz_div
 ```
 
-The target is built with ASan and UBSan, and `XSTD_INTS_FUZZ_COMPILE_OPTIONS` and `XSTD_INTS_FUZZ_LINK_OPTIONS` replace those flags. The first directory on the command line receives what the run discovers; the checked-in seeds under `fuzz/corpus/<target>/` are read but left alone. A crash is written as `crash-<sha1>` in the working directory, and reproduces by passing that file to the target binary. With `BUILD_TESTING` on as well, CTest replays each seed corpus once as `fuzz.<target>`. A seed named `regression-...` is a minimized input that once found a bug, and stays to keep it found.
+The targets are built with ASan and UBSan, and `XSTD_INTS_FUZZ_COMPILE_OPTIONS` and `XSTD_INTS_FUZZ_LINK_OPTIONS` replace those flags. The first directory on the command line receives what the run discovers; the checked-in seeds under `test/fuzz/corpus/<target>/` are read but left alone. A crash is written as `crash-<sha1>` in the working directory, and reproduces by passing that file to the target binary. With `BUILD_TESTING` on as well, CTest replays each seed corpus once as `fuzz.<target>`. A seed named `regression-...` is a minimized input that once found a bug, and stays to keep it found.
 
-[ClusterFuzzLite](https://google.github.io/clusterfuzzlite/) runs the same target in CI, built by [`.clusterfuzzlite/build.sh`](.clusterfuzzlite/build.sh) in the OSS-Fuzz builder image: [`cflite_pr.yml`](.github/workflows/cflite_pr.yml) for five minutes on every pull request, under ASan and UBSan, and [`cflite_batch.yml`](.github/workflows/cflite_batch.yml) nightly for half an hour, keeping the corpus it grows. A crash fails the job and is uploaded as an artifact.
+[ClusterFuzzLite](https://google.github.io/clusterfuzzlite/) runs the same targets in CI, built by [`.clusterfuzzlite/build.sh`](.clusterfuzzlite/build.sh) in the OSS-Fuzz builder image: [`cflite_pr.yml`](.github/workflows/cflite_pr.yml) for five minutes on every pull request, under ASan and UBSan, and [`cflite_batch.yml`](.github/workflows/cflite_batch.yml) nightly for half an hour, each budget split across the targets, keeping the corpus it grows. A crash fails the job and is uploaded as an artifact.
 
 The unit tests reach PEXT and PDEP only where the build targets BMI2, so [`gcc.yml`](.github/workflows/gcc.yml) and [`clang.yml`](.github/workflows/clang.yml) each add a leg at `-march=x86-64-v3` on the stable rung; every other leg runs the portable kernels.
 
 ## Codegen tests
 
-The unit tests and the fuzzer check that the intrinsic kernels agree with the portable ones, which they must, and which also means a detection macro that stops firing goes unseen: the portable kernel answers, every value stays right, and every test stays green. The codegen tests close that gap. Each function in [`codegen/`](codegen) wraps one public call at a fixed width; CTest compiles the file to assembly once per target configuration, with `-std=c++23 -O2 -DNDEBUG` as a consumer builds, and FileCheck reads it against the directives above each function, under the prefixes that configuration names:
+The unit tests and the fuzzer check that the intrinsic kernels agree with the portable ones, which they must, and which also means a detection macro that stops firing goes unseen: the portable kernel answers, every value stays right, and every test stays green. The codegen tests close that gap. Each function in [`test/codegen/`](test/codegen) wraps one public call at a fixed width; CTest compiles the file to assembly once per target configuration, with `-std=c++23 -O2 -DNDEBUG` as a consumer builds, and FileCheck reads it against the directives above each function, under the prefixes that configuration names:
 
 | Configuration | Flags | Expected |
 | :--- | :--- | :--- |
@@ -170,7 +273,7 @@ The unit tests and the fuzzer check that the intrinsic kernels agree with the po
 | `bmi2-excluded` | `-march=znver2` | the `x86-64-v3` checks **rejected**, which proves they see the kernels gone while BMI2 is still enabled |
 | `armv8-a` | `-march=armv8-a` | `bit_reverse` an `rbit`, two for 128 bits, without a branch |
 
-[`codegen/alignment.cpp`](codegen/alignment.cpp) puts `align_up` and `align_down` beside the complement idiom they decline, and its tests require each pair to compile to the same instructions, as often each, in whatever order and registers the compiler picks. The x86-64 configurations run on an x86-64 host and `armv8-a` on an AArch64 one; nothing cross-compiles. They need GCC or Clang with its GNU-style driver, and no Boost:
+[`test/codegen/alignment.cpp`](test/codegen/alignment.cpp) puts `align_up` and `align_down` beside the complement idiom they decline, and its tests require each pair to compile to the same instructions, as often each, in whatever order and registers the compiler picks. The x86-64 configurations run on an x86-64 host and `armv8-a` on an AArch64 one; nothing cross-compiles. They need GCC or Clang with its GNU-style driver, and no Boost:
 
 ```sh
 tools/setup-toolchain.sh
@@ -178,14 +281,30 @@ cmake -S . -B build-codegen -DCMAKE_CXX_COMPILER=clang++-22 -DBUILD_TESTING=OFF 
 ctest --test-dir build-codegen --output-on-failure
 ```
 
-Each test leaves its assembly beside it as `build-codegen/codegen/<source>.<configuration>.s`. The [Codegen workflow](.github/workflows/codegen.yml) runs them with GCC 15 and Clang 22 on `ubuntu-24.04` and `ubuntu-24.04-arm`.
+Each test leaves its assembly beside it as `build-codegen/test/codegen/<source>.<configuration>.s`. The [Codegen workflow](.github/workflows/codegen.yml) runs them with GCC 15 and Clang 22 on `ubuntu-24.04` and `ubuntu-24.04-arm`.
+
+## Standard library test suites
+
+libc++, libstdc++ and the MSVC STL each test their `<bit>` against the standard's paragraphs, written by people with no stake in xstd. [`test/std-test-suite/`](test/std-test-suite) runs libc++'s tests against xstd's functions through cpp-ci's [`std_test_suite`](https://github.com/rhalbersma/cpp-ci#standard-library-test-suites) adapter, which fetches the suite at the tag the stable clang rung pins, `llvmorg-22.1.8`, sparse and shallow, and rewrites a copy of each test in the build tree. The cpp-ci commit is the one [`clang.yml`](.github/workflows/clang.yml) pins, read from that file, so moving the pin moves the suite.
+
+[`libcxx.toml`](test/std-test-suite/libcxx.toml) is the mapping: it takes `libcxx/test/std/numerics/bit/`, keeps the files that call one of the twelve functions xstd mirrors there (`bit_ceil`, `bit_floor`, `bit_width`, `byteswap`, `countl_one`, `countl_zero`, `countr_one`, `countr_zero`, `has_single_bit`, `popcount`, `rotl`, `rotr`), and rewrites each `std::` call to `xstd::`. All twelve run, their negative cases included: `bool`, the character types, the signed types, enumerations and class types must stay uncallable. One assertion is dropped, with its reason in the mapping: `bit_ceil.pass.cpp`'s `LIBCPP_ASSERT_NOEXCEPT`, since [[bit.pow.two]](https://eel.is/c++draft/bit.pow.two) gives `bit_ceil` a precondition and no `noexcept`, which libc++ adds as an extension. An upstream edit to a mapped file fails configuration, so it is reviewed rather than carried.
+
+It needs git and Python 3.11 or later, and no Boost:
+
+```sh
+cmake -S . -B build-std -DCMAKE_CXX_COMPILER=clang++-22 -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ -DBUILD_TESTING=OFF -DXSTD_INTS_STD_TEST_SUITES=ON
+cmake --build build-std --parallel
+ctest --test-dir build-std --output-on-failure
+```
+
+`build-std/test/std-test-suite/std-test-suite/libcxx/manifest.json` lists every file under the taken directory with what became of it. The [Std test suite workflow](.github/workflows/std-test-suite.yml) runs it on every pull request and push to `main`.
 
 ## Exhaustive sweeps
 
-At 16 bits every pair of operands can be tried, 2^32 of them, which the unit tests and the fuzzer only sample. The two sweeps under [`exhaustive/`](exhaustive) try them all, split across the machine's threads:
+At 16 bits every pair of operands can be tried, 2^32 of them, which the unit tests and the fuzzer only sample. The two sweeps under [`test/exhaustive/`](test/exhaustive) try them all, split across the machine's threads:
 
 - `exhaustive_bit_permutation` checks every 16-bit source against every 16-bit mask with the fuzzer's own properties: `bit_compress` and `bit_expand` against their oracles and each other, the portable kernels at `std::size_t` width, and, where the build has fast BMI2, `PEXT` and `PDEP` against those kernels.
-- `exhaustive_division` checks `div`, `div_floor`, `div_euclid` and `div_ceil` over every `int16_t` and `uint16_t` pair in their domain against their postconditions, which alone determine each result, and folds every numerator, denominator, quotient and remainder into a digest per type and function. Those eight digests must equal [`exhaustive/division_digests.txt`](exhaustive/division_digests.txt), which [`tools/division_digests.py`](tools/division_digests.py) computes with numpy's own division routines, so the postconditions are held to an implementation xstd did not write.
+- `exhaustive_division` checks `div`, `div_floor`, `div_euclid` and `div_ceil` over every `int16_t` and `uint16_t` pair in their domain against their postconditions, which alone determine each result, and folds every numerator, denominator, quotient and remainder into a digest per type and function. Those eight digests must equal [`test/exhaustive/division_digests.txt`](test/exhaustive/division_digests.txt), which [`tools/division_digests.py`](tools/division_digests.py) computes with numpy's own division routines, so the postconditions are held to an implementation xstd did not write.
 
 They take minutes each and need no Boost:
 
@@ -199,19 +318,19 @@ The reference digests need numpy, pinned by hash in [`tools/numpy-requirements.t
 
 ```sh
 pip install --user --require-hashes -r tools/numpy-requirements.txt
-python3 tools/division_digests.py --check exhaustive/division_digests.txt
+python3 tools/division_digests.py --check test/exhaustive/division_digests.txt
 ```
 
 The [Exhaustive workflow](.github/workflows/exhaustive.yml) runs the sweeps weekly, by hand, and on a pull request touching what they cover: GCC 15 with the portable kernels, Clang 22 at `-march=x86-64-v3`, GCC 15 on AArch64 and MSVC on x64, with the digests recomputed beside them. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
 
 ## Proofs
 
-The portable kernels under `include/xstd/ints/bit/detail/portable/` answer every constant expression and every target without the instructions, and the tests and the fuzzer can only sample their 2^128 pairs of inputs. [`proofs/`](proofs) proves them equal to their specifications for every input, with [Z3](https://github.com/Z3Prover/z3)'s Python bindings, at both widths `std::size_t` has, 32 and 64 bits:
+The portable kernels under `include/xstd/ints/bit/detail/portable/` answer every constant expression and every target without the instructions, and the tests and the fuzzer can only sample their 2^128 pairs of inputs. [`test/proofs/`](test/proofs) proves them equal to their specifications for every input, with [Z3](https://github.com/Z3Prover/z3)'s Python bindings, at both widths `std::size_t` has, 32 and 64 bits:
 
-- [`specifications.py`](proofs/specifications.py) transcribes what each kernel must compute from its primary source: PEXT and PDEP from the Operation pseudocode of the Intel 64 and IA-32 Architectures Software Developer's Manual, RBIT from the Arm Architecture Reference Manual's ASL, and select from its defining property.
-- [`kernels.py`](proofs/kernels.py) transcribes each kernel statement by statement, over the word operations of [`operations.py`](proofs/operations.py), with each loop given as its parts. Each kernel records what the C++ needs there to be defined: a shift within the width, the select's precondition, a table index in range and a rank that names a one of its byte.
-- [`prove.py`](proofs/prove.py) proves `block_reverse_by_swaps` directly, and each loop by an inductive invariant: it holds on entry, one pass keeps it while a variable falls, so the loop ends, and on exit it makes the result a closed form that a further claim proves equal to the SDM's pseudocode. `block_select_by_broadword` is proved in two parts that meet at its counts, the second a case for each byte and each bit within it, with the `select_in_byte` table standing in by a contract that is checked entry by entry. `block_expand_by_select` relies on the select's proved contract rather than on its code. Three mutants, each a kernel with one deliberate error, must be refuted.
-- [`drift.py`](proofs/drift.py) holds the models to the C++, since a proof is about the transcription: it runs the compiled kernels through [`drift.cpp`](proofs/drift.cpp) on edge values and pseudo-random words and requires every output to equal the model's at the same width.
+- [`specifications.py`](test/proofs/specifications.py) transcribes what each kernel must compute from its primary source: PEXT and PDEP from the Operation pseudocode of the Intel 64 and IA-32 Architectures Software Developer's Manual, RBIT from the Arm Architecture Reference Manual's ASL, and select from its defining property.
+- [`kernels.py`](test/proofs/kernels.py) transcribes each kernel statement by statement, over the word operations of [`operations.py`](test/proofs/operations.py), with each loop given as its parts. Each kernel records what the C++ needs there to be defined: a shift within the width, the select's precondition, a table index in range and a rank that names a one of its byte.
+- [`prove.py`](test/proofs/prove.py) proves `block_reverse_by_swaps` directly, and each loop by an inductive invariant: it holds on entry, one pass keeps it while a variable falls, so the loop ends, and on exit it makes the result a closed form that a further claim proves equal to the SDM's pseudocode. `block_select_by_broadword` is proved in two parts that meet at its counts, the second a case for each byte and each bit within it, with the `select_in_byte` table standing in by a contract that is checked entry by entry. `block_expand_by_select` relies on the select's proved contract rather than on its code. Three mutants, each a kernel with one deliberate error, must be refuted.
+- [`drift.py`](test/proofs/drift.py) holds the models to the C++, since a proof is about the transcription: it runs the compiled kernels through [`drift.cpp`](test/proofs/drift.cpp) on edge values and pseudo-random words and requires every output to equal the model's at the same width. It runs twice where the toolchain can link a `-m32` program, once at the host's 64-bit `std::size_t` and once at 32 bits, so the models of both widths meet a build of their own. `XSTD_INTS_PROOFS_DRIFT_32` is `AUTO` by default; `ON` requires the 32-bit build, as the workflow does after installing `g++-15-multilib`, and `OFF` skips it.
 
 Z3 is pinned by hash in [`tools/z3-requirements.txt`](tools/z3-requirements.txt):
 
@@ -222,26 +341,61 @@ cmake --build build-proofs
 ctest --test-dir build-proofs --output-on-failure --verbose
 ```
 
-`python3 proofs/prove.py --widths 16 --jobs 4` runs every claim at 16 bits in seconds, which is the quick check while editing a kernel or its model. The [Proofs workflow](.github/workflows/proofs.yml) runs both widths weekly, by hand, and on a pull request touching the portable kernels or the proofs. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
+`python3 test/proofs/prove.py --widths 16 --jobs 4` runs every claim at 16 bits in seconds, which is the quick check while editing a kernel or its model. The [Proofs workflow](.github/workflows/proofs.yml) runs both widths weekly, by hand, and on a pull request touching the portable kernels or the proofs. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
 
 ## Mutation tests
 
-Coverage shows that a line ran under test, not that a test would fail if the line were wrong: `<` turned into `<=` at a boundary leaves every line covered and every test green. [Mull](https://github.com/mull-project/mull) checks the stronger claim. Its clang plugin compiles a mutant into every arithmetic, comparison, bitwise and logical operator it finds in the headers [`mutation/mull.yml`](mutation/mull.yml) names: the portable bit kernels, the shift behind `shl` and `shr`, and everything under `cstdlib/`. Each mutant then runs against the unit tests, and must make one of them fail.
+[Mull](https://github.com/mull-project/mull) tests the tests: it compiles a mutant into every operator of the portable bit kernels, the shift behind `shl` and `shr`, and `cstdlib/`, and each must make a unit test fail. [doc/mutation.md](doc/mutation.md) says how to run it and how to answer a mutant that survives.
 
-[`mutation/`](mutation) builds every unit test under `bit/` and `cstdlib/` a second time, one executable each, unoptimized and with the plugin, so that a mutant reruns only the tests compiled with it. The intrinsic kernels' test is left out: without BMI2 it reaches no mutated line, and it is the slowest of all. [`mutation/score.py`](mutation/score.py) runs `mull-runner` over each executable and counts a mutant as killed if any executable kills it. The test fails if a mutant survives, or if no executable reaches its line.
+## Benchmarks
 
-A surviving mutant gets one of two answers. Either a test kills it, built from the cases users meet as the [test requirements](#test-suite-requirements) ask, or it is an equivalent mutant: the same function in a different spelling, such as `x < 0 ? -x : x` against `x <= 0 ? -x : x`, where both arms are zero at zero. An equivalent mutant is suppressed at its line with `// mull-ignore: <mutator>`, and the reason goes on its own comment line above. Mull reads every character after the colon as part of a mutator name, so a reason on the same line breaks the directive. A mutant is never suppressed just to raise the score.
-
-Mull's plugin is built against one LLVM major, and the newest it supports is 20, behind the stable rung's clang. Noble's own archive carries clang 20; Mull comes from its [package repository](https://cloudsmith.io/~mull-project/repos/mull-stable), checked against the hash the workflow pins. The suite needs Boost.Test, which noble's `libboost-test-dev` provides, and no vcpkg:
+What [design.md](doc/design.md) says the bit kernels cost comes from [`benchmark/`](bench), not from figures quoted by hand. `bench_bit_permutation` times every kernel in `detail::portable`; `PEXT`, `PDEP`, and `PDEP` followed by `TZCNT` where the build enables BMI2; and the alternatives design.md names as rejected: the mask walk with an `if`, Hacker's Delight's parallel suffix, and [zp7](https://github.com/zwegner/zp7), with `PCLMULQDQ` where the build enables it. A cell is the cost of one call among 4096 independent calls on fixed pseudo-random inputs whose density its row states, the fastest of five passes. Where the system exposes performance counters, cycles and instructions are counted; elsewhere cycles are time at the clock a chain of dependent adds runs at. Every kernel must agree with its table's first on every input before any is timed, and the executable prints a Markdown page that names the compiler, the machine, the flags and the commit. CMake fetches nanobench and zp7, each pinned by commit:
 
 ```sh
-sudo apt-get install clang-20 libboost-test-dev ./Mull-20-0.34.1-LLVM-20.1.2-ubuntu-amd64-24.04.deb
-cmake -S . -B build-mutation -DCMAKE_CXX_COMPILER=clang++-20 -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_MUTATION_TESTS=ON
-cmake --build build-mutation --parallel
-ctest --test-dir build-mutation --output-on-failure
+tools/setup-toolchain.sh
+cmake -S . -B build-benchmark -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_CXX_FLAGS=-march=native -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_BENCHMARKS=ON
+cmake --build build-benchmark
+build-benchmark/benchmark/bench_bit_permutation
 ```
 
-A run takes about eight minutes on four cores and leaves one SQLite report per executable under `build-mutation/mutation/reports/`. The [Mutation workflow](.github/workflows/mutation.yml) runs it weekly, by hand, and on a pull request that touches the mutated headers, the tests that kill their mutants, or `mutation/`. It is not a required check while its runtime and noise are still being learned.
+A run takes about half a minute. One worth keeping goes under [`benchmark/results/`](benchmark/results), a file per machine that opens with what the machine is and how it was run, and a figure in design.md names the file it comes from. Configure afresh before a run to keep, since CMake reads the commit when it configures.
+
+[`benchmark/static_analysis.py`](benchmark/static_analysis.py) compiles each kernel with GCC 15 and Clang 22 for Haswell, Cascade Lake, Ice Lake and Zen 2 to 4, and with Clang for Neoverse N1, N2 and V2, and writes llvm-mca's analysis of each under [`benchmark/mca/`](benchmark/mca/README.md). It needs the build configured above, for zp7, and noble's `libstdc++-14-dev-arm64-cross` for the AArch64 targets:
+
+```sh
+sudo apt-get install libstdc++-14-dev-arm64-cross
+python3 benchmark/static_analysis.py --zp7 build-benchmark/_deps/zp7-src
+```
+
+Given `--uica` and a [uiCA](https://github.com/andreas-abel/uiCA) checkout that its own `setup.sh` has prepared, the script also has uiCA simulate the same regions of the x86-64 code on the three targets it models, Haswell, Cascade Lake and Ice Lake, under [`benchmark/uica/`](benchmark/uica). llvm-mca reports its model, not the hardware, and its Zen 2 model misses the microcode behind `PEXT` and `PDEP`. A claim about how fast an instruction is cites [uops.info](https://uops.info) by instruction and microarchitecture rather than restating a number.
+
+The [Benchmark workflow](.github/workflows/benchmark.yml) runs both, by hand and on a pull request that touches the kernels or `benchmark/`: the benchmark with GCC 15 and Clang 22 on `ubuntu-24.04` and `ubuntu-24.04-arm` at `-march=native`, `-mcpu=native` on Arm, with each job's page in its summary, and the analysis beside them, uiCA included, pinned by commit, reporting any difference from the checked-in files. A benchmark reports a number and never fails on one, so it is not a required check.
+
+## Constant-time checks
+
+"Branch-free" is a claim about control flow, and a constant-time engineer asks a sharper one: does a kernel's time depend on secret data? [`test/constant_time/`](test/constant_time) answers the part of it that control flow and memory addresses decide, per kernel and per secret argument, over the cases in [`cases.hpp`](test/constant_time/cases.hpp), each named `kernel.secret`. `constant_time_memcheck` marks the secret argument undefined and runs the kernel under Valgrind, which then reports every branch and every memory address computed from it, as ctgrind does. A case that should be clean is a test that passes; a case that branches on its secret or indexes memory by it is a test expected to fail, so a change either way breaks the suite.
+
+```sh
+sudo apt-get install valgrind
+cmake -S . -B build-ct -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_CXX_FLAGS=-march=x86-64-v3 -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_CONSTANT_TIME_TESTS=ON
+cmake --build build-ct
+ctest --test-dir build-ct --output-on-failure
+```
+
+[`test/constant_time/results.md`](test/constant_time/results.md) keeps a run. The [Constant time workflow](.github/workflows/constant-time.yml) runs the tests with GCC 15 and Clang 22, with and without `-march=x86-64-v3`, weekly, by hand, and on a pull request that touches the portable kernels or `test/constant_time/`. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
+
+## Examples
+
+[`examples/perft/`](examples/perft) is a chess move generator built on the library as an engine author would use it: `xstd::countr_zero` to walk a bitboard, and the attacks of the sliding pieces found three ways, each its own table, `xstd::bit_compress` indexing a table as Stockfish's BMI2 path does, hyperbola quintessence over `xstd::bit_reverse`, and magic bitboards, which use no xstd function, as the baseline. Perft counts the leaves of the legal move tree, and every count must equal the one chessprogramming.org publishes for the start position, Kiwipete and positions 3 to 6, so a wrong bit primitive anywhere fails it. Every table is also checked against a square-by-square walk before it is used.
+
+```sh
+cmake -S . -B build-perft -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_CXX_FLAGS=-march=x86-64-v3 -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_EXAMPLES=ON
+cmake --build build-perft
+ctest --test-dir build-perft
+build-perft/examples/perft/perft full
+```
+
+The test runs the suite to shallow depths in seconds; `perft full` runs it to depths of up to 194 million leaves and prints each method's speed. [`examples/perft/results.md`](examples/perft/results.md) keeps a run. The [Perft workflow](.github/workflows/perft.yml) runs `perft full` with the portable kernels and at `-march=x86-64-v3` on `ubuntu-24.04`, and on `ubuntu-24.04-arm`, weekly, by hand, and on a pull request that touches the bit functions or the example. It is not a required check, since its path filter would leave it pending on every pull request it does not cover.
 
 ## Succinct benchmark
 
@@ -261,12 +415,22 @@ Implementation-relevant proposals must record the paper number, the revision-pin
 
 A new paper revision or a change on its tracking issue triggers a review, not an automatic code change. Update the review date only after inspecting the relevant revision and reconsidering xstd's stated relationship.
 
+The table records reviews; the [Upstream watch workflow](.github/workflows/upstream-watch.yml) records changes. Every Monday it runs [`tools/upstream_watch.py`](tools/upstream_watch.py), which compares upstream with what was last reviewed and opens or updates one issue, "Upstream changes to review", naming each difference:
+
+- a paper revision on wg21.link newer than its row's, or a change of state, labels or milestone on its tracking issue;
+- a change to `[bit]`, `[bitmask.types]`, `[charconv.to.chars]` or `[iterator.concept.winc]` in [cplusplus/draft](https://github.com/cplusplus/draft) since the reviewed commit, shown as a diff of the clause;
+- a value of `__cpp_lib_bitops` in libstdc++ or libc++ trunk other than the reviewed one, with the forwarding overloads it makes live, read from the thresholds in `include/xstd/ints/bit/detail/std_*.hpp`, and the tests that then exercise them;
+- an LWG issue against those clauses that is new, or whose status has changed.
+
+Everything but the table's revisions is recorded in [`tools/upstream-watch.json`](tools/upstream-watch.json). After a review, update the paper's row by hand, run `tools/upstream_watch.py --record` with a `GITHUB_TOKEN` for the rest, and close the issue. `tools/upstream_watch.py` alone prints the report without touching anything, and `python3 -m unittest tools/test_upstream_watch.py` checks it offline against a seeded change.
+
 | Paper | Reviewed wording | Tracking issue | Last reviewed | Relationship |
 |---|---|---|---|---|
-| P3104R6 | [P3104R6](https://wg21.link/P3104R6) | [cplusplus/papers#1768](https://github.com/cplusplus/papers/issues/1768) | 2026-10-10 | Supplies `bit_reverse`, `bit_repeat`, `bit_compress` and `bit_expand`. xstd implements the wording, R5's plus R6's constant-evaluation remark on `bit_repeat`, forwards to `<bit>` once `__cpp_lib_bitops` reaches `202607L`, and extends the domain to every xstd unsigned integer. |
-| P3666R0 | [P3666R0](https://wg21.link/P3666R0) | [cplusplus/papers#2420](https://github.com/cplusplus/papers/issues/2420) | 2026-08-19 | Supplies the proposed native bit-precise aliases and library integration direction. xstd exposes Clang's existing `_BitInt` types through equivalent aliases and its open traits, without implementing the paper's core-language changes. |
-| P3701R0 | [P3701R0](https://wg21.link/P3701R0) | [cplusplus/papers#2330](https://github.com/cplusplus/papers/issues/2330) | 2026-08-18 | Supplies arithmetic-integer vocabulary and the built-in type boundary. xstd additionally admits paired integer-class types, requires valid signed/unsigned transformations, and is cv-transparent where the paper excludes cv-qualified types. |
-| P3724R4 | [P3724R4](https://wg21.link/P3724R4) | [cplusplus/papers#2354](https://github.com/cplusplus/papers/issues/2354) | 2026-08-18 | Supplies division-result vocabulary and relevant rounding semantics. xstd intentionally supports only truncating, Euclidean, and floored quotient/remainder operations over its broader integer domain. |
+| [P3104R6](https://github.com/cplusplus/papers/issues/1768) | [P3104R6](https://wg21.link/P3104R6) | [cplusplus/papers#1768](https://github.com/cplusplus/papers/issues/1768) | 2026-10-10 | Supplies `bit_reverse`, `bit_repeat`, `bit_compress` and `bit_expand`. xstd implements the wording, R5's plus R6's constant-evaluation remark on `bit_repeat`, forwards to `<bit>` once `__cpp_lib_bitops` reaches `202607L`, except `bit_compress` and `bit_expand` on libstdc++ with fast BMI2, whose `<bit>` emits no `PEXT` or `PDEP`, and extends the domain to every xstd unsigned integer. |
+| [P3793R2](https://github.com/cplusplus/papers/issues/2399) | [P3793R2](https://wg21.link/P3793R2) | [cplusplus/papers#2399](https://github.com/cplusplus/papers/issues/2399) | 2026-10-17 | Supplies `shl` and `shr`. xstd implements the wording, forwards to `<bit>` once `__cpp_lib_bitops` reaches `202606L`, and extends the domain to every pair of xstd integers, a count of any `integer` type included. |
+| [P3666R4](https://github.com/cplusplus/papers/issues/2420) | [P3666R4](https://wg21.link/P3666R4) | [cplusplus/papers#2420](https://github.com/cplusplus/papers/issues/2420) | 2026-10-23 | Makes `_BitInt(N)` and `unsigned _BitInt(N)` signed and unsigned integer types that are integral, paired by `make_signed` and `make_unsigned`, with `numeric_limits`, and exempt from integral promotion, as xstd's concepts, traits and `promoted_t` already treat Clang's. As LEWG polled, it keeps `<bit>`, `byteswap`, `to_chars` and the rest of the library closed to them, which xstd opens, and drops R3's `bit_int` and `bit_uint` aliases, which xstd keeps as its own. Its `[iterator.concept.winc]` change asks an integer-class type to be wider than the standard integer types only, so `int128` and `uint128` stay integer-class beside `_BitInt(128)`. |
+| [P3701R0](https://github.com/cplusplus/papers/issues/2330) | [P3701R0](https://wg21.link/P3701R0) | [cplusplus/papers#2330](https://github.com/cplusplus/papers/issues/2330) | 2026-08-18 | Supplies arithmetic-integer vocabulary and the built-in type boundary. xstd additionally admits paired integer-class types, requires valid signed/unsigned transformations, and is cv-transparent where the paper excludes cv-qualified types. |
+| [P3724R4](https://github.com/cplusplus/papers/issues/2354) | [P3724R4](https://wg21.link/P3724R4) | [cplusplus/papers#2354](https://github.com/cplusplus/papers/issues/2354) | 2026-08-18 | Supplies division-result vocabulary and relevant rounding semantics. xstd intentionally supports only truncating, Euclidean, and floored quotient/remainder operations over its broader integer domain. |
 
 ## Required status checks
 
@@ -290,6 +454,8 @@ The names to tick under branch protection, exactly as GitHub reports them:
 | `msvc / all` | cl on VS 2022, 2026 and 2026-Preview |
 | `msvc_analyze / all` | `/analyze` on the same three rungs |
 | `sanitizers / all` | all fifteen sanitizer legs |
+| `site` | `mkdocs build --strict`: every page and anchor a link names exists |
+| `std_test_suite / all` | libc++'s `<bit>` tests against xstd, on clang 22 with libc++ |
 
 Codecov posts two more, `codecov/project` and `codecov/patch`, which carry the same 100% bar for the whole
 tree and for the diff.
@@ -298,7 +464,17 @@ The [Scorecard workflow](.github/workflows/scorecard.yml) cannot be required: it
 on a schedule, never on a pull request.
 
 Each ladder ends in an `all` job that is red unless every one of its legs succeeded, and that gate is what
-branch protection requires: a leg name changes whenever a rung moves, the gate name does not. This table is
+branch protection requires: a leg name changes whenever a rung moves, the gate name does not.
+
+The gate is this repository's own job, carrying the required name, beside the shared ladder it waits for. On a
+pull request, [`changes.yml`](.github/workflows/changes.yml) first compares the diff with the paths no ladder
+builds: prose, `doc/`, the suites with workflows of their own (`benchmark/`,
+`test/codegen/`, `test/constant_time/`, `test/exhaustive/`, `test/fuzz/`, `test/mutation/`, `test/proofs/`, `test/std-test-suite/`), `tools/`, `mkdocs.yml`, and the workflows that are not
+ladders. The README counts as prose unless one of its ```` ```cpp ```` blocks, each compiled as a test, is added,
+removed or changed. When every changed file is one of those, the ladder is skipped and its gate passes; any other
+file, a new directory included, runs the ladder, reduced for a compiler ladder as above, and the gate passes only if
+every leg did. Any other event, a manual run and the canary's nightly dispatch among them, always builds. The names
+under branch protection do not change. This table is
 [xstd-bits](https://github.com/rhalbersma/xstd-bits/blob/main/CONTRIBUTING.md)' as well, less the C++26 legs
 it alone carries, the three repositories holding one bar between them.
 
