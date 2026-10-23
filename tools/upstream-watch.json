@@ -10,10 +10,10 @@
   },
   "libraries": {
     "libc++": {
-      "bitops": 201907
+      "bitops": 202606
     },
     "libstdc++": {
-      "bitops": 201907
+      "bitops": 202607
     }
   },
   "lwg": {

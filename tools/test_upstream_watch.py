@@ -71,7 +71,7 @@ Mandates: no padding bits.
 """
 
 TABLE = ("| Paper | Reviewed wording | Tracking issue | Last reviewed | Relationship |\n|---|---|---|---|---|\n"
-         "| P3104R{revision} | [P3104R6](https://wg21.link/P3104R6) | "
+         "| [P3104R{revision}](https://github.com/cplusplus/papers/issues/1768) | [P3104R6](https://wg21.link/P3104R6) | "
          "[cplusplus/papers#1768](https://github.com/cplusplus/papers/issues/1768) | 2026-10-10 | x |\n")
 
 
@@ -97,6 +97,18 @@ class Parsers(unittest.TestCase):
     def test_the_table_gives_paper_revision_and_tracking_issue(self):
         self.assertEqual(upstream_watch.reviewed_papers(TABLE.format(revision=5)),
                          {"P3104": {"revision": 5, "issue": 1768}})
+
+    def test_the_table_reads_the_paper_linked_or_bare(self):
+        bare = TABLE.format(revision=5).replace("[P3104R5](https://github.com/cplusplus/papers/issues/1768)", "P3104R5")
+        self.assertEqual(upstream_watch.reviewed_papers(bare), {"P3104": {"revision": 5, "issue": 1768}})
+
+    def test_a_table_with_no_readable_row_stops_the_report(self):
+        with self.assertRaises(SystemExit):
+            upstream_watch.report({}, "| Paper |\n|---|\n", token=None)
+
+    def test_the_contributing_table_is_readable(self):
+        rows = upstream_watch.reviewed_papers((upstream_watch.ROOT / "CONTRIBUTING.md").read_text())
+        self.assertIn("P3104", rows)
 
     def test_the_overloads_come_from_the_headers(self):
         overloads = {overload["macro"]: overload for overload in upstream_watch.forwarding_overloads()}
