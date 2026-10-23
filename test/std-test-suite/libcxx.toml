@@ -28,13 +28,6 @@ departure = "[bit.pow.two] gives bit_ceil a precondition and no noexcept, which 
 [[libcxx.assertion]]
 file = "libcxx/test/std/numerics/c.math/abs.pass.cpp"
 sha256 = "ebb98e9cb04b73c9b9c53aeae29c39ed211551e5059688d51599dcfd4055f035"
-line = "ASSERT_SAME_TYPE(decltype(std::abs(neg_val)), Result);"
-to = "ASSERT_SAME_TYPE(decltype(std::abs(neg_val)), Source);"
-departure = "xstd::abs returns its argument's type, where [c.math.abs] promotes one narrower than int"
-
-[[libcxx.assertion]]
-file = "libcxx/test/std/numerics/c.math/abs.pass.cpp"
-sha256 = "ebb98e9cb04b73c9b9c53aeae29c39ed211551e5059688d51599dcfd4055f035"
 line = "test_abs<long double, long double>();"
 drop = true
 departure = "xstd::abs takes integers only; [c.math.abs]'s floating-point overloads stay <cmath>'s"
