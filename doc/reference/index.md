@@ -83,7 +83,7 @@ counterpart sits beside its nearest kin, citing the kin's clause where one is sh
 | `to_chars` | Extends | [[charconv.to.chars]](https://eel.is/c++draft/charconv.to.chars) forwarding for `char` and the standard integer types, and writing every other `integer` as that subclause specifies |
 | `to_chars_max_size` | New | [[charconv.to.chars]](https://eel.is/c++draft/charconv.to.chars) none: the size of a buffer that holds every value of `I` at every base |
 | `formatter<xstd::div_result<I>, charT>` | Extends | [[format.formatter.spec]](https://eel.is/c++draft/format.formatter.spec) specialized for `div_result`, as [[namespace.std]](https://eel.is/c++draft/namespace.std) admits for a program-defined type, built on the tuple formatter of [[format.tuple]](https://eel.is/c++draft/format.tuple) where the library has one |
-| `abs` | Extends | [[c.math.abs]](https://eel.is/c++draft/c.math.abs) [[cinttypes.syn]](https://eel.is/c++draft/cinttypes.syn) one template for every `integer`, returning `I` rather than the promoted type |
+| `abs` | Extends | [[c.math.abs]](https://eel.is/c++draft/c.math.abs) [[cinttypes.syn]](https://eel.is/c++draft/cinttypes.syn) one template for every `integer`, returning the promoted type, as they do |
 | `sign` | New | [[c.math.abs]](https://eel.is/c++draft/c.math.abs) none in the standard: Boost.Math's `sign`, for every `integer`, as an `int` |
 | `unsigned_abs` | New | [[c.math.abs]](https://eel.is/c++draft/c.math.abs) none in the standard: the magnitude of every `integer`, in its unsigned counterpart |
 

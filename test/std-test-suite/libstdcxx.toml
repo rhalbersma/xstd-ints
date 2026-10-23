@@ -1,0 +1,82 @@
+#          Copyright Rein Halbersma 2026.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+# libstdc++'s tests of what xstd mirrors, rewritten from std:: onto xstd::, with each departure from them named.
+
+[libstdcxx]
+take = [
+    { path = "libstdc++-v3/testsuite/26_numerics/bit", select = 'std::(bit_ceil|bit_floor|bit_width|byteswap|countl_one|countl_zero|countr_one|countr_zero|has_single_bit|popcount|rotl|rotr)\b' },
+    { path = "libstdc++-v3/testsuite/26_numerics/headers/cstdlib", select = 'std::abs\b' },
+    { path = "libstdc++-v3/testsuite/20_util/to_chars", select = 'std::to_chars\b' },
+    { path = "libstdc++-v3/testsuite/20_util/is_signed" },
+    { path = "libstdc++-v3/testsuite/20_util/is_unsigned" },
+    { path = "libstdc++-v3/testsuite/20_util/make_signed" },
+    { path = "libstdc++-v3/testsuite/20_util/make_unsigned" },
+    { path = "libstdc++-v3/testsuite/18_support/numeric_limits" },
+]
+include = ["xstd_types.hpp"]
+rewrite = [
+    { regex = '(?<![\w:])std::(abs|bit_ceil|bit_floor|bit_width|byteswap|countl_one|countl_zero|countr_one|countr_zero|has_single_bit|is_signed|is_signed_v|is_unsigned|is_unsigned_v|make_signed|make_signed_t|make_unsigned|make_unsigned_t|numeric_limits|popcount|rotl|rotr|to_chars)\b', to = 'xstd::\1' },
+]
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/26_numerics/bit/bit.pow.two/bit_ceil.cc"
+sha256 = "6770c44689fddc4808557aa05b6176fefb877e85867beb08f1d99a5c32c7552a"
+line = "static_assert( noexcept(std::bit_ceil(x)) );"
+drop = true
+departure = "[bit.pow.two] gives bit_ceil a precondition and no noexcept, which libstdc++ adds as an extension and xstd does not"
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/26_numerics/bit/bit.pow.two/bit_ceil.cc"
+sha256 = "6770c44689fddc4808557aa05b6176fefb877e85867beb08f1d99a5c32c7552a"
+line = "struct bit_ceil_valid<N, std::void_t<char[(std::bit_ceil(N), 1)]>>"
+to = "struct bit_ceil_valid<N, std::void_t<char[((void)std::bit_ceil(N), 1)]>>"
+departure = "xstd marks bit_ceil [[nodiscard]], as libc++ does, so a result the test throws away is cast to void"
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/26_numerics/bit/bit.pow.two/bit_ceil_neg.cc"
+sha256 = "043730d1d5396d64ea541d65b736b4118dc84f3b1aadfd1ed12de0fb12ae7bf0"
+line = "struct bit_ceil_valid<N, std::void_t<char[(std::bit_ceil(N), 1)]>>"
+to = "struct bit_ceil_valid<N, std::void_t<char[((void)std::bit_ceil(N), 1)]>>"
+departure = "xstd marks bit_ceil [[nodiscard]], as libc++ does, so a result the test throws away is cast to void"
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/26_numerics/bit/bit.pow.two/bit_ceil_neg.cc"
+sha256 = "043730d1d5396d64ea541d65b736b4118dc84f3b1aadfd1ed12de0fb12ae7bf0"
+line = "std::bit_ceil( maxpow2<unsigned> + 1u ); // should fail __glibcxx_assert"
+to = "(void)std::bit_ceil( maxpow2<unsigned> + 1u ); // should fail __glibcxx_assert"
+departure = "xstd marks bit_ceil [[nodiscard]], as libc++ does, so a result the test throws away is cast to void"
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/26_numerics/bit/bit.byteswap/byteswap.cc"
+sha256 = "aede759699cd58bef008e648c18fbec2443b3ef4607059254c28ab6c9028c15f"
+line = "static_assert( std::byteswap<volatile uint32_t>(0xdeadbeef) == 0xefbeadde );"
+drop = true
+departure = "[expr.const] makes no read of a volatile object a constant expression; GCC lets its own byteswap make one, Clang does not"
+
+[[libstdcxx.expect]]
+file = "libstdc++-v3/testsuite/26_numerics/headers/cstdlib/dr2192.cc"
+sha256 = "bc2ea0e4c6671491753da9cb591a2f1ca796e92d01f15c9d32230b90725d2e63"
+fails = "compile"
+paragraph = "xstd::abs takes integers only; [c.math.abs]'s floating-point overloads stay <cmath>'s"
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/26_numerics/headers/cstdlib/dr2735.cc"
+sha256 = "30c61d2de9d495a6c1ae61792df5634ec91ff4884325974760fdf2e696b399d4"
+line = "check<char>();"
+drop = true
+departure = "xstd::abs takes an integer, which plain char is not: like wchar_t and the charN_t, it is neither half of its own signed and unsigned pair"
+
+[[libstdcxx.expect]]
+file = "libstdc++-v3/testsuite/20_util/to_chars/3.cc"
+sha256 = "008ced9b7b2198f1627b04a5fdcd9a76950768db4bc2f6c8affc015e859eb5ff"
+fails = "compile"
+paragraph = "xstd::to_chars takes the integer types and char; [charconv.to.chars] reaches wchar_t and the charN_t only by promoting them to int"
+
+[[libstdcxx.expect]]
+file = "libstdc++-v3/testsuite/20_util/to_chars/103955.cc"
+sha256 = "fac6229b423be4c9a526f0d25ebe5e9d3f4fe872f1351f43f7cd69565ab0a2d3"
+fails = "compile"
+paragraph = "xstd::to_chars writes integers only; [charconv.to.chars]'s floating-point overloads stay <charconv>'s"

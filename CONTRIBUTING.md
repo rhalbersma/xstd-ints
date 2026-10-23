@@ -19,7 +19,7 @@ This repository enforces its quality bar through CI rather than through review d
 - **Line and branch coverage stay at 100%, project-wide and for the PR's own diff.** [`codecov.yml`](.github/codecov.yml) sets both the `project` and `patch` Codecov status checks to a 100% target with zero tolerance, backed by the [Coverage workflow](.github/workflows/coverage.yml)'s own `gcovr --fail-under-line 100 --fail-under-branch 100` gate. New code needs a test that exercises every line and branch it adds; existing coverage may not regress. Excluded from this bar: `assert(...)` contract checks (their failure path is undefined behavior by design, not something a correct test can hit), compiler-synthesized `= default;` special members (gcov cannot attribute a hit counter to them regardless of how often they run), and the exception-unwinding branch gcc/gcov attaches to any call that could throw (`--exclude-throw-branches`/`--exclude-unreachable-branches`) - not a code path a test can meaningfully hit either.
 - **No new sanitizer failures.** The [sanitizers workflow](.github/workflows/sanitizers.yml) must stay green.
 - **The bit kernels compile to the instructions they exist for.** The [Codegen workflow](.github/workflows/codegen.yml) compiles [`test/codegen/`](test/codegen) to assembly with the stable rung's GCC and Clang, on an x86-64 and an AArch64 runner, and reads it with FileCheck - see [Codegen tests](#codegen-tests) below.
-- **The standard library's own tests pass.** The [Std test suite workflow](.github/workflows/std-test-suite.yml) runs libc++'s tests of the `<bit>` functions against xstd's, on clang 22 with libc++ - see [Standard library test suites](#standard-library-test-suites) below.
+- **The standard library's own tests pass.** The [Std test suite workflow](.github/workflows/std-test-suite.yml) runs libc++'s and libstdc++'s tests of the functions, traits and `numeric_limits` xstd mirrors against xstd's, on clang 22 with libc++, on GCC 15 with libstdc++, and on GCC trunk for what only trunk tests - see [Standard library test suites](#standard-library-test-suites) below.
 - **The public headers stay self-sufficient.** Each header is compiled as its own translation unit (see `test/CMakeLists.txt`); don't rely on include order from another header.
 - **The README's examples compile.** `test/CMakeLists.txt` writes each ```` ```cpp ```` block of [README.md](README.md) to a translation unit of its own, `readme.example<n>`, built with the tests' warnings on every leg. An example that includes an `<xstd/ints/ext/>` header is built where the library it adapts resolved, as that header's own test is, and one that names `xstd::int128` or `xstd::uint128` tests `XSTD_HAS_INT128` itself, as a test source does.
 - **The documentation site builds.** The [Pages workflow](.github/workflows/pages.yml) runs `mkdocs build --strict` over the README and `doc/`, which fails on a link to a page or an anchor that does not exist, and deploys the site from `main`.
@@ -199,8 +199,7 @@ run-clang-tidy -quiet -p build "$PWD/build/test/header_self_sufficiency/.*"
 - the suite on GCC 15, 16 and 17-SVN, and on clang 22, 23 and 24-SVN, each clang on its own rung's libstdc++;
 - the libc++ 22, i686 and BMI2 legs;
 - clang-tidy 22, 23 and 24-SVN, with the clang-tidy job's passes;
-- the codegen tests on GCC 15 and clang 22, libc++'s `<bit>` tests on clang 22 with libc++, and the three consumption
-  models;
+- the codegen tests on GCC 15 and clang 22, libc++'s, libstdc++'s and GCC trunk's tests of what xstd mirrors on clang 22 with libc++, GCC 15 and GCC 17-SVN, and the three consumption models;
 - the coverage gate, gcovr over GCC 15's instrumented suite at 100% of lines and branches;
 - the sanitizer ladder's five kinds on the stable rung: ASan and LSan, and UBSan, on GCC 15; UBSan and implicit conversions on clang 22.
 
@@ -285,19 +284,71 @@ Each test leaves its assembly beside it as `build-codegen/test/codegen/<source>.
 
 ## Standard library test suites
 
-libc++, libstdc++ and the MSVC STL each test their `<bit>` against the standard's paragraphs, written by people with no stake in xstd. [`test/std-test-suite/`](test/std-test-suite) runs libc++'s tests against xstd's functions through cpp-ci's [`std_test_suite`](https://github.com/rhalbersma/cpp-ci#standard-library-test-suites) adapter, which fetches the suite at the tag the stable clang rung pins, `llvmorg-22.1.8`, sparse and shallow, and rewrites a copy of each test in the build tree. The cpp-ci commit is the one [`clang.yml`](.github/workflows/clang.yml) pins, read from that file, so moving the pin moves the suite.
+libc++, libstdc++ and the MSVC STL each test their standard library against the standard's paragraphs, written by people with no stake in xstd. [`test/std-test-suite/`](test/std-test-suite) runs libc++'s and libstdc++'s tests against xstd's functions through cpp-ci's [`std_test_suite`](https://github.com/rhalbersma/cpp-ci#standard-library-test-suites) adapter, which fetches each suite at the tag its stable rung pins, `llvmorg-22.1.8` for clang and `releases/gcc-15.2.0` for gcc, sparse and shallow, and rewrites a copy of each test in the build tree. The cpp-ci commit is the one [`clang.yml`](.github/workflows/clang.yml) pins, read from that file, so moving the pin moves the suites. Each suite checks its own library's choices as well as the standard's, so each runs on the library it is written for: libc++'s where the build's standard library is libc++, libstdc++'s otherwise.
 
-[`libcxx.toml`](test/std-test-suite/libcxx.toml) is the mapping: it takes `libcxx/test/std/numerics/bit/`, keeps the files that call one of the twelve functions xstd mirrors there (`bit_ceil`, `bit_floor`, `bit_width`, `byteswap`, `countl_one`, `countl_zero`, `countr_one`, `countr_zero`, `has_single_bit`, `popcount`, `rotl`, `rotr`), and rewrites each `std::` call to `xstd::`. All twelve run, their negative cases included: `bool`, the character types, the signed types, enumerations and class types must stay uncallable. One assertion is dropped, with its reason in the mapping: `bit_ceil.pass.cpp`'s `LIBCPP_ASSERT_NOEXCEPT`, since [[bit.pow.two]](https://eel.is/c++draft/bit.pow.two) gives `bit_ceil` a precondition and no `noexcept`, which libc++ adds as an extension. An upstream edit to a mapped file fails configuration, so it is reviewed rather than carried.
+A mapping per suite, [`libcxx.toml`](test/std-test-suite/libcxx.toml) and [`libstdcxx.toml`](test/std-test-suite/libstdcxx.toml), takes the directories that test what xstd mirrors, keeps the files that name it, and rewrites each `std::` spelling of it to `xstd::`. Where xstd departs from what a test asserts, the mapping replaces or drops that one line, or expects the whole file to fail, and names the departure. An upstream edit to a mapped file fails configuration, so it is reviewed rather than carried.
 
-It needs git and Python 3.11 or later, and no Boost:
+### libc++
+
+| libc++ directory | Tests | xstd |
+| :-- | --: | :-- |
+| `numerics/bit/` | 12 | `bit_ceil`, `bit_floor`, `bit_width`, `byteswap`, `countl_one`, `countl_zero`, `countr_one`, `countr_zero`, `has_single_bit`, `popcount`, `rotl`, `rotr` |
+| `numerics/c.math/abs.pass.cpp` | 1 | `abs` |
+| `utilities/meta/meta.trans/meta.trans.sign/` | 2 | `make_signed`, `make_unsigned` |
+| `utilities/meta/meta.unary/meta.unary.prop/` | 2 | `is_signed`, `is_unsigned` |
+| `language.support/support.limits/limits/` | 34 | `numeric_limits` |
+| `utilities/charconv/charconv.to.chars/` | 1 | `to_chars`, through the support header `charconv_test_helpers.h` |
+
+All 52 run, their negative cases included: `bool`, the character types, the signed types, enumerations and class types must stay out of the bit functions. libc++ cannot name the types xstd implements itself, so after its own assertions each bit test and `abs.pass.cpp` run them again over the bit-precise widths 8, 9, 17, 33, 65, 127, 128, 129 and 256, `boost::int128::uint128` and `int128`, and `absl::uint128` and `int128`. [`xstd_types.hpp`](test/std-test-suite/include/xstd_types.hpp), the prelude every test includes, lists them; `absl::uint128` is left out of the constant-evaluated runs, since its operators are not `constexpr`. The departures:
+
+- `bit_ceil.pass.cpp`'s `LIBCPP_ASSERT_NOEXCEPT` is dropped: [[bit.pow.two]](https://eel.is/c++draft/bit.pow.two) gives `bit_ceil` a precondition and no `noexcept`, which libc++ adds as an extension.
+- The other bit tests' `noexcept` assertions become `noexcept(xstd::f(T())) == xstd::nothrow_const_operators<T>`: `noexcept` for the standard types and Boost's, not for `absl::uint128`, whose operators declare none.
+- `abs.pass.cpp` drops the plain `char` case and the three floating-point ones, since `xstd::abs` takes an `integer`; its return type, the promoted one, is [[c.math.abs]](https://eel.is/c++draft/c.math.abs)'s.
+
+Every `std::to_chars` call in `charconv.to.chars/integral.pass.cpp` sits in the support header `charconv_test_helpers.h`, which the mapping's `support` key names: the adapter rewrites a copy of it as it does a test and puts the copy ahead of the original on the include path.
+
+### libstdc++
+
+| libstdc++ directory | Tests | xstd |
+| :-- | --: | :-- |
+| `26_numerics/bit/` | 14 | `bit_ceil`, `bit_floor`, `bit_width`, `byteswap`, `countl_one`, `countl_zero`, `countr_one`, `countr_zero`, `has_single_bit`, `popcount`, `rotl`, `rotr` |
+| `26_numerics/headers/cstdlib/` | 5 | `abs` |
+| `20_util/to_chars/` | 6 | `to_chars` |
+| `20_util/is_signed/`, `20_util/is_unsigned/` | 4 | `is_signed`, `is_unsigned` |
+| `20_util/make_signed/`, `20_util/make_unsigned/` | 8 | `make_signed`, `make_unsigned` |
+| `18_support/numeric_limits/` | 7 | `numeric_limits` |
+
+All 44 build and the 8 runnable ones run. `bit_ceil_neg.cc` is expected to abort, as libstdc++'s own `dg-xfail-run-if` says: `bit_ceil` past the largest power of two breaks its precondition, and xstd's `assert` catches it. GCC 15 has no `_BitInt` in C++, so the bit-precise widths run on libc++ alone. The departures:
+
+- `bit_ceil.cc`'s `static_assert( noexcept(std::bit_ceil(x)) )` is dropped, as for libc++.
+- `bit_ceil.cc` and `bit_ceil_neg.cc` discard `bit_ceil`'s result in three places, which xstd marks `[[nodiscard]]`, as libc++ does; the mapping casts each to `void`.
+- `byteswap.cc`'s `static_assert` on `byteswap<volatile uint32_t>` is dropped: [[expr.const]](https://eel.is/c++draft/expr.const) makes no read of a volatile object a constant expression. GCC lets its own `std::byteswap` make one; Clang rejects that line for `std::byteswap` too.
+- `dr2735.cc` drops the plain `char` case, as for libc++, and `dr2192.cc`, which asks `abs` for the three floating-point types and nothing else, is expected not to compile.
+- `to_chars/103955.cc` writes a `double` and is expected not to compile: [[charconv.to.chars]](https://eel.is/c++draft/charconv.to.chars)'s floating-point overloads stay `<charconv>`'s.
+- `to_chars/3.cc` writes `char16_t`, `char32_t` and `wchar_t`, which the standard's overloads reach only by promoting them to `int`, and is expected not to compile: `xstd::to_chars` takes the integer types and `char`.
+
+### GCC trunk
+
+GCC trunk tests what no release has yet: P3104's `bit_compress`, `bit_expand`, `bit_repeat` and `bit_reverse` in `26_numerics/bit/bit.permute/`, and P3793's `shl` and `shr` in `26_numerics/bit/bit.shift/`. Trunk has no tag, so cpp-ci's development gcc rung pins a commit of it, and [`libstdcxx-trunk.toml`](test/std-test-suite/libstdcxx-trunk.toml) maps those two directories alone, leaving the rest to the release's suite. The six are compile tests of C++29, which CMake cannot yet name, so the build passes `-std=gnu++2d` in `CMAKE_CXX_FLAGS`, GNU mode as libstdc++'s own runs use, and the adapter reads the markers against that. All six build with no departure: the expected values, `unsigned __int128` among the types taken, and the types turned away, `bool`, the character types, `float`, pointers, enumerations and classes, and for the permutations the signed types too.
+
+### Running them
+
+They need git, Python 3.11 or later, and Boost.Int128 and Abseil, which CMake finds or fetches as for the unit tests:
 
 ```sh
-cmake -S . -B build-std -DCMAKE_CXX_COMPILER=clang++-22 -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ -DBUILD_TESTING=OFF -DXSTD_INTS_STD_TEST_SUITES=ON
-cmake --build build-std --parallel
-ctest --test-dir build-std --output-on-failure
+cmake -S . -B build-libcxx -DCMAKE_CXX_COMPILER=clang++-22 -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ -DBUILD_TESTING=OFF -DXSTD_INTS_STD_TEST_SUITES=ON
+cmake --build build-libcxx --parallel
+ctest --test-dir build-libcxx --output-on-failure
+
+cmake -S . -B build-libstdcxx -DCMAKE_CXX_COMPILER=g++-15 -DBUILD_TESTING=OFF -DXSTD_INTS_STD_TEST_SUITES=ON
+cmake --build build-libstdcxx --parallel
+ctest --test-dir build-libstdcxx --output-on-failure
+
+cmake -S . -B build-trunk -DCMAKE_CXX_COMPILER=g++-17 -DCMAKE_CXX_FLAGS=-std=gnu++2d -DBUILD_TESTING=OFF -DXSTD_INTS_STD_TEST_SUITES=ON -DXSTD_INTS_STD_TEST_SUITE_RUNG=development
+cmake --build build-trunk --parallel
 ```
 
-`build-std/test/std-test-suite/std-test-suite/libcxx/manifest.json` lists every file under the taken directory with what became of it. The [Std test suite workflow](.github/workflows/std-test-suite.yml) runs it on every pull request and push to `main`.
+`test/std-test-suite/std-test-suite/<suite>/manifest.json` under each build tree lists every file under the taken directories with what became of it. The [Std test suite workflow](.github/workflows/std-test-suite.yml) runs all three on every pull request and push to `main`, and `tools/ci-local.sh std-test-suite` runs them locally.
 
 ## Exhaustive sweeps
 
@@ -443,7 +494,7 @@ The names to tick under branch protection, exactly as GitHub reports them:
 | `msvc_analyze / all` | `/analyze` on the same three rungs |
 | `sanitizers / all` | all fifteen sanitizer legs |
 | `site` | `mkdocs build --strict`: every page and anchor a link names exists |
-| `std_test_suite / all` | libc++'s `<bit>` tests against xstd, on clang 22 with libc++ |
+| `std_test_suite / all` | libc++'s and libstdc++'s tests of what xstd mirrors, on clang 22 with libc++, on GCC 15 with libstdc++, and GCC trunk's on its snapshot |
 
 Codecov posts two more, `codecov/project` and `codecov/patch`, which carry the same 100% bar for the whole
 tree and for the diff.
