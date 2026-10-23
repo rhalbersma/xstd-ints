@@ -12,7 +12,7 @@
 #include <concepts>                                // integral, regular, same_as
 #include <type_traits>                             // remove_cv_t
 
-// [bitmask.types]'s bitmask type: an unsigned integer, std::bitset, or an enumeration overloading the operators.
+// [bitmask.types]'s bitmask type: an unsigned integer, or any non-integer with the operators, as std::bitset has.
 namespace xstd {
 
 template<class T_cv, class T = std::remove_cv_t<T_cv>>

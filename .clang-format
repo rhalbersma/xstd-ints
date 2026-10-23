@@ -24,7 +24,7 @@ BraceWrapping:
   AfterClass: true
   AfterStruct: true
   AfterUnion: true
-  AfterEnum: false
+  AfterEnum: true
   AfterFunction: true
   AfterNamespace: false
   AfterControlStatement: false
@@ -65,6 +65,7 @@ AlignConsecutiveAssignments:
 
 FixNamespaceComments: true
 
+AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
@@ -72,7 +73,7 @@ AllowShortLoopsOnASingleLine: false
 SortIncludes: Never
 AlignAfterOpenBracket: BlockIndent
 SeparateDefinitionBlocks: Always
-BreakInheritanceList: BeforeComma
+BreakInheritanceList: AfterColon
 BreakConstructorInitializers: BeforeComma
 PackConstructorInitializers: Never
 ConstructorInitializerIndentWidth: 8

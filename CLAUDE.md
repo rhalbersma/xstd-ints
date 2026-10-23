@@ -152,18 +152,102 @@ cases users will meet and the pitfalls they will fall into, never against a cons
 
 A fixture that runs a component over a user-shaped argument probes no concept, and stays.
 
+## Where tests live
+
+Everything that checks the code lives under `test/`: the unit tests in `test/src/`, mirroring `include/`, their shared
+helpers in `test/include/`, and each suite with a CMake option or a workflow of its own in a directory beside them, as
+`test/codegen/`, `test/fuzz/` and `test/proofs/` are. A new suite goes there too, never at the top level. What measures
+or demonstrates rather than passes or fails, as `benchmark/` and `examples/` do, stays outside. `changes.yml` counts a path
+under `test/` as built, so a suite that no compiler ladder builds is listed there as unbuilt, or each change to it runs
+the full matrix.
+
+## The relation table
+
+The reference's relation table, in `doc/reference/index.md`, relates every public entity to the working draft, a row per
+entity or family. Its rules are the same across the xstd libraries, so that a reader of one table can read the others:
+
+- **Clause first.** The Counterpart cell leads with the clause of the draft that specifies the counterpart, as
+  `[[unord.hash]](https://eel.is/c++draft/unord.hash)`, then says only how the entity extends or generalizes it. The
+  clause already names the standard facility, so the cell does not name it again. Several clauses go in the draft's
+  order.
+- **The draft's order.** Rows follow the draft's numbering of their leading clause, as eel.is shows it, and the names
+  within a row follow the draft's order of their counterparts, `has_single_bit`, `bit_ceil`, `bit_floor`, `bit_width`,
+  not the alphabet. A row with no counterpart sits beside its nearest kin, citing the kin's clause where one is shared,
+  and its names are alphabetical. A proposed row takes its paper's order, as `is_aligned`, `align_up`, `align_down`.
+- **One clause for a family.** Where a family's counterparts share a tight parent subclause, it is cited once.
+- **Permission is no counterpart.** A clause cited only as a license, such as `[namespace.std]` for a `formatter`
+  specialization, stays in the description and decides nothing about the row's place.
+- **Customization is new.** A standard-named type generalizes its counterpart; templates that only choose its
+  representation take a row of their own, of kind New, led by the same clause.
+
 ## Checking your work
 
-Compile with the **stable rung** of [README.md](README.md)'s matrix, never with whatever `g++` or `clang++`
-happen to resolve to. Ubuntu 24.04 ships GCC 13, which rejects `-std=c++2c` outright, so the default compiler
-cannot build this library at all, and a check that quietly falls back to a cut-down reproduction proves less than
-it appears to. [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) installs the rung;
-`XSTD_TOOLCHAIN_FULL=1` adds the qualification rung, which a leg carrying a newer standard library needs.
+Fail early, fail fast: break things here, not on CI's runners, where a push waits hours for its first result. The
+closer a change gets to a push and a pull request, the more of CI it has already passed locally. Two scripts make
+that possible, and the work relies on them rather than on whatever happens to be installed:
+
+- [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) installs what CI builds with: every rung of
+  [README.md](README.md)'s matrix, clang-tidy for each of the three clangs, the format gate's clang-format 22,
+  actionlint, gcovr, the CMake the workflows pin and the Boost CI resolves. Run it once per container; it is
+  idempotent.
+- [`tools/ci-local.sh`](tools/ci-local.sh) runs the CI jobs' Linux legs on that toolchain, cheapest first, and stops
+  at the first that fails.
+
+Each step toward GitHub runs more:
+
+| Step | Run | Takes |
+| :-- | :-- | :-- |
+| While editing | the tests the change touches, on one compiler | seconds |
+| Before a commit | `tools/ci-local.sh --quick`: format, actionlint, GCC 15, clang 22, clang-tidy 22 | about 10 min |
+| Before a push or a pull request | `tools/ci-local.sh`: every leg | an hour or more |
+| On the pull request | CI: all of it, on every platform | CI's queue |
+
+Push only what the full run reports green: CI is there to confirm, not to discover.
+
+Never build with whatever `g++` or `clang++` happen to resolve to. Ubuntu 24.04 ships GCC 13, which rejects
+`-std=c++2c` outright, so the default compiler cannot build this library at all, and a check that quietly falls
+back to a cut-down reproduction proves less than it appears to. What `ci-local.sh` cannot cover, MSVC, clang-cl,
+MinGW, Apple Clang, Emscripten, CodeQL and the sanitizer ladder's other rungs, is CI's alone; say so rather than
+claim it was checked.
+
+Run anything that takes more than a minute in the background: a build, a `ci-local.sh` leg, a sweep, a proof, a
+fuzz run. The conversation then stays free for questions asked in the meantime. Report the result when it lands,
+from its output, never from a guess at it, and keep two jobs off one working tree: a second checkout, such as a
+`git worktree`, gives a parallel job its own sources.
 
 A comment or formatting change is not exempt, because two gates read lines rather than syntax. `NOLINT` and
 `GCOVR_EXCL_LINE` suppress the line they sit on, so a formatter that splits that line leaves the marker behind on
 the wrong half, where it goes silent with nothing to say it has. Check that the code is byte-identical when a
 change is meant to be comment-only, and that every marker still sits on the line it names.
+
+## Pull requests and CI
+
+A push to a pull request runs dozens of jobs, though each compiler ladder builds only its floor and ceiling rungs,
+in Debug; a merge into `main` runs the other workflows again but no compiler ladder, as the nightly canary runs the
+full matrix there. Pull requests whose CI runs side by side finish no sooner for it: each waits longer for its first
+result, and every merge makes the others' runs stale. CI is therefore a queue, one pull request long, across
+xstd-ints, xstd-bits, xstd-misc and cpp-ci, which draw on one account's runners.
+
+- **One run in flight across the four repositories.** Before opening a pull request, or pushing to one, check that
+  xstd-ints, xstd-bits, xstd-misc and cpp-ci have no run queued or in progress, on a pull request or from a push to
+  `main`, as a merge's push runs take the same runners. If one has, finish the change locally and push only the
+  branch, which runs nothing; open the pull request when the queue is empty.
+  A pull request that changes only paths `.github/workflows/changes.yml` lets skip the ladders runs only the light
+  checks, in minutes, and may open beside a long run.
+- **A pull request is what merges or reverts as one.** Changes that touch the same files, or that are only tests or
+  only documentation, go in one pull request rather than one per issue. A pull request that changes only paths no
+  ladder builds, which `.github/workflows/changes.yml` lists, skips the ladders and costs minutes rather than hours.
+- **Neither stack nor fan out.** Each pull request branches off `main` and waits there. Its turn starts by merging
+  `main` into it, never rebasing, so its one run is against the `main` it will land on. A stack costs the same runs
+  and adds a restack whenever a lower pull request changes; pull requests in parallel make every merge put the rest
+  out of date.
+- **Push once per round.** Reproduce a failure and fix it locally, with `ci-local.sh` as above, and push when
+  everything passes. A push cancels the run before it, but not the jobs that already took their slots.
+- **Merge on green, then start the next.** A green, conflict-free pull request is squash-merged at once. The next
+  one opens once the merge has landed.
+
+How an agent drives a pull request from opened to merged is in
+[`.claude/skills/steward/SKILL.md`](.claude/skills/steward/SKILL.md).
 
 ## `[[nodiscard]]`
 

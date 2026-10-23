@@ -5,7 +5,7 @@
 
 #include <xstd/ints/bit/byteswap.hpp>                     // byteswap
 #include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
+#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_BIT_INT, XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
 #include <xstd/ints/limits.hpp>                           // numeric_limits
 #include <xstd/ints/type_traits/make_unsigned.hpp>        // make_unsigned_t
 #include <test/bit/oracle.hpp>                            // oracle_byteswap
@@ -15,9 +15,19 @@
 #include <boost/test/unit_test.hpp>                       // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <bit>                                            // byteswap
 #include <cstdint>                                        // int16_t, int32_t, uint16_t, uint32_t, uint64_t
-#include <utility>                                        // make_integer_sequence
+#include <tuple>                                          // tuple, tuple_cat
+#include <utility>                                        // declval, make_integer_sequence
 
 namespace {
+
+// Three bytes in a four-byte object, a width whose padding bits the standard function's Mandates turn away.
+#ifdef XSTD_HAS_BIT_INT
+using padded_whole_byte_types = std::tuple<xstd::bit_int<24>, xstd::bit_uint<24>>;
+#else
+using padded_whole_byte_types = std::tuple<>;
+#endif
+
+using swappable_types = decltype(std::tuple_cat(std::declval<test::exact_width_integer_types>(), std::declval<padded_whole_byte_types>()));
 
 template<class T>
 concept xstd_answers = requires (T x) { xstd::byteswap(x); };
@@ -27,7 +37,7 @@ concept std_answers = requires (T x) { std::byteswap(x); };
 
 // The edge values at one position of the unsigned counterpart, read as T, so that no signed doubling overflows.
 template<class T>
-constexpr auto agrees_at(int k)
+[[nodiscard]] constexpr auto agrees_at(int k)
         -> bool
 {
         auto agrees = true;
@@ -76,14 +86,14 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsAWholeNumberOfBytes)
 }
 
 // Unconditional where the operations cannot throw, and otherwise as conditional as the operators of the pair.
-BOOST_AUTO_TEST_CASE_TEMPLATE(NoexceptFollowsTheOperators, T, test::exact_width_integer_types)
+BOOST_AUTO_TEST_CASE_TEMPLATE(NoexceptFollowsTheOperators, T, swappable_types)
 {
         static_assert(noexcept(xstd::byteswap(T{1})) == (xstd::nothrow_const_operators<T> and xstd::nothrow_const_operators<xstd::make_unsigned_t<T>>));
         BOOST_CHECK(true);
 }
 
 // The lowest byte becomes the highest, and the highest the lowest.
-BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsTrade, T, test::exact_width_integer_types)
+BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsTrade, T, swappable_types)
 {
         using U            = xstd::make_unsigned_t<T>;
         constexpr auto top = static_cast<U>(U{0xA5} << static_cast<unsigned>(xstd::numeric_limits<U>::digits - 8));
@@ -95,7 +105,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TheEndsTrade, T, test::exact_width_integer_types)
 }
 
 // Each width against a byte-at-a-time oracle, and swapping twice is the identity.
-BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheOracle, T, test::exact_width_integer_types)
+BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheOracle, T, swappable_types)
 {
         using U = xstd::make_unsigned_t<T>;
         static_assert(test::holds_at_every_position<agrees_at<T>>(std::make_integer_sequence<int, xstd::numeric_limits<U>::digits>{}));

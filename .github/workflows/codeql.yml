@@ -32,7 +32,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: rhalbersma/cpp-ci/.github/workflows/codeql.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
+    uses: rhalbersma/cpp-ci/.github/workflows/codeql.yml@acbf0f0b3ed85dcabf95cd0d4806c0fa7c451ecf # main after rhalbersma/cpp-ci#83, which adds the standard library test suites' adapters
     with:
       # Boost.Test, which vcpkg.json keeps out of its default features so that
       # consuming this library resolves no Boost at all.
