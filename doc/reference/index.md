@@ -60,7 +60,7 @@ counterpart sits beside its nearest kin, citing the kin's clause where one is sh
 | `div_result` | Generalizes | [[cstdlib.syn]](https://eel.is/c++draft/cstdlib.syn) [[cinttypes.syn]](https://eel.is/c++draft/cinttypes.syn) one aggregate for every `integer`, with [P3724R4](https://github.com/cplusplus/papers/issues/2354)'s member names `quotient` and `remainder` |
 | `div_euclid`<br>`div_floor`<br>`div_ceil` | Proposed | [[cstdlib.syn]](https://eel.is/c++draft/cstdlib.syn) with the Euclidean, floored and ceiling rounding [P3724R4](https://github.com/cplusplus/papers/issues/2354) proposes, each returning quotient and remainder as a `div_result`; `div_ceil` follows its `div_rem_to_pos_inf` |
 | `numeric_limits`<br>`numeric_limits<signed _BitInt(N)>`<br>`numeric_limits<unsigned _BitInt(N)>` | Extends | [[numeric.limits]](https://eel.is/c++draft/numeric.limits) as a base for an object type that is not an array and an empty class for every other type, with a cv-qualified type forwarded to xstd's own specialization and a `_BitInt(N)` answered at its width |
-| `bit_int`<br>`bit_uint` | Proposed | [[cstdint.syn]](https://eel.is/c++draft/cstdint.syn) as [P3666R0](https://github.com/cplusplus/papers/issues/2420) proposes aliases for `signed _BitInt(N)` and `unsigned _BitInt(N)`, from a width of 2 |
+| `bit_int`<br>`bit_uint` | New | [[cstdint.syn]](https://eel.is/c++draft/cstdint.syn) none: aliases for `signed _BitInt(N)` and `unsigned _BitInt(N)`, from a width of 2, which [P3666](https://github.com/cplusplus/papers/issues/2420) proposed until LEWG found no consensus for them |
 | `bit_int_max_width`<br>`XSTD_HAS_BIT_INT` | New | [[cstdint.syn]](https://eel.is/c++draft/cstdint.syn) none: the compiler's `__BITINT_MAXWIDTH__`, detected and as a `size_t` |
 | `int128`<br>`uint128`<br>`XSTD_HAS_INT128` | New | [[cstdint.syn]](https://eel.is/c++draft/cstdint.syn) none: the platform's 128-bit pair, the Microsoft STL's integer classes or `__int128`, and the macro that detects it |
 | `integer`<br>`signed_integer`<br>`unsigned_integer` | Proposed | [[concepts.arithmetic]](https://eel.is/c++draft/concepts.arithmetic) as [P3701R0](https://github.com/cplusplus/papers/issues/2330) proposes, extended to the integer-class types that a specialization of `make_signed` and `make_unsigned` pairs |
@@ -116,7 +116,8 @@ in another language where that counterpart shares its purpose. Papers are linked
     - **Rust** has [`i128`](https://doc.rust-lang.org/std/primitive.i128.html) and
       [`u128`](https://doc.rust-lang.org/std/primitive.u128.html) as primitive types.
 - **`bit_int`, `bit_uint`:**
-    - **C++:** [P3666R0](https://wg21.link/p3666r0), *Bit-precise integers* (Jan Schultke).
+    - **C++:** [P3666R4](https://wg21.link/p3666r4), *Bit-precise integers* (Jan Schultke), brings `_BitInt(N)` into
+      C++ as integer types. Up to R3 it proposed the aliases too; R4 drops them, as LEWG found no consensus for them.
     - **C23** has `_BitInt(N)`, which the aliases name, and Clang offers it in C++ as an
       [extension](https://clang.llvm.org/docs/LanguageExtensions.html#bitint-extint).
 - **`byteswap`:** [P1272R4](https://wg21.link/p1272r4), *Byteswapping for fun&&nuf* (Isabella Muerte, Corentin Jabot).

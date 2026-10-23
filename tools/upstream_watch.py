@@ -70,7 +70,7 @@ def reviewed_papers(contributing):
     """Each row of the tracking table: paper, reviewed revision and tracking issue number."""
     rows = {}
     for line in contributing.splitlines():
-        row = re.match(r"\|\s*(P\d{4})R(\d+)\s*\|.*cplusplus/papers#(\d+)", line)
+        row = re.match(r"\|\s*\[?(P\d{4})R(\d+)\]?(?:\([^)]*\))?\s*\|.*cplusplus/papers#(\d+)", line)
         if row:
             rows[row.group(1)] = {"revision": int(row.group(2)), "issue": int(row.group(3))}
     return rows
@@ -215,8 +215,11 @@ def report(state, contributing, token):
     sections = []
     current = {"tracking": {}}
 
+    rows = reviewed_papers(contributing)
+    if not rows:
+        raise SystemExit("CONTRIBUTING.md's tracking table has no row this script can read; fix the table or the parser")
     papers = []
-    for paper, row in reviewed_papers(contributing).items():
+    for paper, row in rows.items():
         revision, url = latest_revision(paper)
         if revision is not None and revision > row["revision"]:
             papers.append(f"- **{paper}R{revision}** is out ({url}); the tracking table records "
