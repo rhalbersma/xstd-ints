@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.30)
 project(
     xstd-ints
     VERSION 0.1.0
-    DESCRIPTION "Do as the ints do"
+    DESCRIPTION "Integer extensions to the C++ Standard Library"
     # Spelled out rather than derived from ${PROJECT_NAME}: project() expands its
     # own arguments before it sets that variable, so a derived URL would silently
     # record https://github.com/rhalbersma/ with no repository on the end.
@@ -91,6 +91,7 @@ target_sources(
         include/xstd/ints/bit/shl.hpp
         include/xstd/ints/bit/shr.hpp
         include/xstd/ints/charconv.hpp
+        include/xstd/ints/charconv/detail/std_writes_chars.hpp
         include/xstd/ints/charconv/to_chars.hpp
         include/xstd/ints/concepts.hpp
         include/xstd/ints/concepts/alignable.hpp
@@ -119,8 +120,10 @@ target_sources(
         include/xstd/ints/ext/boost/hash2.hpp
         include/xstd/ints/ext/boost/int128.hpp
         include/xstd/ints/format.hpp
+        include/xstd/ints/format/detail/decimal.hpp
         include/xstd/ints/format/div_result.hpp
         include/xstd/ints/limits.hpp
+        include/xstd/ints/limits/detail/digits10.hpp
         include/xstd/ints/limits/numeric_limits.hpp
         include/xstd/ints/memory.hpp
         include/xstd/ints/memory/align_down.hpp
@@ -131,6 +134,7 @@ target_sources(
         include/xstd/ints/type_traits/is_unsigned.hpp
         include/xstd/ints/type_traits/make_signed.hpp
         include/xstd/ints/type_traits/make_unsigned.hpp
+        include/xstd/ints/type_traits/detail/promoted.hpp
         include/xstd/ints/type_traits/promoted.hpp
 )
 
@@ -163,65 +167,123 @@ endif()
 # Tests and their Boost.Test dependency only exist when xstd-ints is being
 # developed; a consumer vendoring this directory gets the header-only target.
 if(PROJECT_IS_TOP_LEVEL)
+    string(MAKE_C_IDENTIFIER ${PROJECT_NAME} project_id)
+    string(TOUPPER ${project_id} project_option_prefix)
+
+    # What the repository builds for itself stays as strictly conforming as the library, except
+    # where strict mode would drop the 128-bit column: <bit>'s functions take std::unsigned_integral,
+    # and libstdc++ before 16 carries unsigned __int128 into that concept only outside
+    # __STRICT_ANSI__, where libc++ and libstdc++ 16 always do. Dropped, xstd::uint128 would fall
+    # out of the bit/ instantiation lists rather than fail, the worse of the two outcomes. The
+    # question is put to the toolchain rather than to a version number, so a clang on libstdc++ 15
+    # gets that library's answer, and MSVC and 32-bit targets, with no unsigned __int128 to lose,
+    # stay strict. The standard is named because nothing sets CMAKE_CXX_STANDARD, and GCC's and
+    # Clang's default dialects are gnu ones, where the question cannot be asked.
+    try_compile(
+        ${project_option_prefix}_STRICT_DROPS_UINT128
+        SOURCE_FROM_CONTENT strict_drops_uint128.cpp [[
+            #include <concepts>
+            #if !defined(__SIZEOF_INT128__) || defined(_MSC_VER)
+            #error "no unsigned __int128 to lose"
+            #endif
+            static_assert(not std::unsigned_integral<unsigned __int128>);
+            auto main() -> int { return 0; }
+        ]]
+        CXX_STANDARD 23
+        CXX_STANDARD_REQUIRED ON
+        CXX_EXTENSIONS OFF
+    )
+    if(${project_option_prefix}_STRICT_DROPS_UINT128)
+        message(STATUS "Tests, fuzz targets and mutants compile as gnu++: strict mode drops unsigned __int128 from std::unsigned_integral here")
+    else()
+        message(STATUS "Tests, fuzz targets and mutants compile as strictly as the library")
+    endif()
+
     include(CTest)
     if(BUILD_TESTING)
-        # Relaxed to gnu++ for the tests alone, leaving the library's own dialect above
-        # untouched. The reason is specific: <bit>'s functions take std::unsigned_integral,
-        # and libstdc++ and libc++ carry unsigned __int128 into that concept only outside
-        # __STRICT_ANSI__. Strictly conforming, xstd::uint128 is the one exact width with no
-        # bit basis on GCC and Clang -- on MSVC it is a class and carries its own -- so the
-        # 128-bit column would drop out of the bit/ instantiation lists rather than fail,
-        # which is the worse of the two outcomes. xstd-bits relaxes it in the same place and
-        # for the same reason. [xstd-bits design.md#uint128-support]
-        set(CMAKE_CXX_EXTENSIONS ON)
+        # The library's own dialect above is untouched; only the tests relax, and only where asked.
+        set(CMAKE_CXX_EXTENSIONS ${${project_option_prefix}_STRICT_DROPS_UINT128})
 
         add_subdirectory(test)
     endif()
 
     # Off by default, and outside BUILD_TESTING: ClusterFuzzLite builds the fuzz targets
     # alone, without the test tree's Boost.Test. Clang only, libFuzzer being clang's.
-    string(MAKE_C_IDENTIFIER ${PROJECT_NAME} project_id)
-    string(TOUPPER ${project_id} project_option_prefix)
-    option(${project_option_prefix}_BUILD_FUZZERS "Build the libFuzzer targets under fuzz/" OFF)
+    option(${project_option_prefix}_BUILD_FUZZERS "Build the libFuzzer targets under test/fuzz/" OFF)
 
     if(${project_option_prefix}_BUILD_FUZZERS)
-        add_subdirectory(fuzz)
+        add_subdirectory(test/fuzz)
     endif()
 
     # Off by default, and outside BUILD_TESTING: the codegen tests compile to assembly and read it with FileCheck, so
     # they need neither Boost.Test nor a test executable. enable_testing() stays here, where ctest looks for the tests.
-    option(${project_option_prefix}_BUILD_CODEGEN_TESTS "Check the assembly the bit kernels compile to, under codegen/" OFF)
+    option(${project_option_prefix}_BUILD_CODEGEN_TESTS "Check the assembly the bit kernels compile to, under test/codegen/" OFF)
 
     if(${project_option_prefix}_BUILD_CODEGEN_TESTS)
         enable_testing()
-        add_subdirectory(codegen)
+        add_subdirectory(test/codegen)
     endif()
 
     # Off by default, and outside BUILD_TESTING: each exhaustive sweep runs for minutes and needs no Boost.Test, so it
     # is a job of its own rather than a unit test. enable_testing() stays here for the reason given above.
-    option(${project_option_prefix}_BUILD_EXHAUSTIVE_TESTS "Build the exhaustive 16-bit sweeps under exhaustive/" OFF)
+    option(${project_option_prefix}_BUILD_EXHAUSTIVE_TESTS "Build the exhaustive 16-bit sweeps under test/exhaustive/" OFF)
 
     if(${project_option_prefix}_BUILD_EXHAUSTIVE_TESTS)
         enable_testing()
-        add_subdirectory(exhaustive)
+        add_subdirectory(test/exhaustive)
     endif()
 
     # Off by default, and outside BUILD_TESTING: the proofs run Z3 from Python for many minutes and need no Boost.Test.
     # enable_testing() stays here for the reason given above.
-    option(${project_option_prefix}_BUILD_PROOFS "Prove the portable bit kernels with Z3, under proofs/" OFF)
+    option(${project_option_prefix}_BUILD_PROOFS "Prove the portable bit kernels with Z3, under test/proofs/" OFF)
 
     if(${project_option_prefix}_BUILD_PROOFS)
         enable_testing()
-        add_subdirectory(proofs)
+        add_subdirectory(test/proofs)
     endif()
 
     # Off by default, and outside BUILD_TESTING: Mull's clang plugin builds its own copy of the unit tests, unoptimized and
     # instrumented, and the run takes minutes. enable_testing() stays here for the reason given above.
-    option(${project_option_prefix}_BUILD_MUTATION_TESTS "Score the unit tests by the mutants they kill, under mutation/" OFF)
+    option(${project_option_prefix}_BUILD_MUTATION_TESTS "Score the unit tests by the mutants they kill, under test/mutation/" OFF)
 
     if(${project_option_prefix}_BUILD_MUTATION_TESTS)
         enable_testing()
-        add_subdirectory(mutation)
+        add_subdirectory(test/mutation)
+    endif()
+
+    # Off by default, and outside BUILD_TESTING: a benchmark reports what a machine does rather than passing or failing,
+    # so it is an executable to run by hand, not a test, and it fetches nanobench, which nothing else needs.
+    option(${project_option_prefix}_BUILD_BENCHMARKS "Build the bit-kernel benchmarks under benchmark/" OFF)
+
+    if(${project_option_prefix}_BUILD_BENCHMARKS)
+        add_subdirectory(benchmark)
+    endif()
+
+    # Off by default, and outside BUILD_TESTING: the constant-time checks run the kernels under Valgrind, which nothing
+    # else needs. enable_testing() stays here for the reason given above.
+    option(${project_option_prefix}_BUILD_CONSTANT_TIME_TESTS "Check the portable bit kernels for secret-dependent branches and addresses, under test/constant_time/" OFF)
+
+    if(${project_option_prefix}_BUILD_CONSTANT_TIME_TESTS)
+        enable_testing()
+        add_subdirectory(test/constant_time)
+    endif()
+
+    # Off by default, and outside BUILD_TESTING: the standard libraries' own test suites, fetched at the tags the stable
+    # rungs pin and rewritten onto xstd's functions. enable_testing() stays here for the reason given above.
+    option(${project_option_prefix}_STD_TEST_SUITES "Run libc++'s <bit> tests against the bit functions, under test/std-test-suite/" OFF)
+
+    if(${project_option_prefix}_STD_TEST_SUITES)
+        enable_testing()
+        add_subdirectory(test/std-test-suite)
+    endif()
+
+    # Off by default, and outside BUILD_TESTING: the examples are programs that use the library the way its users do,
+    # each checking its own output. enable_testing() stays here for the reason given above.
+    option(${project_option_prefix}_BUILD_EXAMPLES "Build the example programs under examples/" OFF)
+
+    if(${project_option_prefix}_BUILD_EXAMPLES)
+        enable_testing()
+        add_subdirectory(examples/perft)
     endif()
 endif()
 

@@ -4,7 +4,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <xstd/ints/bit/bit_ceil.hpp> // bit_ceil
-#include <xstd/ints/cstdint.hpp>      // XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
+#include <xstd/ints/cstdint.hpp>      // XSTD_HAS_BIT_INT, XSTD_HAS_INT128, bit_int, bit_uint, int128, uint128
 #include <xstd/ints/limits.hpp>       // numeric_limits
 #include <test/bit/oracle.hpp>        // oracle_bit_ceil
 #include <test/bit/sweep.hpp>         // bit_precise_sweep_types, for_each_edge_value_at, for_each_sweep_value, holds_at_every_position
@@ -14,6 +14,7 @@
 #include <bit>                        // bit_ceil
 #include <cstdint>                    // int32_t, uint64_t
 #include <tuple>                      // tuple_cat
+#include <type_traits>                // integral_constant
 #include <utility>                    // declval, make_integer_sequence
 
 namespace {
@@ -30,17 +31,24 @@ concept xstd_answers = requires (T x) { xstd::bit_ceil(x); };
 template<class T>
 concept std_answers = requires (T x) { std::bit_ceil(x); };
 
+// The top bit, past which no ceiling is representable.
+template<class T>
+constexpr auto top_bit = static_cast<T>(xstd::numeric_limits<T>::max() ^ static_cast<T>(xstd::numeric_limits<T>::max() >> 1U));
+
 // The precondition's domain: every value up to and including the top bit.
 template<class T>
 constexpr auto in_domain(T x)
         -> bool
 {
-        auto const ones = xstd::numeric_limits<T>::max();
-        return x <= static_cast<T>(ones ^ static_cast<T>(ones >> 1U));
+        return x <= top_bit<T>;
 }
 
+// Whether the call is a constant expression, asked as a template argument so that a refusal is false, not an error.
+template<class T, int Past>
+concept ceils_as_a_constant = requires { typename std::integral_constant<bool, xstd::bit_ceil(static_cast<T>(top_bit<T> + static_cast<T>(Past))) != T{0}>; };
+
 template<class T>
-constexpr auto agrees_at(int k)
+[[nodiscard]] constexpr auto agrees_at(int k)
         -> bool
 {
         auto agrees = true;
@@ -80,6 +88,21 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsUnsignedInteger)
         static_assert(xstd_answers<xstd::bit_uint<24>>);
         static_assert(not xstd_answers<xstd::bit_int<24>>);
 #endif
+        BOOST_CHECK(true);
+}
+
+// A narrow contract is not noexcept, whatever the type.
+BOOST_AUTO_TEST_CASE_TEMPLATE(IsNotNoexcept, T, basis_unsigned_types)
+{
+        static_assert(not noexcept(xstd::bit_ceil(T{1})));
+        BOOST_CHECK(true);
+}
+
+// [bit.pow.two]'s remark: a value past the top bit is no constant expression, with or without NDEBUG.
+BOOST_AUTO_TEST_CASE_TEMPLATE(AValuePastTheTopBitIsNoConstant, T, basis_unsigned_types)
+{
+        static_assert(ceils_as_a_constant<T, 0>);
+        static_assert(not ceils_as_a_constant<T, 1>);
         BOOST_CHECK(true);
 }
 

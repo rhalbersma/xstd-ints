@@ -5,7 +5,7 @@
 
 #include <xstd/ints/bit/bit_select.hpp> // bit_select
 #include <xstd/ints/bit/popcount.hpp>   // popcount
-#include <xstd/ints/cstdint.hpp>        // XSTD_HAS_INT128, bit_int, bit_uint, uint128
+#include <xstd/ints/cstdint.hpp>        // XSTD_HAS_BIT_INT, XSTD_HAS_INT128, bit_int, bit_uint, uint128
 #include <xstd/ints/limits.hpp>         // numeric_limits
 #include <test/bit/oracle.hpp>          // oracle_bit_select
 #include <test/bit/sweep.hpp>           // alternating_ones, bit_precise_sweep_types, for_each_edge_value_at, for_each_sweep_value, holds_at_every_position, width
@@ -13,6 +13,7 @@
 #include <test/exact_width_types.hpp>   // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
 #include <boost/test/unit_test.hpp>     // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
 #include <climits>                      // INT_MAX, INT_MIN
+#include <concepts>                     // same_as
 #include <cstdint>                      // int32_t, uint32_t, uint64_t
 #include <ranges>                       // iota
 #include <tuple>                        // tuple_cat
@@ -36,7 +37,7 @@ concept selects_as_a_constant = requires { typename std::integral_constant<int, 
 
 // Walking x one bit at a time, each one met is the one bit_select finds at the rank it is met with.
 template<class T>
-constexpr auto selects_every_one(T x)
+[[nodiscard]] constexpr auto selects_every_one(T x)
         -> bool
 {
         auto agrees = true;
@@ -53,7 +54,7 @@ constexpr auto selects_every_one(T x)
 }
 
 template<class T>
-constexpr auto agrees_at(int k)
+[[nodiscard]] constexpr auto agrees_at(int k)
         -> bool
 {
         auto agrees = true;
@@ -99,6 +100,13 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsUnsignedInteger)
 BOOST_AUTO_TEST_CASE_TEMPLATE(IsNotNoexcept, T, selectable_types)
 {
         static_assert(not noexcept(xstd::bit_select(T{1}, 0)));
+        BOOST_CHECK(true);
+}
+
+// An int whatever the width, as the counting functions of <bit> answer.
+BOOST_AUTO_TEST_CASE_TEMPLATE(ReturnsAnInt, T, selectable_types)
+{
+        static_assert(std::same_as<decltype(xstd::bit_select(T{1}, 0)), int>);
         BOOST_CHECK(true);
 }
 

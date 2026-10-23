@@ -1,0 +1,59 @@
+#          Copyright Rein Halbersma 2014-2026.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+name: Upstream watch
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Weekly and by hand it opens or updates the one issue that lists what changed upstream since the last review. On a
+# pull request that touches the watch or the tracking table it only reports, so the run shows what a merge would open.
+on:
+  schedule:
+    - cron: '23 6 * * 1'
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'tools/upstream_watch.py'
+      - 'tools/upstream-watch.json'
+      - 'tools/test_upstream_watch.py'
+      - 'include/xstd/ints/bit/detail/std_*.hpp'
+      - 'CONTRIBUTING.md'
+      - '.github/workflows/upstream-watch.yml'
+
+jobs:
+  watch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      issues: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Test the watch offline
+        run: python3 -m unittest tools/test_upstream_watch.py
+
+      - name: Report
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: tools/upstream_watch.py | tee -a "${GITHUB_STEP_SUMMARY}"
+
+      - name: Report, and open or update the issue
+        if: github.event_name != 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: tools/upstream_watch.py --issue | tee -a "${GITHUB_STEP_SUMMARY}"

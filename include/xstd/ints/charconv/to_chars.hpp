@@ -6,31 +6,32 @@
 #ifndef XSTD_INTS_CHARCONV_TO_CHARS_HPP
 #define XSTD_INTS_CHARCONV_TO_CHARS_HPP
 
-#include <xstd/ints/concepts/integer.hpp>          // integer
-#include <xstd/ints/cstdlib/div.hpp>               // div
-#include <xstd/ints/detail/delegates_to_std.hpp>   // delegates_to_std
-#include <xstd/ints/limits/numeric_limits.hpp>     // numeric_limits
-#include <xstd/ints/type_traits/is_signed.hpp>     // is_signed_v
-#include <xstd/ints/type_traits/make_unsigned.hpp> // make_unsigned_t
-#include <cassert>                                 // assert
-#include <charconv>                                // to_chars, to_chars_result
-#include <concepts>                                // integral, same_as
-#include <cstddef>                                 // ptrdiff_t, size_t
-#include <iterator>                                // distance, next
-#include <system_error>                            // errc
-#include <type_traits>                             // remove_cv_t
+#include <xstd/ints/charconv/detail/std_writes_chars.hpp> // std_writes_chars
+#include <xstd/ints/concepts/integer.hpp>                 // integer
+#include <xstd/ints/cstdlib/div.hpp>                      // div
+#include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
+#include <xstd/ints/type_traits/is_signed.hpp>            // is_signed_v
+#include <xstd/ints/type_traits/make_unsigned.hpp>        // make_unsigned_t
+#include <bit>                                            // bit_width
+#include <cassert>                                        // assert
+#include <charconv>                                       // to_chars, to_chars_result
+#include <concepts>                                       // integral, same_as
+#include <cstddef>                                        // ptrdiff_t, size_t
+#include <iterator>                                       // distance, next
+#include <system_error>                                   // errc
+#include <type_traits>                                    // conditional_t, remove_cv_t
 
 namespace xstd {
 
-// Worst case is base 2: one character per value bit, and two more when signed.
+// Worst case is base 2: one character per value bit, and two more when signed; char and the integers, as to_chars.
 template<class I>
-        requires ((std::integral<I> and not std::same_as<std::remove_cv_t<I>, bool>) or integer<I>)
+        requires (std::same_as<std::remove_cv_t<I>, char> or integer<I>)
 inline constexpr auto to_chars_max_size =
         static_cast<std::size_t>(numeric_limits<I>::digits) + (is_signed_v<I> ? 2 : 0);
 
-// The standard's own integral domain, other than its deleted bool overload.
+// The integer types and char, where the standard library's own to_chars takes them.
 template<std::integral I>
-        requires (not std::same_as<std::remove_cv_t<I>, bool>) and ints::detail::delegates_to_std<I>
+        requires ints::detail::std_writes_chars<I>
 // NOLINTNEXTLINE(readability-magic-numbers): the standard's own default base, see above
 [[nodiscard]] constexpr auto to_chars(char* first, char* last, I value, int base = 10)
         -> std::to_chars_result
@@ -44,7 +45,7 @@ auto to_chars(char*, char*, bool, int = 10) -> std::to_chars_result = delete;
 
 // For xstd integers the standard library does not cover.
 template<integer I>
-        requires (not ints::detail::delegates_to_std<I>)
+        requires (not ints::detail::std_writes_chars<I>)
 // NOLINTNEXTLINE(readability-magic-numbers): the standard's own default base, see above
 [[nodiscard]] constexpr auto to_chars(char* first, char* last, I value, int base = 10)
         -> std::to_chars_result
@@ -54,14 +55,17 @@ template<integer I>
         // A pointer rather than a string_view: these are only ever subscripted.
         static constexpr auto* digits = "0123456789abcdefghijklmnopqrstuvwxyz";
 
-        // The unsigned counterpart holds |min()| and lets both loops stop at the radix.
-        using U          = make_unsigned_t<I>;
-        auto const radix = static_cast<U>(base);
+        // The unsigned counterpart holds |min()|, widened to unsigned where it is too narrow to hold the radix.
+        constexpr auto max_base = 36U;
+        using U                 = std::conditional_t<(numeric_limits<make_unsigned_t<I>>::digits < std::bit_width(max_base)), unsigned, make_unsigned_t<I>>;
+        // Bound by reference: Clang 19 crashes emitting a const local _BitInt over 128 bits.
+        auto const& radix = static_cast<U>(base);
 
         // Reduced once here, not per digit; both are well-formed and branchless when unsigned.
-        auto const zero      = static_cast<I>(0);
-        auto const negative  = value < zero;
-        auto const magnitude = static_cast<U>(negative ? U{} - static_cast<U>(value) : static_cast<U>(value));
+        auto const zero     = static_cast<I>(0);
+        auto const negative = value < zero;
+        // Bound by reference: Clang 19 crashes emitting a const local _BitInt over 128 bits.
+        auto const& magnitude = static_cast<U>(negative ? U{} - static_cast<U>(value) : static_cast<U>(value));
 
         // Converted rather than selected: a conditional would be one-sided when unsigned.
         auto const sign_width = static_cast<std::ptrdiff_t>(negative);

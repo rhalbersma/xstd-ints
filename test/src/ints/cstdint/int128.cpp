@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(Ordering)
 
 #else
 
-// Absent only where the target has no 128-bit integer of its own to alias, as on 32-bit x86 and ARM.
+// Absent only where the target has no 128-bit integer of its own to alias, as for GCC and Clang on 32-bit x86 and ARM.
 BOOST_AUTO_TEST_CASE(AbsentOnlyWhereTheTargetHasNone)
 {
 #if defined(__SIZEOF_INT128__) or defined(_MSC_VER)

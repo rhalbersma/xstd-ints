@@ -14,25 +14,65 @@ concurrency:
 
 on:
   schedule:
-    - cron: '30 5 * * 1'
+    - cron: '14 1 * * *'
   workflow_dispatch:
 
 jobs:
-  # Run the complete compiler workflows weekly so dynamic development
+  # Dispatched rather than called: a dispatched run is the workflow's own run
+  # on main, which its README badge shows, where a called one is filed under
+  # this workflow and leaves the badge on whatever main last ran. Nightly, as
+  # the one run of every rung and build type: a pull request builds each
+  # ladder's floor and ceiling in Debug alone, and dynamic development
   # toolchains and mutable runner images are checked even without a push.
-  gcc:
-    uses: ./.github/workflows/gcc.yml
-  emscripten:
-    uses: ./.github/workflows/emscripten.yml
-  clang:
-    uses: ./.github/workflows/clang.yml
-  clang_libcxx:
-    uses: ./.github/workflows/clang-libc++.yml
-  mingw:
-    uses: ./.github/workflows/mingw.yml
-  apple_clang:
-    uses: ./.github/workflows/apple-clang.yml
-  msvc:
-    uses: ./.github/workflows/msvc.yml
-  clang_cl:
-    uses: ./.github/workflows/clang-cl.yml
+  dispatch:
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+    steps:
+      - name: Dispatch every compiler workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          REF: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          for workflow in gcc.yml emscripten.yml clang.yml clang-libc++.yml mingw.yml apple-clang.yml msvc.yml \
+                          clang-cl.yml s390x.yml; do
+            gh workflow run "$workflow" --repo "$REPO" --ref "$REF"
+          done
+
+  # libstdc++'s std::bit_compress and std::bit_expand emit no PEXT or PDEP, so
+  # on a fast-BMI2 target xstd keeps its own kernels rather than forward to
+  # them. This job turns red the week GCC trunk starts emitting either: the
+  # libstdc++ exclusion in XSTD_HAS_STD_BIT_COMPRESS can then go.
+  libstdcxx_pext:
+    name: libstdc++ bit_compress and bit_expand emit no PEXT or PDEP
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Install the GCC trunk snapshot
+        uses: rhalbersma/cpp-ci/.github/actions/install-gcc@acbf0f0b3ed85dcabf95cd0d4806c0fa7c451ecf # main after rhalbersma/cpp-ci#83, which adds the standard library test suites' adapters
+        with:
+          version: "17"
+          trunk: "true"
+
+      - name: Compile both at x86-64-v3 and look for the instructions
+        run: |
+          set -euo pipefail
+          cat > probe.cpp <<'PROBE'
+          #include <bit>
+          #include <cstdint>
+          auto compress(std::uint64_t x, std::uint64_t m) -> std::uint64_t { return std::bit_compress(x, m); }
+          auto expand(std::uint64_t x, std::uint64_t m) -> std::uint64_t { return std::bit_expand(x, m); }
+          PROBE
+          g++-17 --version | head -1
+          bitops=$(echo '#include <bit>' | g++-17 -std=c++2d -dM -E -x c++ - | sed -n 's/^#define __cpp_lib_bitops \([0-9]*\)L$/\1/p')
+          if [ "${bitops:-0}" -lt 202607 ]; then
+            echo "::notice::this snapshot's libstdc++ declares no P3104 permutations (__cpp_lib_bitops ${bitops:-undefined}); nothing to compare yet"
+            exit 0
+          fi
+          g++-17 -std=c++2d -O2 -march=x86-64-v3 -S -o probe.s probe.cpp
+          if grep -Ew 'pext|pdep' probe.s; then
+            echo "::error::GCC trunk's libstdc++ now emits PEXT or PDEP for std::bit_compress or std::bit_expand; drop the libstdc++ exclusion from XSTD_HAS_STD_BIT_COMPRESS in include/xstd/ints/bit/detail/std_permutes_bits.hpp"
+            exit 1
+          fi
+          echo "No pext or pdep: libstdc++ still answers with its portable method, so xstd keeps its own kernels."

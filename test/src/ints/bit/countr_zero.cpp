@@ -3,28 +3,25 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/ints/bit/countr_zero.hpp> // countr_zero
-#include <xstd/ints/bit/popcount.hpp>    // popcount
-#include <xstd/ints/cstdint.hpp>         // XSTD_HAS_INT128, bit_int, bit_uint, uint128
-#include <xstd/ints/limits.hpp>          // numeric_limits
-#include <test/bit/oracle.hpp>           // oracle_countr_zero
-#include <test/bit/sweep.hpp>            // TEST_HAS_BIT_PRECISE_BIT, bit_precise_sweep_types, for_each_edge_value, for_each_sweep_value
-#include <test/constexpr_check.hpp>      // XSTD_CONSTEXPR_CHECK
-#include <test/exact_width_types.hpp>    // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
-#include <boost/test/unit_test.hpp>      // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK
-#include <bit>                           // countr_zero
-#include <concepts>                      // unsigned_integral
-#include <cstddef>                       // size_t
-#include <cstdint>                       // uint64_t
-#include <tuple>                         // tuple_cat
-#include <utility>                       // declval
+#include <xstd/ints/bit/countr_zero.hpp>                  // countr_zero
+#include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
+#include <xstd/ints/cstdint.hpp>                          // XSTD_HAS_INT128, bit_int, bit_uint, uint128
+#include <xstd/ints/limits.hpp>                           // numeric_limits
+#include <test/bit/oracle.hpp>                            // oracle_countr_zero
+#include <test/bit/sweep.hpp>                             // TEST_HAS_BIT_PRECISE_BIT, bit_precise_sweep_types, for_each_edge_value, for_each_sweep_value
+#include <test/constexpr_check.hpp>                       // XSTD_CONSTEXPR_CHECK
+#include <test/exact_width_types.hpp>                     // absl_unsigned_types, boost_unsigned_types, std_unsigned_types, xstd_unsigned_types
+#include <boost/test/unit_test.hpp>                       // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL
+#include <bit>                                            // countr_zero
+#include <concepts>                                       // unsigned_integral
+#include <cstddef>                                        // size_t
+#include <cstdint>                                        // uint64_t
+#include <tuple>                                          // tuple_cat
+#include <utility>                                        // declval
 
 namespace {
 
 // Every exact width, the unsigned bit-precise ones reaching <bit> where it takes them and a builtin where it does not.
-template<class T>
-concept has_popcount = requires (T x) { xstd::popcount(x); };
-
 using basis_unsigned_types = decltype(std::tuple_cat(
         std::declval<test::std_unsigned_types>(), std::declval<test::xstd_unsigned_types>(),
         std::declval<test::boost_unsigned_types>(), std::declval<test::absl_unsigned_types>(),
@@ -93,7 +90,7 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsTheBodys)
         static_assert(xstd_answers<std::uint64_t> == std_answers<std::uint64_t>);
 
 #ifdef XSTD_HAS_INT128
-        // Not an equality at the widest width: xstd::uint128 is a class, so this asserts a basis exists, not std's.
+        // Not an equality at the widest width: <bit> takes xstd::uint128 on some legs only, xstd on every one.
         static_assert(xstd_answers<xstd::uint128>);
 #endif
 
@@ -111,6 +108,15 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsTheBodys)
         // And those first four really are the gap std::unsigned_integral would have opened.
         static_assert(std::unsigned_integral<bool> and not std_answers<bool>);
         static_assert(std::unsigned_integral<char8_t> and not std_answers<char8_t>);
+        static_assert(std::unsigned_integral<char16_t> and not std_answers<char16_t>);
+        static_assert(std::unsigned_integral<char32_t> and not std_answers<char32_t>);
+        BOOST_CHECK(true);
+}
+
+// Unconditional where the operations cannot throw, and otherwise as conditional as the type's own operators.
+BOOST_AUTO_TEST_CASE_TEMPLATE(NoexceptFollowsTheOperators, T, basis_unsigned_types)
+{
+        static_assert(noexcept(xstd::countr_zero(T{1})) == xstd::nothrow_const_operators<T>);
         BOOST_CHECK(true);
 }
 
@@ -118,7 +124,7 @@ BOOST_AUTO_TEST_CASE(TheConstraintIsTheBodys)
 namespace {
 
 template<class T>
-constexpr auto agrees_with_the_oracle()
+[[nodiscard]] constexpr auto agrees_with_the_oracle()
         -> bool
 {
         auto agrees = true;

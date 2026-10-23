@@ -1,0 +1,75 @@
+#          Copyright Rein Halbersma 2014-2026.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+name: Perft
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Weekly, by hand, and on a pull request that touches the bit functions or the example. Not a required check: a path
+# filter would leave it pending on every pull request that does not.
+on:
+  schedule:
+    - cron: '7 4 * * 1'
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'include/xstd/ints/bit/**'
+      - 'examples/perft/**'
+      - '.github/workflows/perft.yml'
+
+jobs:
+  perft:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: GCC 15, portable kernels
+            runner: ubuntu-24.04
+            compiler: g++-15
+            flags: ''
+          - name: Clang 22, x86-64-v3
+            runner: ubuntu-24.04
+            compiler: clang++-22
+            flags: '-march=x86-64-v3'
+          - name: GCC 15, AArch64
+            runner: ubuntu-24.04-arm
+            compiler: g++-15
+            flags: ''
+          - name: Clang 22, AArch64
+            runner: ubuntu-24.04-arm
+            compiler: clang++-22
+            flags: ''
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install the stable rung and CMake
+        run: |
+          tools/setup-toolchain.sh --stable
+          pip install --quiet --user --break-system-packages --require-hashes -r tools/cmake-requirements.txt
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+
+      - name: Configure
+        env:
+          CXX: ${{ matrix.compiler }}
+          FLAGS: ${{ matrix.flags }}
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER="${CXX}" -DCMAKE_CXX_FLAGS="${FLAGS}" -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_EXAMPLES=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Perft to the published depths
+        shell: bash
+        run: build/examples/perft/perft full | tee -a "${GITHUB_STEP_SUMMARY}"

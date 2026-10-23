@@ -3,11 +3,12 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/ints/cstdlib/div_euclid.hpp>    // div_euclid
-#include <test/constexpr_check.hpp>            // XSTD_CONSTEXPR_CHECK, XSTD_CONSTEXPR_CHECK_EQUAL
-#include <test/boost_test_print_log_value.hpp> // NOLINT(misc-include-cleaner): registers Boost.Test printers
-#include <test/exact_width_types.hpp>          // exact_width_signed_integer_types, exact_width_unsigned_integer_types
-#include <boost/test/unit_test.hpp>            // Boost.Test
+#include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
+#include <xstd/ints/cstdlib/div_euclid.hpp>               // div_euclid
+#include <test/boost_test_print_log_value.hpp>            // NOLINT(misc-include-cleaner): registers Boost.Test printers
+#include <test/constexpr_check.hpp>                       // XSTD_CONSTEXPR_CHECK, XSTD_CONSTEXPR_CHECK_EQUAL
+#include <test/exact_width_types.hpp>                     // exact_width_integer_types, exact_width_signed_integer_types, exact_width_unsigned_integer_types
+#include <boost/test/unit_test.hpp>                       // Boost.Test
 
 BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(CStdLib)
@@ -29,12 +30,18 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(LeavesANonNegativeRemainder, T, test::exact_width_
         XSTD_CONSTEXPR_CHECK_EQUAL_IF(test::has_constexpr_division<T>, (xstd::div_euclid(T{-9}, T{-3})), (xstd::div_result<T>{+3, 0}));
 }
 
-// Unsigned, the three conventions coincide; checked against xstd::div, not against literals.
+// Unsigned, the three conventions coincide: these are truncated division's own results.
 BOOST_AUTO_TEST_CASE_TEMPLATE(LeavesANonNegativeRemainderOnUnsigned, T, test::exact_width_unsigned_integer_types)
 {
         XSTD_CONSTEXPR_CHECK_EQUAL_IF(test::has_constexpr_division<T>, (xstd::div_euclid(T{8}, T{3})), (xstd::div_result<T>{2, 2}));
         XSTD_CONSTEXPR_CHECK_EQUAL_IF(test::has_constexpr_division<T>, (xstd::div_euclid(T{1}, T{2})), (xstd::div_result<T>{0, 1}));
         XSTD_CONSTEXPR_CHECK_EQUAL_IF(test::has_constexpr_division<T>, (xstd::div_euclid(T{0}, T{3})), (xstd::div_result<T>{0, 0}));
+}
+
+// noexcept exactly where the type's own operators are, which Abseil's 128-bit types do not declare.
+BOOST_AUTO_TEST_CASE_TEMPLATE(IsNoexceptWhereTheOperatorsAre, T, test::exact_width_integer_types)
+{
+        XSTD_CONSTEXPR_CHECK(noexcept(xstd::div_euclid(T{1}, T{1})) == xstd::nothrow_const_operators<T>);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

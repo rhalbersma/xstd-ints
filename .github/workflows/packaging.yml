@@ -53,7 +53,7 @@ jobs:
       - name: Install the stable rung
         if: runner.os == 'Linux'
         run: |
-          tools/setup-toolchain.sh
+          tools/setup-toolchain.sh --stable
           {
             echo "CC=gcc-15"
             echo "CXX=g++-15"

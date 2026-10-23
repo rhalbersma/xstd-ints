@@ -4,11 +4,12 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <xstd/ints/cstdlib/abs.hpp>           // abs
-#include <test/constexpr_check.hpp>            // XSTD_CONSTEXPR_CHECK, XSTD_CONSTEXPR_CHECK_EQUAL
-#include <test/boost_test_print_log_value.hpp> // NOLINT(misc-include-cleaner): registers Boost.Test printers
-#include <test/exact_width_types.hpp>          // exact_width_signed_integer_types, exact_width_unsigned_integer_types
 #include <xstd/ints/limits.hpp>                // numeric_limits
+#include <test/boost_test_print_log_value.hpp> // NOLINT(misc-include-cleaner): registers Boost.Test printers
+#include <test/constexpr_check.hpp>            // XSTD_CONSTEXPR_CHECK, XSTD_CONSTEXPR_CHECK_EQUAL
+#include <test/exact_width_types.hpp>          // exact_width_signed_integer_types, exact_width_unsigned_integer_types
 #include <boost/test/unit_test.hpp>            // Boost.Test
+#include <concepts>                            // same_as
 
 BOOST_AUTO_TEST_SUITE(Ints)
 BOOST_AUTO_TEST_SUITE(CStdLib)
@@ -16,6 +17,9 @@ BOOST_AUTO_TEST_SUITE(Abs)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(ReturnsTheMagnitude, T, test::exact_width_signed_integer_types)
 {
+        // T itself, where std::abs of a std::int8_t returns the promoted int.
+        static_assert(std::same_as<decltype(xstd::abs(T{})), T>);
+
         XSTD_CONSTEXPR_CHECK_EQUAL(xstd::abs(T{-2}), T{2});
         XSTD_CONSTEXPR_CHECK_EQUAL(xstd::abs(T{-1}), T{1});
         XSTD_CONSTEXPR_CHECK_EQUAL(xstd::abs(T{0}), T{0});
@@ -30,6 +34,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(ReturnsTheMagnitude, T, test::exact_width_signed_i
 // The identity, and total where the signed case is not: min() is 0, its own magnitude.
 BOOST_AUTO_TEST_CASE_TEMPLATE(IsTheIdentityOnUnsigned, T, test::exact_width_unsigned_integer_types)
 {
+        static_assert(std::same_as<decltype(xstd::abs(T{})), T>);
+
         XSTD_CONSTEXPR_CHECK_EQUAL(xstd::abs(T{0}), T{0});
         XSTD_CONSTEXPR_CHECK_EQUAL(xstd::abs(T{1}), T{1});
         XSTD_CONSTEXPR_CHECK_EQUAL(xstd::abs(T{2}), T{2});
