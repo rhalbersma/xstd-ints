@@ -147,13 +147,20 @@ codegen() {
         return "${status}"
 }
 
-# The std-test-suite job: libc++'s own <bit> tests, rewritten onto xstd, on the libc++ they are written for.
+# The std-test-suite job: libc++'s, libstdc++'s and GCC trunk's tests of what xstd mirrors, each on its own library.
 std_test_suite() {
         local dir="${out}/std-test-suite"
-        "${cmake}" -S "${root}" -B "${dir}" -G Ninja -DCMAKE_CXX_COMPILER=clang++-22 -DCMAKE_CXX_FLAGS=-stdlib=libc++ \
+        "${cmake}" -S "${root}" -B "${dir}/libcxx" -G Ninja -DCMAKE_CXX_COMPILER=clang++-22 -DCMAKE_CXX_FLAGS=-stdlib=libc++ \
                 -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ -DBUILD_TESTING=OFF -DXSTD_INTS_STD_TEST_SUITES=ON \
-                && "${cmake}" --build "${dir}" --parallel "${jobs}" \
-                && ctest --test-dir "${dir}" --output-on-failure --parallel "${jobs}"
+                && "${cmake}" --build "${dir}/libcxx" --parallel "${jobs}" \
+                && ctest --test-dir "${dir}/libcxx" --output-on-failure --parallel "${jobs}" \
+                && "${cmake}" -S "${root}" -B "${dir}/libstdcxx" -G Ninja -DCMAKE_CXX_COMPILER=g++-15 \
+                        -DBUILD_TESTING=OFF -DXSTD_INTS_STD_TEST_SUITES=ON \
+                && "${cmake}" --build "${dir}/libstdcxx" --parallel "${jobs}" \
+                && ctest --test-dir "${dir}/libstdcxx" --output-on-failure --parallel "${jobs}" \
+                && "${cmake}" -S "${root}" -B "${dir}/libstdcxx-trunk" -G Ninja -DCMAKE_CXX_COMPILER=g++-17 -DCMAKE_CXX_FLAGS=-std=gnu++2d \
+                        -DBUILD_TESTING=OFF -DXSTD_INTS_STD_TEST_SUITES=ON -DXSTD_INTS_STD_TEST_SUITE_RUNG=development \
+                && "${cmake}" --build "${dir}/libstdcxx-trunk" --parallel "${jobs}"
 }
 
 # The consumption job: install the library, then build and run each consumer model under test/consumer.
