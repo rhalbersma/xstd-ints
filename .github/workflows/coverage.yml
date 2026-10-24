@@ -32,7 +32,7 @@ jobs:
   # cannot lower it without a commit in this repository. xstd-bits and tabula
   # state theirs for the same reason; tabula's is a ratchet below 100.
   coverage:
-    uses: rhalbersma/cpp-ci/.github/workflows/coverage.yml@acbf0f0b3ed85dcabf95cd0d4806c0fa7c451ecf # main after rhalbersma/cpp-ci#83, which adds the standard library test suites' adapters
+    uses: rhalbersma/cpp-ci/.github/workflows/coverage.yml@8d989e750414e76f4832e755e1439ccf449f904c # main after rhalbersma/cpp-ci#85, which reads dg-xfail-run-if and pins GCC trunk's test suite
     with:
       fail_under_line: 100
       fail_under_branch: 100

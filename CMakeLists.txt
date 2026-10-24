@@ -270,7 +270,7 @@ if(PROJECT_IS_TOP_LEVEL)
 
     # Off by default, and outside BUILD_TESTING: the standard libraries' own test suites, fetched at the tags the stable
     # rungs pin and rewritten onto xstd's functions. enable_testing() stays here for the reason given above.
-    option(${project_option_prefix}_STD_TEST_SUITES "Run libc++'s <bit> tests against the bit functions, under test/std-test-suite/" OFF)
+    option(${project_option_prefix}_STD_TEST_SUITES "Run libc++'s or libstdc++'s tests of what xstd mirrors against it, under test/std-test-suite/" OFF)
 
     if(${project_option_prefix}_STD_TEST_SUITES)
         enable_testing()
@@ -284,6 +284,14 @@ if(PROJECT_IS_TOP_LEVEL)
     if(${project_option_prefix}_BUILD_EXAMPLES)
         enable_testing()
         add_subdirectory(examples/perft)
+    endif()
+
+    # Off by default, and outside BUILD_TESTING: it builds a dictionary over a billion bits to time against sux and SDSL,
+    # whose headers need GCC or Clang, and reports what a machine does rather than passing or failing.
+    option(${project_option_prefix}_BUILD_SUCCINCT_BENCHMARKS "Build the select benchmark against sux and SDSL under benchmark/succinct/" OFF)
+
+    if(${project_option_prefix}_BUILD_SUCCINCT_BENCHMARKS)
+        add_subdirectory(benchmark/succinct)
     endif()
 endif()
 
