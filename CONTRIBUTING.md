@@ -461,6 +461,23 @@ build-succinct/benchmark/succinct/bench_select
 
 A run takes five to eight minutes and under 600 MB of memory; a number of bits as its argument runs a smaller vector. [`benchmark/succinct/results.md`](benchmark/succinct/results.md) keeps a run with the machine it names.
 
+## Packaging
+
+[`packaging/`](packaging) holds a [vcpkg](https://github.com/microsoft/vcpkg) port and a [Conan](https://conan.io) 2 recipe, written as each registry wants them: the source is the GitHub archive of a release tag, checked against its hash; the license is `LICENSE_1_0.txt`; and the package is header-only, with no test feature and no build step. The port installs the CMake package that `find_package(xstd-ints CONFIG)` finds; the recipe copies the headers and declares the same `xstd::ints` target.
+
+The committed recipes name the tag `v<version>` and carry placeholder hashes. [`packaging/pin.py`](packaging/pin.py) downloads an archive and writes copies of both recipes pinned to it, so a branch is tested as a release would be:
+
+```sh
+python3 packaging/pin.py "$(git rev-parse HEAD)" /tmp/pinned
+cmake -S packaging/vcpkg/test -B /tmp/test-port -DCMAKE_TOOLCHAIN_FILE="${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" -DVCPKG_OVERLAY_PORTS=/tmp/pinned/vcpkg
+cmake --build /tmp/test-port && ctest --test-dir /tmp/test-port
+conan create /tmp/pinned/conan --version 0.1.0 -s compiler.cppstd=23
+```
+
+The commit has to be on GitHub, since the archive is GitHub's. The [Packaging workflow](.github/workflows/packaging.yml) does the same for the commit under test on Linux, macOS and Windows: the port through a clean CMake project whose manifest names only `xstd-ints`, and the recipe through its `test_package`. Conan installs from [`packaging/conan-requirements.txt`](packaging/conan-requirements.txt), pinned by hash.
+
+A release is a tag `vX.Y.Z` matching `project(VERSION)`. After the tag is pushed, `python3 packaging/pin.py vX.Y.Z packaging --version X.Y.Z` fills in both hashes in place, and the port directory and the recipe go to [microsoft/vcpkg](https://github.com/microsoft/vcpkg) and [conan-io/conan-center-index](https://github.com/conan-io/conan-center-index) as each repository's contributing guide describes.
+
 ## Standards-paper tracking
 
 Implementation-relevant proposals must record the paper number, the revision-pinned wording reviewed by xstd, the corresponding live `cplusplus/papers` tracking issue, the last-reviewed date, and a short statement saying whether xstd implements, partially follows, extends, or merely references the paper. Unversioned `wg21.link/P####` links are reserved for links explicitly described as the latest revision; implementation and conformance claims use pinned `P####R#` links. Durable prose does not copy volatile WG21 status labels.
