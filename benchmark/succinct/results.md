@@ -51,8 +51,8 @@ For a proposal to standardize `bit_select`, then: every one of these libraries c
 ```sh
 cmake -S . -B build-succinct -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_CXX_FLAGS=-march=x86-64-v3 -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_SUCCINCT_BENCHMARKS=ON
 cmake --build build-succinct
-build-succinct/bench/succinct/bench_select 1048576
-build-succinct/bench/succinct/bench_select
+build-succinct/benchmark/succinct/bench_select 1048576
+build-succinct/benchmark/succinct/bench_select
 ```
 
 A 2<sup>30</sup>-bit run took 5 to 8 minutes and peaked at 576 MB of memory.

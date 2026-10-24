@@ -288,10 +288,10 @@ if(PROJECT_IS_TOP_LEVEL)
 
     # Off by default, and outside BUILD_TESTING: it builds a dictionary over a billion bits to time against sux and SDSL,
     # whose headers need GCC or Clang, and reports what a machine does rather than passing or failing.
-    option(${project_option_prefix}_BUILD_SUCCINCT_BENCHMARKS "Build the select benchmark against sux and SDSL under bench/succinct/" OFF)
+    option(${project_option_prefix}_BUILD_SUCCINCT_BENCHMARKS "Build the select benchmark against sux and SDSL under benchmark/succinct/" OFF)
 
     if(${project_option_prefix}_BUILD_SUCCINCT_BENCHMARKS)
-        add_subdirectory(bench/succinct)
+        add_subdirectory(benchmark/succinct)
     endif()
 endif()
 
