@@ -36,6 +36,6 @@ The exception specification is `nothrow_const_operators<I>`.
 
 | Entity | Relation |
 | :----- | :------- |
-| [`abs`](abs.md) | the magnitude as `I`, with `min()` outside its domain |
+| [`abs`](abs.md) | the magnitude as `promoted_t<I>`, with `min()` outside its domain from `int` up |
 | [`make_unsigned`](../type_traits/make_unsigned.md) | names the result type |
 | [`sign`](sign.md) | the sign the magnitude leaves out |

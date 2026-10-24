@@ -10,7 +10,7 @@ namespace xstd {
   template<integer I>
     constexpr auto sign(I x) noexcept(nothrow_const_operators<I>) -> int;
   template<integer I>
-    constexpr auto abs(I x) noexcept(nothrow_const_operators<I>) -> I;
+    constexpr auto abs(I x) noexcept(nothrow_const_operators<I>) -> promoted_t<I>;
   template<integer I>
     constexpr auto unsigned_abs(I x) noexcept(nothrow_const_operators<I>) -> xstd::make_unsigned_t<I>;
 
