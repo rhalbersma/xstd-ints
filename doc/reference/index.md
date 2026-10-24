@@ -116,8 +116,8 @@ in another language where that counterpart shares its purpose. Papers are linked
     - **Rust** has [`i128`](https://doc.rust-lang.org/std/primitive.i128.html) and
       [`u128`](https://doc.rust-lang.org/std/primitive.u128.html) as primitive types.
 - **`bit_int`, `bit_uint`:**
-    - **C++:** [P3666R4](https://wg21.link/p3666r4), *Bit-precise integers* (Jan Schultke), brings `_BitInt(N)` into
-      C++ as integer types. Up to R3 it proposed the aliases too; R4 drops them, as LEWG found no consensus for them.
+    - **C++:** [P3666R5](https://wg21.link/p3666r5), *Bit-precise integers* (Jan Schultke), brings `_BitInt(N)` into
+      C++ as integer types. Up to R3 it proposed the aliases too; R4 dropped them, as LEWG found no consensus for them.
     - **C23** has `_BitInt(N)`, which the aliases name, and Clang offers it in C++ as an
       [extension](https://clang.llvm.org/docs/LanguageExtensions.html#bitint-extint).
 - **`byteswap`:** [P1272R4](https://wg21.link/p1272r4), *Byteswapping for fun&&nuf* (Isabella Muerte, Corentin Jabot).
