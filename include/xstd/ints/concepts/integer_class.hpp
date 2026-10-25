@@ -21,9 +21,10 @@ concept integer_class =
         // /2: structurally recognize the set; its note disclaims class-ness, so built-ins are eligible.
         std::same_as<T, std::remove_cv_t<T_cv>> and
 
-        // /3: the width requirement is deliberately omitted; its range half the tests check.
+        // /3: a width exists, which no arbitrary-precision integer has; wider than the integral types is not asked.
         numeric_limits<T>::is_specialized and
         numeric_limits<T>::is_integer and
+        numeric_limits<T>::is_bounded and
         (numeric_limits<T>::radix == 2) and
 
         // /4: integer-like and its signedness refinements are defined from this concept.

@@ -54,7 +54,9 @@ other character types are refused.
 an open structural concept rather than an implementation-defined set. It admits
 integer types of every width instead of requiring them to be wider than every
 integral type, and it deliberately checks only same-type arithmetic rather than
-mixed-mode operations or common types. Its range metadata comes from the open
+mixed-mode operations or common types. It keeps /3's demand that there be a width
+at all, so an arbitrary-precision integer, whose `numeric_limits::is_bounded` is
+false, is not one. Its range metadata comes from the open
 `xstd::numeric_limits`, which delegates to the standard trait for every non-array
 object type.
 
