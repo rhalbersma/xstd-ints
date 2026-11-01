@@ -44,7 +44,7 @@ jobs:
             deb: Mull-20-0.34.1-LLVM-20.1.2-ubuntu-amd64-24.04.deb
             sha256: c4c6ae0410da5e92e1c4e0d6a33fdf034a3ea1dab5780ec0dd545b97a299dc54
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
