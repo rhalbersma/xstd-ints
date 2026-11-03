@@ -49,3 +49,8 @@ elseif(rung STREQUAL "development")
 else()
     std_test_suite(libstdcxx MAPPING libstdcxx.toml LINK_LIBRARIES ${project_id}_std_test_suite_types RUNG ${rung})
 endif()
+
+# The MSVC STL's tests need none of its internals, so they run beside either suite; cpp-ci pins them on the stable rung.
+if(rung STREQUAL "stable")
+    std_test_suite(msvc-stl MAPPING msvc-stl.toml LINK_LIBRARIES ${project_id}_std_test_suite_types RUNG ${rung})
+endif()

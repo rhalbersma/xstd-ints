@@ -1,0 +1,97 @@
+#          Copyright Rein Halbersma 2026.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+# The MSVC STL's tests of what xstd mirrors, rewritten from std:: onto xstd::, with each departure from them named.
+
+[msvc-stl]
+take = [
+    { path = "tests/std/tests/P0553R4_bit_rotating_and_counting_functions" },
+    { path = "tests/std/tests/P0556R3_bit_integral_power_of_two_operations" },
+    { path = "tests/std/tests/P1272R4_byteswap" },
+    { path = "tests/std/tests/Dev11_0272959_make_signed" },
+]
+include = ["xstd_types.hpp"]
+# The tests call what they test unqualified, under a using-directive for std.
+rewrite = [
+    { regex = '(?<![\w:.])(bit_ceil|bit_floor|bit_width|byteswap|countl_one|countl_zero|countr_one|countr_zero|has_single_bit|make_signed|make_signed_t|make_unsigned|make_unsigned_t|numeric_limits|popcount|rotl|rotr)\b', to = 'xstd::\1' },
+]
+
+# The tests assume Windows' LLP64 model and its 16-bit wchar_t; the legs run on Linux, whose LP64 model gives these.
+[[msvc-stl.assertion]]
+file = "tests/std/tests/Dev11_0272959_make_signed/test.compile.pass.cpp"
+sha256 = "683818b0f6be4e8e710d1c0e4ee7df5baa4edc6918d35097148273aaec61d5ba"
+line = "test<wchar_t, short, unsigned short>();"
+to = "test<wchar_t, int, unsigned int>();"
+departure = "the test assumes MSVC's 16-bit wchar_t; on Linux wchar_t has 32 bits, so int and unsigned int are its counterparts"
+
+[[msvc-stl.assertion]]
+file = "tests/std/tests/Dev11_0272959_make_signed/test.compile.pass.cpp"
+sha256 = "683818b0f6be4e8e710d1c0e4ee7df5baa4edc6918d35097148273aaec61d5ba"
+line = "test<e4, int, unsigned int>();"
+to = "test<e4, long, unsigned long>();"
+departure = "the test assumes Windows' 32-bit long; under LP64 an enum over long keeps long, the lowest-ranked type of its 64 bits"
+
+[[msvc-stl.assertion]]
+file = "tests/std/tests/Dev11_0272959_make_signed/test.compile.pass.cpp"
+sha256 = "683818b0f6be4e8e710d1c0e4ee7df5baa4edc6918d35097148273aaec61d5ba"
+line = "test<e5, long long, unsigned long long>();"
+to = "test<e5, long, unsigned long>();"
+departure = "[meta.trans.sign] picks the lowest-ranked type of an enumeration's size, which under LP64 is long rather than long long"
+
+[[msvc-stl.assertion]]
+file = "tests/std/tests/Dev11_0272959_make_signed/test.compile.pass.cpp"
+sha256 = "683818b0f6be4e8e710d1c0e4ee7df5baa4edc6918d35097148273aaec61d5ba"
+line = "test<e9, int, unsigned int>();"
+to = "test<e9, long, unsigned long>();"
+departure = "the test assumes Windows' 32-bit long; under LP64 an enum over unsigned long takes long and unsigned long"
+
+[[msvc-stl.assertion]]
+file = "tests/std/tests/Dev11_0272959_make_signed/test.compile.pass.cpp"
+sha256 = "683818b0f6be4e8e710d1c0e4ee7df5baa4edc6918d35097148273aaec61d5ba"
+line = "test<e10, long long, unsigned long long>();"
+to = "test<e10, long, unsigned long>();"
+departure = "[meta.trans.sign] picks the lowest-ranked type of an enumeration's size, which under LP64 is long rather than long long"
+
+[[msvc-stl.assertion]]
+file = "tests/std/tests/Dev11_0272959_make_signed/test.compile.pass.cpp"
+sha256 = "683818b0f6be4e8e710d1c0e4ee7df5baa4edc6918d35097148273aaec61d5ba"
+line = "test<e12, short, unsigned short>();"
+to = "test<e12, int, unsigned int>();"
+departure = "the test assumes MSVC's 16-bit wchar_t; on Linux an enum over wchar_t has 32 bits, so int and unsigned int are its counterparts"
+
+[[msvc-stl.assertion]]
+file = "tests/std/tests/P1272R4_byteswap/test.cpp"
+sha256 = "4838289a14d7d52ae2667abab55f265e9fe7da8834a82f1d6aed795d204d6823"
+line = "assert(test_byteswap<wchar_t>(0xAC34, 0x34AC));"
+to = "assert(test_byteswap<wchar_t>(0x1234ABCD, 0xCDAB3412));"
+departure = "the test assumes MSVC's 16-bit wchar_t; on Linux wchar_t has 32 bits, so it swaps as int does"
+
+[[msvc-stl.assertion]]
+file = "tests/std/tests/P1272R4_byteswap/test.cpp"
+sha256 = "4838289a14d7d52ae2667abab55f265e9fe7da8834a82f1d6aed795d204d6823"
+line = "assert(test_byteswap<long>(0x1234ABCD, 0xCDAB3412));"
+to = "assert(test_byteswap<long>(0x1234567890ABCDEF, 0xEFCDAB9078563412));"
+departure = "the test assumes Windows' 32-bit long; under LP64 long has 64 bits, so it swaps as long long does"
+
+[[msvc-stl.assertion]]
+file = "tests/std/tests/P1272R4_byteswap/test.cpp"
+sha256 = "4838289a14d7d52ae2667abab55f265e9fe7da8834a82f1d6aed795d204d6823"
+line = "assert(test_byteswap<unsigned long>(0x1234ABCD, 0xCDAB3412));"
+to = "assert(test_byteswap<unsigned long>(0x1234567890ABCDEF, 0xEFCDAB9078563412));"
+departure = "the test assumes Windows' 32-bit long; under LP64 unsigned long has 64 bits, so it swaps as unsigned long long does"
+
+[[msvc-stl.assertion]]
+file = "tests/std/tests/Dev11_0272959_make_signed/test.compile.pass.cpp"
+sha256 = "683818b0f6be4e8e710d1c0e4ee7df5baa4edc6918d35097148273aaec61d5ba"
+line = "test<e15, signed char, unsigned char>();"
+to = "#ifndef _LIBCPP_VERSION\n    test<e15, signed char, unsigned char>();\n#endif"
+departure = "libc++'s make_signed rejects an enumeration over bool, which [meta.trans.sign] admits, and xstd::make_signed delegates to it there"
+
+[[msvc-stl.assertion]]
+file = "tests/std/tests/P0556R3_bit_integral_power_of_two_operations/test.cpp"
+sha256 = "704fcc6203a1e3b8c638e787a8f52a4f195c26b04b7ef3365eb5e587756fcf7b"
+line = "test_all<unsigned long long>();"
+to = "test_all<unsigned long long>(); XSTD_TYPES_UNSIGNED_CONSTEXPR(XSTD_TYPES_TEST_ALL)"
+departure = "none: xstd's 128-bit and bit-precise unsigned types with constexpr operators run the same checks"

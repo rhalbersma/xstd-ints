@@ -21,7 +21,8 @@ on:
 
 jobs:
   # libc++'s own tests of what xstd mirrors, fetched at the tag the stable clang rung pins and rewritten onto xstd, on
-  # the libc++ they are written for. The fetch is sparse and the tests are small, so the leg takes about a minute.
+  # the libc++ they are written for, and the MSVC STL's beside them. The fetch is sparse and the tests are small, so
+  # the leg takes about a minute.
   libcxx:
     name: libc++ 22
     runs-on: ubuntu-24.04
@@ -45,7 +46,8 @@ jobs:
       - name: Run the suite
         run: ctest --test-dir build --output-on-failure
 
-  # libstdc++'s own tests of what xstd mirrors, at the tag the stable gcc rung pins, on the libstdc++ they are written for.
+  # libstdc++'s own tests of what xstd mirrors, at the tag the stable gcc rung pins, on the libstdc++ they are written for,
+  # and the MSVC STL's beside them.
   libstdcxx:
     name: libstdc++ 15
     runs-on: ubuntu-24.04

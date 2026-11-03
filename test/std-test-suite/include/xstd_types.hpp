@@ -46,5 +46,6 @@
 #define XSTD_TYPES_STATIC_TEST(T) static_assert(test<T>());
 #define XSTD_TYPES_TEST(T) test<T>();
 #define XSTD_TYPES_TEST_ABS(T) test_abs<T, T>();
+#define XSTD_TYPES_TEST_ALL(T) test_all<T>();
 
 #endif // XSTD_TYPES_HPP
