@@ -23,4 +23,4 @@ jobs:
   # Its own tier, deliberately left at stable: a formatter release reformats
   # the code base, which is not something a compiler bump should decide.
   clang_format:
-    uses: rhalbersma/cpp-ci/.github/workflows/clang-format.yml@8d989e750414e76f4832e755e1439ccf449f904c # main after rhalbersma/cpp-ci#85, which reads dg-xfail-run-if and pins GCC trunk's test suite
+    uses: rhalbersma/cpp-ci/.github/workflows/clang-format.yml@47d56c00db0024b6a5a22a0d1e8bec06f40163ff # main after rhalbersma/cpp-ci#85, which reads dg-xfail-run-if and pins GCC trunk's test suite

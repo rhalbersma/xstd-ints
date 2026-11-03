@@ -6,7 +6,7 @@ Coverage shows that a line ran under test, not that a test would fail if the lin
 
 A surviving mutant gets one of two answers. Either a test kills it, built from the cases users meet as the [test requirements](../CONTRIBUTING.md#test-suite-requirements) ask, or it is an equivalent mutant: the same function in a different spelling, such as `x < 0 ? -x : x` against `x <= 0 ? -x : x`, where both arms are zero at zero. An equivalent mutant is suppressed at its line with `// mull-ignore: <mutator>`, and the reason goes on its own comment line above. Mull reads every character after the colon as part of a mutator name, so a reason on the same line breaks the directive. A mutant is never suppressed just to raise the score.
 
-Mull's plugin is built against one LLVM major, and the newest it supports is 20, behind the stable rung's clang. Noble's own archive carries clang 20; Mull comes from its [package repository](https://cloudsmith.io/~mull-project/repos/mull-stable), checked against the hash the workflow pins. The suite needs Boost.Test, which noble's `libboost-test-dev` provides, and no vcpkg:
+Mull's plugin is built against one LLVM major, and the newest it supports is 20, behind the stable rung's clang. Noble's own archive carries clang 20; Mull comes from its [GitHub release](https://github.com/mull-project/mull/releases/tag/0.34.1), checked against the hash the workflow pins. The suite needs Boost.Test, which noble's `libboost-test-dev` provides, and no vcpkg:
 
 ```sh
 sudo apt-get install clang-20 libboost-test-dev ./Mull-20-0.34.1-LLVM-20.1.2-ubuntu-amd64-24.04.deb
