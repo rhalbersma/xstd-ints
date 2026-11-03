@@ -19,7 +19,7 @@ This repository enforces its quality bar through CI rather than through review d
 - **Line and branch coverage stay at 100%, project-wide and for the PR's own diff.** [`codecov.yml`](.github/codecov.yml) sets both the `project` and `patch` Codecov status checks to a 100% target with zero tolerance, backed by the [Coverage workflow](.github/workflows/coverage.yml)'s own `gcovr --fail-under-line 100 --fail-under-branch 100` gate. New code needs a test that exercises every line and branch it adds; existing coverage may not regress. Excluded from this bar: `assert(...)` contract checks (their failure path is undefined behavior by design, not something a correct test can hit), compiler-synthesized `= default;` special members (gcov cannot attribute a hit counter to them regardless of how often they run), and the exception-unwinding branch gcc/gcov attaches to any call that could throw (`--exclude-throw-branches`/`--exclude-unreachable-branches`) - not a code path a test can meaningfully hit either.
 - **No new sanitizer failures.** The [sanitizers workflow](.github/workflows/sanitizers.yml) must stay green.
 - **The bit kernels compile to the instructions they exist for.** The [Codegen workflow](.github/workflows/codegen.yml) compiles [`test/codegen/`](test/codegen) to assembly with the stable rung's GCC and Clang, on an x86-64 and an AArch64 runner, and reads it with FileCheck - see [Codegen tests](#codegen-tests) below.
-- **The standard library's own tests pass.** The [Std test suite workflow](.github/workflows/std-test-suite.yml) runs libc++'s and libstdc++'s tests of the functions, traits and `numeric_limits` xstd mirrors against xstd's, on clang 22 with libc++, on GCC 15 with libstdc++, and on GCC trunk for what only trunk tests - see [Standard library test suites](#standard-library-test-suites) below.
+- **The standard library's own tests pass.** The [Std test suite workflow](.github/workflows/std-test-suite.yml) runs libc++'s, libstdc++'s and the MSVC STL's tests of the functions, traits and `numeric_limits` xstd mirrors against xstd's, on clang 22 with libc++, on GCC 15 with libstdc++, and on GCC trunk for what only trunk tests - see [Standard library test suites](#standard-library-test-suites) below.
 - **The public headers stay self-sufficient.** Each header is compiled as its own translation unit (see `test/CMakeLists.txt`); don't rely on include order from another header.
 - **The README's examples compile.** `test/CMakeLists.txt` writes each ```` ```cpp ```` block of [README.md](README.md) to a translation unit of its own, `readme.example<n>`, built with the tests' warnings on every leg. An example that includes an `<xstd/ints/ext/>` header is built where the library it adapts resolved, as that header's own test is, and one that names `xstd::int128` or `xstd::uint128` tests `XSTD_HAS_INT128` itself, as a test source does.
 - **The documentation site builds.** The [Pages workflow](.github/workflows/pages.yml) runs `mkdocs build --strict` over the README and `doc/`, which fails on a link to a page or an anchor that does not exist, and deploys the site from `main`.
@@ -284,9 +284,9 @@ Each test leaves its assembly beside it as `build-codegen/test/codegen/<source>.
 
 ## Standard library test suites
 
-libc++, libstdc++ and the MSVC STL each test their standard library against the standard's paragraphs, written by people with no stake in xstd. [`test/std-test-suite/`](test/std-test-suite) runs libc++'s and libstdc++'s tests against xstd's functions through cpp-ci's [`std_test_suite`](https://github.com/rhalbersma/cpp-ci#standard-library-test-suites) adapter, which fetches each suite at the tag its stable rung pins, `llvmorg-22.1.8` for clang and `releases/gcc-15.2.0` for gcc, sparse and shallow, and rewrites a copy of each test in the build tree. The cpp-ci commit is the one [`clang.yml`](.github/workflows/clang.yml) pins, read from that file, so moving the pin moves the suites. Each suite checks its own library's choices as well as the standard's, so each runs on the library it is written for: libc++'s where the build's standard library is libc++, libstdc++'s otherwise.
+libc++, libstdc++ and the MSVC STL each test their standard library against the standard's paragraphs, written by people with no stake in xstd. [`test/std-test-suite/`](test/std-test-suite) runs all three suites' tests against xstd's functions through cpp-ci's [`std_test_suite`](https://github.com/rhalbersma/cpp-ci#standard-library-test-suites) adapter, which fetches each suite at the tag its stable rung pins, `llvmorg-22.1.8` for clang, `releases/gcc-15.2.0` for gcc and `vs-2022-17.14` for msvc, sparse and shallow, and rewrites a copy of each test in the build tree. The cpp-ci commit is the one [`clang.yml`](.github/workflows/clang.yml) pins, read from that file, so moving the pin moves the suites. Each suite checks its own library's choices as well as the standard's, so each runs on the library it is written for: libc++'s where the build's standard library is libc++, libstdc++'s otherwise. The MSVC STL's tests reach none of its internals, and no Linux leg has the MSVC STL, so they run beside either of the other two, on the stable rung, the only one cpp-ci pins them on.
 
-A mapping per suite, [`libcxx.toml`](test/std-test-suite/libcxx.toml) and [`libstdcxx.toml`](test/std-test-suite/libstdcxx.toml), takes the directories that test what xstd mirrors, keeps the files that name it, and rewrites each `std::` spelling of it to `xstd::`. Where xstd departs from what a test asserts, the mapping replaces or drops that one line, or expects the whole file to fail, and names the departure. An upstream edit to a mapped file fails configuration, so it is reviewed rather than carried.
+A mapping per suite, [`libcxx.toml`](test/std-test-suite/libcxx.toml), [`libstdcxx.toml`](test/std-test-suite/libstdcxx.toml) and [`msvc-stl.toml`](test/std-test-suite/msvc-stl.toml), takes the directories that test what xstd mirrors, keeps the files that name it, and rewrites each `std::` spelling of it to `xstd::`. Where xstd departs from what a test asserts, the mapping replaces or drops that one line, or expects the whole file to fail, and names the departure. An upstream edit to a mapped file fails configuration, so it is reviewed rather than carried.
 
 ### libc++
 
@@ -326,6 +326,22 @@ All 44 build and the 8 runnable ones run. `bit_ceil_neg.cc` is expected to abort
 - `dr2735.cc` drops the plain `char` case, as for libc++, and `dr2192.cc`, which asks `abs` for the three floating-point types and nothing else, is expected not to compile.
 - `to_chars/103955.cc` writes a `double` and is expected not to compile: [[charconv.to.chars]](https://eel.is/c++draft/charconv.to.chars)'s floating-point overloads stay `<charconv>`'s.
 - `to_chars/3.cc` writes `char16_t`, `char32_t` and `wchar_t`, which the standard's overloads reach only by promoting them to `int`, and is expected not to compile: `xstd::to_chars` takes the integer types and `char`.
+
+### MSVC STL
+
+| MSVC STL directory | Tests | xstd |
+| :-- | --: | :-- |
+| `P0553R4_bit_rotating_and_counting_functions/` | 1 | `countl_one`, `countl_zero`, `countr_one`, `countr_zero`, `popcount`, `rotl`, `rotr` |
+| `P0556R3_bit_integral_power_of_two_operations/` | 1 | `bit_ceil`, `bit_floor`, `bit_width`, `has_single_bit` |
+| `P1272R4_byteswap/` | 1 | `byteswap` |
+| `Dev11_0272959_make_signed/` | 1 | `make_signed`, `make_unsigned` |
+
+The tests call what they test unqualified, under a using-directive for `std`, so the mapping rewrites each unqualified name to `xstd::`. All four build and the three runnable ones run, on both legs. After its own types, `P0556R3` runs again over the bit-precise widths and `boost::int128::uint128`, the unsigned types with `constexpr` operators, since every check in it is also constant-evaluated. `P0553R4` keeps to the standard types: its rotation patterns are 64-bit constants and assume a width divisible by four. The departures:
+
+- The tests are written for Windows, whose LLP64 model has a 32-bit `long`, and for MSVC's 16-bit `wchar_t`. The legs run on Linux, so the mapping replaces each such expectation with the LP64 answer: `make_signed` and `make_unsigned` of `wchar_t` and of the enumerations over `wchar_t`, `long`, `unsigned long`, `long long` and `unsigned long long`, and `byteswap` of `wchar_t`, `long` and `unsigned long`. [[meta.trans.sign]](https://eel.is/c++draft/meta.trans.sign) picks the lowest-ranked type of an enumeration's size, which under LP64 is `long`.
+- `make_signed` of an enumeration over `bool` is left out under libc++, whose `std::make_signed` rejects what [[meta.trans.sign]](https://eel.is/c++draft/meta.trans.sign) admits, and `xstd::make_signed` delegates to it there.
+
+Two tests are not taken. `P0067R5_charconv` writes integers and floating-point values with the same `to_chars` in one file, and `xstd::to_chars` writes integers only. `VSO_0000000_type_traits` checks `is_signed` and `is_unsigned` in three of its 1473 lines, all of them for `void`.
 
 ### GCC trunk
 
@@ -524,7 +540,7 @@ The names to tick under branch protection, exactly as GitHub reports them:
 | `msvc_analyze / all` | `/analyze` on the same three rungs |
 | `sanitizers / all` | all fifteen sanitizer legs |
 | `site` | `mkdocs build --strict`: every page and anchor a link names exists |
-| `std_test_suite / all` | libc++'s and libstdc++'s tests of what xstd mirrors, on clang 22 with libc++, on GCC 15 with libstdc++, and GCC trunk's on its snapshot |
+| `std_test_suite / all` | libc++'s, libstdc++'s and the MSVC STL's tests of what xstd mirrors, on clang 22 with libc++, on GCC 15 with libstdc++, and GCC trunk's on its snapshot |
 
 Codecov posts two more, `codecov/project` and `codecov/patch`, which carry the same 100% bar for the whole
 tree and for the diff.

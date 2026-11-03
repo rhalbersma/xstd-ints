@@ -148,6 +148,7 @@ codegen() {
 }
 
 # The std-test-suite job: libc++'s, libstdc++'s and GCC trunk's tests of what xstd mirrors, each on its own library.
+# The MSVC STL's run beside the first two.
 std_test_suite() {
         local dir="${out}/std-test-suite"
         "${cmake}" -S "${root}" -B "${dir}/libcxx" -G Ninja -DCMAKE_CXX_COMPILER=clang++-22 -DCMAKE_CXX_FLAGS=-stdlib=libc++ \
