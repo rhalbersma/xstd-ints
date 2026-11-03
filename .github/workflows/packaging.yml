@@ -49,6 +49,11 @@ jobs:
         with:
           persist-credentials: false
 
+      # Pinned rather than the image's python3: PyYAML, which Conan requires, has no wheel for Python 3.15, and pip takes wheels only.
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+
       # Ubuntu's own GCC 13 cannot compile the library; macOS keeps its default Xcode and Windows its default MSVC.
       - name: Install the stable rung
         if: runner.os == 'Linux'
