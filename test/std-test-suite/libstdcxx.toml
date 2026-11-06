@@ -15,10 +15,12 @@ take = [
     { path = "libstdc++-v3/testsuite/20_util/make_signed" },
     { path = "libstdc++-v3/testsuite/20_util/make_unsigned" },
     { path = "libstdc++-v3/testsuite/18_support/numeric_limits" },
+    { path = "libstdc++-v3/testsuite/std/concepts/concepts.lang/concept.arithmetic", select = 'std::(signed_|unsigned_)?integral\b' },
 ]
 include = ["xstd_types.hpp"]
 rewrite = [
     { regex = '(?<![\w:])std::(abs|bit_ceil|bit_floor|bit_width|byteswap|countl_one|countl_zero|countr_one|countr_zero|has_single_bit|is_signed|is_signed_v|is_unsigned|is_unsigned_v|make_signed|make_signed_t|make_unsigned|make_unsigned_t|numeric_limits|popcount|rotl|rotr|to_chars)\b', to = 'xstd::\1' },
+    { regex = '(?<![\w:])std::(signed_|unsigned_)?integral\b', to = 'xstd::\1integer' },
 ]
 
 [[libstdcxx.assertion]]
@@ -80,3 +82,103 @@ file = "libstdc++-v3/testsuite/20_util/to_chars/103955.cc"
 sha256 = "fac6229b423be4c9a526f0d25ebe5e9d3f4fe872f1351f43f7cd69565ab0a2d3"
 fails = "compile"
 paragraph = "xstd::to_chars writes integers only; [charconv.to.chars]'s floating-point overloads stay <charconv>'s"
+
+# The concepts admit what P3701R0 calls an integer: the character types and bool stay out, whatever their signedness.
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/std/concepts/concepts.lang/concept.arithmetic/integral.cc"
+sha256 = "c3d1e0c2f58f1018c80dace5f99d737bd7a6c3864623300a341e40cff86a94bc"
+line = "static_assert( std::integral<bool> );"
+to = "static_assert( !std::integral<bool> );"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/std/concepts/concepts.lang/concept.arithmetic/integral.cc"
+sha256 = "c3d1e0c2f58f1018c80dace5f99d737bd7a6c3864623300a341e40cff86a94bc"
+line = "static_assert( std::integral<char> );"
+to = "static_assert( !std::integral<char> );"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/std/concepts/concepts.lang/concept.arithmetic/integral.cc"
+sha256 = "c3d1e0c2f58f1018c80dace5f99d737bd7a6c3864623300a341e40cff86a94bc"
+line = "static_assert( std::integral<char16_t> );"
+to = "static_assert( !std::integral<char16_t> );"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/std/concepts/concepts.lang/concept.arithmetic/integral.cc"
+sha256 = "c3d1e0c2f58f1018c80dace5f99d737bd7a6c3864623300a341e40cff86a94bc"
+line = "static_assert( std::integral<char32_t> );"
+to = "static_assert( !std::integral<char32_t> );"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/std/concepts/concepts.lang/concept.arithmetic/integral.cc"
+sha256 = "c3d1e0c2f58f1018c80dace5f99d737bd7a6c3864623300a341e40cff86a94bc"
+line = "static_assert( std::integral<wchar_t> );"
+to = "static_assert( !std::integral<wchar_t> );"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/std/concepts/concepts.lang/concept.arithmetic/integral.cc"
+sha256 = "c3d1e0c2f58f1018c80dace5f99d737bd7a6c3864623300a341e40cff86a94bc"
+line = "static_assert( std::integral<char8_t> );"
+to = "static_assert( !std::integral<char8_t> );"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/std/concepts/concepts.lang/concept.arithmetic/signed_integral.cc"
+sha256 = "32416282991d98dbcc4c1fa3772eb67d69abebf154cb45323c2aea7c166ce76c"
+line = "static_assert( std::is_signed_v<char> ? std::signed_integral<char> : true );"
+to = "static_assert( !std::signed_integral<char> );"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/std/concepts/concepts.lang/concept.arithmetic/signed_integral.cc"
+sha256 = "32416282991d98dbcc4c1fa3772eb67d69abebf154cb45323c2aea7c166ce76c"
+line = "static_assert( std::is_signed_v<wchar_t> ? std::signed_integral<wchar_t> : true );"
+to = "static_assert( !std::signed_integral<wchar_t> );"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/std/concepts/concepts.lang/concept.arithmetic/unsigned_integral.cc"
+sha256 = "3253350162db4d25a3ff2974f61f84a50a3104f60107e58d3daed029f71e7fd8"
+line = "static_assert( std::unsigned_integral<bool> );"
+to = "static_assert( !std::unsigned_integral<bool> );"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/std/concepts/concepts.lang/concept.arithmetic/unsigned_integral.cc"
+sha256 = "3253350162db4d25a3ff2974f61f84a50a3104f60107e58d3daed029f71e7fd8"
+line = "static_assert( std::unsigned_integral<char16_t> );"
+to = "static_assert( !std::unsigned_integral<char16_t> );"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/std/concepts/concepts.lang/concept.arithmetic/unsigned_integral.cc"
+sha256 = "3253350162db4d25a3ff2974f61f84a50a3104f60107e58d3daed029f71e7fd8"
+line = "static_assert( std::unsigned_integral<char32_t> );"
+to = "static_assert( !std::unsigned_integral<char32_t> );"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/std/concepts/concepts.lang/concept.arithmetic/unsigned_integral.cc"
+sha256 = "3253350162db4d25a3ff2974f61f84a50a3104f60107e58d3daed029f71e7fd8"
+line = "static_assert( std::unsigned_integral<char8_t> );"
+to = "static_assert( !std::unsigned_integral<char8_t> );"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/std/concepts/concepts.lang/concept.arithmetic/unsigned_integral.cc"
+sha256 = "3253350162db4d25a3ff2974f61f84a50a3104f60107e58d3daed029f71e7fd8"
+line = "static_assert( std::is_signed_v<char> ? true : std::unsigned_integral<char> );"
+to = "static_assert( !std::unsigned_integral<char> );"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libstdcxx.assertion]]
+file = "libstdc++-v3/testsuite/std/concepts/concepts.lang/concept.arithmetic/unsigned_integral.cc"
+sha256 = "3253350162db4d25a3ff2974f61f84a50a3104f60107e58d3daed029f71e7fd8"
+line = "static_assert( std::is_signed_v<wchar_t> ? true : std::unsigned_integral<wchar_t> );"
+to = "static_assert( !std::unsigned_integral<wchar_t> );"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
