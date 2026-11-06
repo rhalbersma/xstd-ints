@@ -24,6 +24,10 @@ on:
       - 'include/xstd/ints/bit/detail/portable/**'
       - 'include/xstd/ints/bit/detail/shift.hpp'
       - 'include/xstd/ints/cstdlib/**'
+      - 'include/xstd/ints/detail/div.hpp'
+      - 'include/xstd/ints/detail/div_result.hpp'
+      - 'include/xstd/ints/detail/sign.hpp'
+      - 'include/xstd/ints/detail/unsigned_abs.hpp'
       - 'test/include/**'
       - 'test/src/ints/bit/**'
       - 'test/src/ints/cstdlib/**'
@@ -68,7 +72,7 @@ jobs:
         run: cmake -S . -B build -DCMAKE_CXX_COMPILER="clang++-${LLVM}" -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_MUTATION_TESTS=ON
 
       - name: Build
-        run: cmake --build build --parallel
+        run: cmake --build build --parallel "$(nproc)"
 
       - name: Score
         run: ctest --test-dir build --output-on-failure

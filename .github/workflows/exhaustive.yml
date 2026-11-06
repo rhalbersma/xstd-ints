@@ -23,6 +23,17 @@ on:
     paths:
       - 'include/xstd/ints/bit/**'
       - 'include/xstd/ints/cstdlib/**'
+      - 'include/xstd/ints/detail/bit_width.hpp'
+      - 'include/xstd/ints/detail/block_width.hpp'
+      - 'include/xstd/ints/detail/countl_zero.hpp'
+      - 'include/xstd/ints/detail/countr_zero.hpp'
+      - 'include/xstd/ints/detail/div.hpp'
+      - 'include/xstd/ints/detail/div_result.hpp'
+      - 'include/xstd/ints/detail/popcount.hpp'
+      - 'include/xstd/ints/detail/rotl.hpp'
+      - 'include/xstd/ints/detail/shift_count.hpp'
+      - 'include/xstd/ints/detail/sign.hpp'
+      - 'include/xstd/ints/detail/unsigned_abs.hpp'
       - 'test/exhaustive/**'
       - 'test/include/test/bit/**'
       - 'tools/division_digests.py'
@@ -93,7 +104,8 @@ jobs:
         run: cmake -S . -B build -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_EXHAUSTIVE_TESTS=ON
 
       - name: Build
-        run: cmake --build build --config Release --parallel
+        shell: bash
+        run: cmake --build build --config Release --parallel "$(nproc)"
 
       - name: Sweep
         run: ctest --test-dir build --build-config Release --output-on-failure
