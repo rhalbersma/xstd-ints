@@ -6,13 +6,13 @@
 #ifndef XSTD_INTS_BIT_BIT_REVERSE_HPP
 #define XSTD_INTS_BIT_BIT_REVERSE_HPP
 
-#include <xstd/ints/bit/detail/block_reverse.hpp>         // block_reverse
-#include <xstd/ints/bit/detail/mirror_blocks.hpp>         // mirror_blocks
-#include <xstd/ints/bit/detail/std_permutes_bits.hpp>     // XSTD_HAS_STD_BIT_PERMUTATIONS, std_permutes_bits
-#include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
-#include <bit>                                            // IWYU pragma: keep; bit_reverse, where the standard library ships it
-#include <cstddef>                                        // size_t
+#include <xstd/ints/bit/detail/block_reverse.hpp>       // block_reverse
+#include <xstd/ints/bit/detail/mirror_blocks.hpp>       // mirror_blocks
+#include <xstd/ints/bit/detail/std_permutes_bits.hpp>   // XSTD_HAS_STD_BIT_PERMUTATIONS, std_permutes_bits
+#include <xstd/ints/detail/nothrow_const_operators.hpp> // nothrow_const_operators
+#include <xstd/ints/detail/unsigned_integer.hpp>        // unsigned_integer
+#include <bit>                                          // IWYU pragma: keep; bit_reverse, where the standard library ships it
+#include <cstddef>                                      // size_t
 
 // P3104R5's bit_reverse, over every unsigned integer xstd knows.
 namespace xstd {

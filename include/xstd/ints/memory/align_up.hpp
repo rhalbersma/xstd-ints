@@ -6,11 +6,11 @@
 #ifndef XSTD_INTS_MEMORY_ALIGN_UP_HPP
 #define XSTD_INTS_MEMORY_ALIGN_UP_HPP
 
-#include <xstd/ints/concepts/alignable.hpp> // alignable, nothrow_alignable
-#include <bit>                              // has_single_bit
-#include <cassert>                          // assert
-#include <cstddef>                          // size_t
-#include <cstdint>                          // uintptr_t
+#include <xstd/ints/detail/alignable.hpp> // alignable, nothrow_alignable
+#include <bit>                            // has_single_bit
+#include <cassert>                        // assert
+#include <cstddef>                        // size_t
+#include <cstdint>                        // uintptr_t
 
 namespace xstd {
 

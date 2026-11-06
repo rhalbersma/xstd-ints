@@ -3,8 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_INTS_LIMITS_DETAIL_DIGITS10_HPP
-#define XSTD_INTS_LIMITS_DETAIL_DIGITS10_HPP
+#ifndef XSTD_INTS_DETAIL_DIGITS10_HPP
+#define XSTD_INTS_DETAIL_DIGITS10_HPP
 
 #include <cstdint> // uint32_t, uint64_t
 #include <limits>  // numeric_limits
@@ -27,4 +27,4 @@ inline constexpr auto digits10_exact_width = 8'388'608;
 
 } // namespace xstd::ints::detail
 
-#endif // XSTD_INTS_LIMITS_DETAIL_DIGITS10_HPP
+#endif // XSTD_INTS_DETAIL_DIGITS10_HPP

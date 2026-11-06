@@ -6,11 +6,11 @@
 #ifndef XSTD_INTS_CONCEPTS_BIT_MASK_HPP
 #define XSTD_INTS_CONCEPTS_BIT_MASK_HPP
 
-#include <xstd/ints/concepts/signed_integer.hpp>   // signed_integer
-#include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
-#include <xstd/ints/type_traits/promoted.hpp>      // promoted_t
-#include <concepts>                                // integral, regular, same_as
-#include <type_traits>                             // remove_cv_t
+#include <xstd/ints/detail/promoted.hpp>         // promoted_t
+#include <xstd/ints/detail/signed_integer.hpp>   // signed_integer
+#include <xstd/ints/detail/unsigned_integer.hpp> // unsigned_integer
+#include <concepts>                              // integral, regular, same_as
+#include <type_traits>                           // remove_cv_t
 
 // [bitmask.types]'s bitmask type: an unsigned integer, or any non-integer with the operators, as std::bitset has.
 namespace xstd {

@@ -20,6 +20,7 @@ This repository enforces its quality bar through CI rather than through review d
 - **No new sanitizer failures.** The [sanitizers workflow](.github/workflows/sanitizers.yml) must stay green.
 - **The bit kernels compile to the instructions they exist for.** The [Codegen workflow](.github/workflows/codegen.yml) compiles [`test/codegen/`](test/codegen) to assembly with the stable rung's GCC and Clang, on an x86-64 and an AArch64 runner, and reads it with FileCheck - see [Codegen tests](#codegen-tests) below.
 - **The standard library's own tests pass.** The [Std test suite workflow](.github/workflows/std-test-suite.yml) runs libc++'s, libstdc++'s and the MSVC STL's tests of the functions, traits, concepts and `numeric_limits` xstd mirrors against xstd's, on clang 22 with libc++, on GCC 15 with libstdc++, and on GCC trunk for what only trunk tests - see [Standard library test suites](#standard-library-test-suites) below.
+- **The headers stay layered.** The [Layering workflow](.github/workflows/layering.yml) runs cpp-ci's layering check over the `#include` lines, against the folder kinds in [`tools/layering.toml`](tools/layering.toml). Every public header is a leaf that only the umbrellas and `ext/` include, a front over its definition in the shared `detail/`, so deleting one breaks nothing else. The shared `detail/` includes no public header, and a folder's own `detail/` serves that folder alone. A new folder is listed in `tools/layering.toml` before it lands. `tools/ci-local.sh layering` runs the same check.
 - **The public headers stay self-sufficient.** Each header is compiled as its own translation unit (see `test/CMakeLists.txt`); don't rely on include order from another header.
 - **The README's examples compile.** `test/CMakeLists.txt` writes each ```` ```cpp ```` block of [README.md](README.md) to a translation unit of its own, `readme.example<n>`, built with the tests' warnings on every leg. An example that includes an `<xstd/ints/ext/>` header is built where the library it adapts resolved, as that header's own test is, and one that names `xstd::int128` or `xstd::uint128` tests `XSTD_HAS_INT128` itself, as a test source does.
 - **The documentation site builds.** The [Pages workflow](.github/workflows/pages.yml) runs `mkdocs build --strict` over the README and `doc/`, which fails on a link to a page or an anchor that does not exist, and deploys the site from `main`.
@@ -195,7 +196,7 @@ run-clang-tidy -quiet -p build "$PWD/build/test/header_self_sufficiency/.*"
 ```
 
 [`tools/ci-local.sh`](tools/ci-local.sh) runs the CI jobs' Linux legs on what `setup-toolchain.sh` installs, so a change fails here, fast, rather than after hours in CI's queue:
-- the format gate and actionlint, and the site, built as the Pages workflow builds it;
+- the format gate, actionlint and the layering check, and the site, built as the Pages workflow builds it;
 - the suite on GCC 15, 16 and 17-SVN, and on clang 22, 23 and 24-SVN, each clang on its own rung's libstdc++;
 - the libc++ 22, i686 and BMI2 legs;
 - clang-tidy 22, 23 and 24-SVN, with the clang-tidy job's passes;
@@ -541,6 +542,7 @@ The names to tick under branch protection, exactly as GitHub reports them:
 | `consumption / Consume` | the three CMake consumption models |
 | `coverage / gcovr` | 100% of lines and branches |
 | `gcc / all` | GCC 15, 16, 17-SVN |
+| `layering` | the headers' layering against [`tools/layering.toml`](tools/layering.toml): every public header a leaf over the shared `detail/` |
 | `mingw / all` | MinGW 15 and 16 |
 | `msvc / all` | cl on VS 2022, 2026 and 2026-Preview |
 | `msvc_analyze / all` | `/analyze` on the same three rungs |

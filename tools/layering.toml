@@ -1,0 +1,7 @@
+# The kind of each folder under include/xstd/ints/, for cpp-ci's layering check: the shared detail/ holds every
+# definition more than one folder needs, each layer is a public front over it and the layers below, and ext/ adapts
+# other libraries' types.
+root = "include/xstd/ints"
+shared = "detail"
+layers = ["bit", "charconv", "concepts", "cstdint", "cstdlib", "format", "limits", "memory", "type_traits"]
+extensions = ["ext"]

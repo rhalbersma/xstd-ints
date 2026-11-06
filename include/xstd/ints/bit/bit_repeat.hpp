@@ -6,10 +6,10 @@
 #ifndef XSTD_INTS_BIT_BIT_REPEAT_HPP
 #define XSTD_INTS_BIT_BIT_REPEAT_HPP
 
-#include <xstd/ints/bit/detail/shift_count.hpp>       // shift_count_t
 #include <xstd/ints/bit/detail/std_permutes_bits.hpp> // XSTD_HAS_STD_BIT_PERMUTATIONS, std_permutes_bits
-#include <xstd/ints/concepts/unsigned_integer.hpp>    // unsigned_integer
-#include <xstd/ints/limits/numeric_limits.hpp>        // numeric_limits
+#include <xstd/ints/detail/numeric_limits.hpp>        // numeric_limits
+#include <xstd/ints/detail/shift_count.hpp>           // shift_count_t
+#include <xstd/ints/detail/unsigned_integer.hpp>      // unsigned_integer
 #include <bit>                                        // IWYU pragma: keep; bit_repeat, where the standard library ships it
 #include <cassert>                                    // assert
 #include <utility>                                    // unreachable

@@ -6,9 +6,9 @@
 #ifndef XSTD_INTS_FORMAT_DIV_RESULT_HPP
 #define XSTD_INTS_FORMAT_DIV_RESULT_HPP
 
-#include <xstd/ints/charconv/to_chars.hpp>     // to_chars, to_chars_max_size
-#include <xstd/ints/concepts/integer.hpp>      // integer
-#include <xstd/ints/cstdlib/div_result.hpp>    // div_result
+#include <xstd/ints/detail/div_result.hpp>     // div_result
+#include <xstd/ints/detail/integer.hpp>        // integer
+#include <xstd/ints/detail/to_chars.hpp>       // to_chars, to_chars_max_size
 #include <xstd/ints/format/detail/decimal.hpp> // decimal, formats_tuples
 #include <array>                               // array
 #include <cassert>                             // assert

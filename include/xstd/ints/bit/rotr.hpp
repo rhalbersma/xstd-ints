@@ -6,11 +6,11 @@
 #ifndef XSTD_INTS_BIT_ROTR_HPP
 #define XSTD_INTS_BIT_ROTR_HPP
 
-#include <xstd/ints/bit/rotl.hpp>                         // rotl
-#include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
-#include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
-#include <bit>                                            // rotr
+#include <xstd/ints/detail/nothrow_const_operators.hpp> // nothrow_const_operators
+#include <xstd/ints/detail/numeric_limits.hpp>          // numeric_limits
+#include <xstd/ints/detail/rotl.hpp>                    // rotl
+#include <xstd/ints/detail/unsigned_integer.hpp>        // unsigned_integer
+#include <bit>                                          // rotr
 
 // [bit.rotate]'s rotr over every unsigned integer xstd knows.
 namespace xstd {

@@ -6,14 +6,14 @@
 #ifndef XSTD_INTS_BIT_BYTESWAP_HPP
 #define XSTD_INTS_BIT_BYTESWAP_HPP
 
-#include <xstd/ints/bit/detail/mirror_blocks.hpp>         // mirror_blocks
-#include <xstd/ints/bit/detail/std_swaps_bytes.hpp>       // std_swaps_bytes
-#include <xstd/ints/concepts/integer.hpp>                 // integer
-#include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
-#include <xstd/ints/type_traits/make_unsigned.hpp>        // make_unsigned_t
-#include <bit>                                            // byteswap
-#include <cstddef>                                        // size_t
+#include <xstd/ints/bit/detail/mirror_blocks.hpp>       // mirror_blocks
+#include <xstd/ints/bit/detail/std_swaps_bytes.hpp>     // std_swaps_bytes
+#include <xstd/ints/detail/integer.hpp>                 // integer
+#include <xstd/ints/detail/make_unsigned.hpp>           // make_unsigned_t
+#include <xstd/ints/detail/nothrow_const_operators.hpp> // nothrow_const_operators
+#include <xstd/ints/detail/numeric_limits.hpp>          // numeric_limits
+#include <bit>                                          // byteswap
+#include <cstddef>                                      // size_t
 
 // [bit.byteswap] over every integer xstd knows whose width is a whole number of bytes.
 namespace xstd {

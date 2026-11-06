@@ -6,13 +6,13 @@
 #ifndef XSTD_INTS_BIT_BIT_CEIL_HPP
 #define XSTD_INTS_BIT_BIT_CEIL_HPP
 
-#include <xstd/ints/bit/bit_width.hpp>             // bit_width
-#include <xstd/ints/bit/detail/shift_count.hpp>    // shift_count_t
-#include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
-#include <xstd/ints/limits/numeric_limits.hpp>     // numeric_limits
-#include <bit>                                     // bit_ceil
-#include <cassert>                                 // assert
-#include <utility>                                 // unreachable
+#include <xstd/ints/detail/bit_width.hpp>        // bit_width
+#include <xstd/ints/detail/numeric_limits.hpp>   // numeric_limits
+#include <xstd/ints/detail/shift_count.hpp>      // shift_count_t
+#include <xstd/ints/detail/unsigned_integer.hpp> // unsigned_integer
+#include <bit>                                   // bit_ceil
+#include <cassert>                               // assert
+#include <utility>                               // unreachable
 
 // [bit.pow.two]'s bit_ceil over every unsigned integer xstd knows: a narrow contract, so not noexcept.
 namespace xstd {

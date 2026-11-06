@@ -6,8 +6,8 @@
 #ifndef XSTD_INTS_BIT_DETAIL_PORTABLE_BLOCK_EXPAND_HPP
 #define XSTD_INTS_BIT_DETAIL_PORTABLE_BLOCK_EXPAND_HPP
 
-#include <xstd/ints/bit/detail/block_width.hpp>           // block_width
 #include <xstd/ints/bit/detail/portable/block_select.hpp> // block_select_by_broadword
+#include <xstd/ints/detail/block_width.hpp>               // block_width
 #include <bit>                                            // countr_zero, popcount
 #include <cstddef>                                        // size_t
 

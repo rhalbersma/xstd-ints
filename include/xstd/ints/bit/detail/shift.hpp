@@ -6,13 +6,13 @@
 #ifndef XSTD_INTS_BIT_DETAIL_SHIFT_HPP
 #define XSTD_INTS_BIT_DETAIL_SHIFT_HPP
 
-#include <xstd/ints/bit/detail/shift_count.hpp>           // shift_count_t
-#include <xstd/ints/concepts/integer.hpp>                 // integer
-#include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/cstdlib/unsigned_abs.hpp>             // unsigned_abs
-#include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
-#include <xstd/ints/type_traits/is_signed.hpp>            // is_signed_v
-#include <xstd/ints/type_traits/make_unsigned.hpp>        // make_unsigned_t
+#include <xstd/ints/detail/integer.hpp>                 // integer
+#include <xstd/ints/detail/is_signed.hpp>               // is_signed_v
+#include <xstd/ints/detail/make_unsigned.hpp>           // make_unsigned_t
+#include <xstd/ints/detail/nothrow_const_operators.hpp> // nothrow_const_operators
+#include <xstd/ints/detail/numeric_limits.hpp>          // numeric_limits
+#include <xstd/ints/detail/shift_count.hpp>             // shift_count_t
+#include <xstd/ints/detail/unsigned_abs.hpp>            // unsigned_abs
 
 namespace xstd::ints::detail {
 

@@ -3,8 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_INTS_BIT_DETAIL_SHIFT_COUNT_HPP
-#define XSTD_INTS_BIT_DETAIL_SHIFT_COUNT_HPP
+#ifndef XSTD_INTS_DETAIL_SHIFT_COUNT_HPP
+#define XSTD_INTS_DETAIL_SHIFT_COUNT_HPP
 
 #include <type_traits> // conditional_t, is_class_v
 
@@ -16,4 +16,4 @@ using shift_count_t = std::conditional_t<std::is_class_v<T>, int, unsigned>;
 
 } // namespace xstd::ints::detail
 
-#endif // XSTD_INTS_BIT_DETAIL_SHIFT_COUNT_HPP
+#endif // XSTD_INTS_DETAIL_SHIFT_COUNT_HPP

@@ -3,8 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_INTS_TYPE_TRAITS_DETAIL_PROMOTED_HPP
-#define XSTD_INTS_TYPE_TRAITS_DETAIL_PROMOTED_HPP
+#ifndef XSTD_INTS_DETAIL_PROMOTED_HPP
+#define XSTD_INTS_DETAIL_PROMOTED_HPP
 
 #include <concepts>    // integral
 #include <type_traits> // conditional_t, type_identity
@@ -22,4 +22,12 @@ using promoted = std::conditional_t<std::integral<T>, integral_promoted<T>, std:
 
 } // namespace xstd::ints::detail
 
-#endif // XSTD_INTS_TYPE_TRAITS_DETAIL_PROMOTED_HPP
+namespace xstd {
+
+// The type of +a for an integral T, which [conv.prom] gives; T itself otherwise.
+template<class T>
+using promoted_t = ints::detail::promoted<T>::type;
+
+} // namespace xstd
+
+#endif // XSTD_INTS_DETAIL_PROMOTED_HPP

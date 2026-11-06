@@ -6,26 +6,6 @@
 #ifndef XSTD_INTS_CSTDLIB_SIGN_HPP
 #define XSTD_INTS_CSTDLIB_SIGN_HPP
 
-#include <xstd/ints/concepts/integer.hpp>                 // integer
-#include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/type_traits/is_unsigned.hpp>          // is_unsigned_v
-
-namespace xstd {
-
-// Returns -1, 0, or 1; over an unsigned type, 0 or 1.
-template<integer I>
-[[nodiscard]] constexpr auto sign(I x) noexcept(nothrow_const_operators<I>)
-        -> int
-{
-        auto const zero = static_cast<I>(0);
-        // One comparison, not two: for an integer-class type the dead one is a call.
-        if constexpr (is_unsigned_v<I>) {
-                return static_cast<int>(zero < x);
-        } else {
-                return static_cast<int>(zero < x) - static_cast<int>(x < zero);
-        }
-}
-
-} // namespace xstd
+#include <xstd/ints/detail/sign.hpp> // IWYU pragma: export; sign
 
 #endif // XSTD_INTS_CSTDLIB_SIGN_HPP

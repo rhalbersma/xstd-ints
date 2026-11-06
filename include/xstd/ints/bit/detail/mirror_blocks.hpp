@@ -6,12 +6,12 @@
 #ifndef XSTD_INTS_BIT_DETAIL_MIRROR_BLOCKS_HPP
 #define XSTD_INTS_BIT_DETAIL_MIRROR_BLOCKS_HPP
 
-#include <xstd/ints/bit/detail/block_width.hpp>           // block_width
-#include <xstd/ints/bit/detail/shift_count.hpp>           // shift_count_t
-#include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
-#include <cstddef>                                        // size_t
-#include <utility>                                        // index_sequence, make_index_sequence
+#include <xstd/ints/detail/block_width.hpp>             // block_width
+#include <xstd/ints/detail/nothrow_const_operators.hpp> // nothrow_const_operators
+#include <xstd/ints/detail/numeric_limits.hpp>          // numeric_limits
+#include <xstd/ints/detail/shift_count.hpp>             // shift_count_t
+#include <cstddef>                                      // size_t
+#include <utility>                                      // index_sequence, make_index_sequence
 
 namespace xstd::ints::detail {
 
