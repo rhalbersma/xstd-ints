@@ -13,6 +13,7 @@ take = [
     { path = "libcxx/test/std/utilities/meta/meta.unary/meta.unary.prop", select = 'std::is_(un)?signed\b' },
     { path = "libcxx/test/std/language.support/support.limits/limits" },
     { path = "libcxx/test/std/utilities/charconv/charconv.to.chars" },
+    { path = "libcxx/test/std/concepts/concepts.lang/concepts.arithmetic", select = 'std::(signed_|unsigned_)?integral\b' },
 ]
 support = [
     { path = "libcxx/test/support/charconv_test_helpers.h" },
@@ -20,6 +21,7 @@ support = [
 include = ["xstd_types.hpp"]
 rewrite = [
     { regex = '(?<![\w:])std::(abs|bit_ceil|bit_floor|bit_width|byteswap|countl_one|countl_zero|countr_one|countr_zero|has_single_bit|is_signed|is_signed_v|is_unsigned|is_unsigned_v|make_signed|make_signed_t|make_unsigned|make_unsigned_t|numeric_limits|popcount|rotl|rotr|to_chars)\b', to = 'xstd::\1' },
+    { regex = '(?<![\w:])std::(signed_|unsigned_)?integral\b', to = 'xstd::\1integer' },
 ]
 
 [[libcxx.assertion]]
@@ -289,3 +291,103 @@ sha256 = "ebb98e9cb04b73c9b9c53aeae29c39ed211551e5059688d51599dcfd4055f035"
 line = "test_abs<std::int64_t, correct_size_int<std::int64_t>::type>();"
 to = "test_abs<std::int64_t, correct_size_int<std::int64_t>::type>(); XSTD_TYPES_SIGNED(XSTD_TYPES_TEST_ABS)"
 departure = "the signed types xstd implements itself run the same assertions, each its own promoted type"
+
+# The concepts admit what P3701R0 calls an integer: the character types and bool stay out, whatever their signedness.
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/concepts/concepts.lang/concepts.arithmetic/integral.compile.pass.cpp"
+sha256 = "fd60b256badec389a15a547a22ed8a0b6b25af5cc00d31d874aef9e274306e22"
+line = "static_assert(CheckIntegralQualifiers<wchar_t>());"
+to = "static_assert(!CheckIntegralQualifiers<wchar_t>());"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/concepts/concepts.lang/concepts.arithmetic/integral.compile.pass.cpp"
+sha256 = "fd60b256badec389a15a547a22ed8a0b6b25af5cc00d31d874aef9e274306e22"
+line = "static_assert(CheckIntegralQualifiers<bool>());"
+to = "static_assert(!CheckIntegralQualifiers<bool>());"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/concepts/concepts.lang/concepts.arithmetic/integral.compile.pass.cpp"
+sha256 = "fd60b256badec389a15a547a22ed8a0b6b25af5cc00d31d874aef9e274306e22"
+line = "static_assert(CheckIntegralQualifiers<char>());"
+to = "static_assert(!CheckIntegralQualifiers<char>());"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/concepts/concepts.lang/concepts.arithmetic/integral.compile.pass.cpp"
+sha256 = "fd60b256badec389a15a547a22ed8a0b6b25af5cc00d31d874aef9e274306e22"
+line = "static_assert(CheckIntegralQualifiers<char8_t>());"
+to = "static_assert(!CheckIntegralQualifiers<char8_t>());"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/concepts/concepts.lang/concepts.arithmetic/integral.compile.pass.cpp"
+sha256 = "fd60b256badec389a15a547a22ed8a0b6b25af5cc00d31d874aef9e274306e22"
+line = "static_assert(CheckIntegralQualifiers<char16_t>());"
+to = "static_assert(!CheckIntegralQualifiers<char16_t>());"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/concepts/concepts.lang/concepts.arithmetic/integral.compile.pass.cpp"
+sha256 = "fd60b256badec389a15a547a22ed8a0b6b25af5cc00d31d874aef9e274306e22"
+line = "static_assert(CheckIntegralQualifiers<char32_t>());"
+to = "static_assert(!CheckIntegralQualifiers<char32_t>());"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/concepts/concepts.lang/concepts.arithmetic/signed_integral.compile.pass.cpp"
+sha256 = "cdad725f1b3d44470cd39a0b2629f49d0ac7ba18f4d55842962d0bef6c3a44bc"
+line = "static_assert(CheckSignedIntegralQualifiers<wchar_t>() == std::is_signed_v<wchar_t>);"
+to = "static_assert(!CheckSignedIntegralQualifiers<wchar_t>());"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/concepts/concepts.lang/concepts.arithmetic/signed_integral.compile.pass.cpp"
+sha256 = "cdad725f1b3d44470cd39a0b2629f49d0ac7ba18f4d55842962d0bef6c3a44bc"
+line = "static_assert(CheckSignedIntegralQualifiers<char>() == std::is_signed_v<char>);"
+to = "static_assert(!CheckSignedIntegralQualifiers<char>());"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/concepts/concepts.lang/concepts.arithmetic/unsigned_integral.compile.pass.cpp"
+sha256 = "ae4b93f78703af2e7517db94bcc2f00a281556fe38c2bfafc364f899617c68e6"
+line = "static_assert(CheckUnsignedIntegralQualifiers<wchar_t>() == !std::is_signed_v<wchar_t>);"
+to = "static_assert(!CheckUnsignedIntegralQualifiers<wchar_t>());"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/concepts/concepts.lang/concepts.arithmetic/unsigned_integral.compile.pass.cpp"
+sha256 = "ae4b93f78703af2e7517db94bcc2f00a281556fe38c2bfafc364f899617c68e6"
+line = "static_assert(CheckUnsignedIntegralQualifiers<bool>() == !std::is_signed_v<bool>);"
+to = "static_assert(!CheckUnsignedIntegralQualifiers<bool>());"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/concepts/concepts.lang/concepts.arithmetic/unsigned_integral.compile.pass.cpp"
+sha256 = "ae4b93f78703af2e7517db94bcc2f00a281556fe38c2bfafc364f899617c68e6"
+line = "static_assert(CheckUnsignedIntegralQualifiers<char>() == !std::is_signed_v<char>);"
+to = "static_assert(!CheckUnsignedIntegralQualifiers<char>());"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/concepts/concepts.lang/concepts.arithmetic/unsigned_integral.compile.pass.cpp"
+sha256 = "ae4b93f78703af2e7517db94bcc2f00a281556fe38c2bfafc364f899617c68e6"
+line = "static_assert(CheckUnsignedIntegralQualifiers<char8_t>() == !std::is_signed_v<char8_t>);"
+to = "static_assert(!CheckUnsignedIntegralQualifiers<char8_t>());"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/concepts/concepts.lang/concepts.arithmetic/unsigned_integral.compile.pass.cpp"
+sha256 = "ae4b93f78703af2e7517db94bcc2f00a281556fe38c2bfafc364f899617c68e6"
+line = "static_assert(CheckUnsignedIntegralQualifiers<char16_t>() == !std::is_signed_v<char16_t>);"
+to = "static_assert(!CheckUnsignedIntegralQualifiers<char16_t>());"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+[[libcxx.assertion]]
+file = "libcxx/test/std/concepts/concepts.lang/concepts.arithmetic/unsigned_integral.compile.pass.cpp"
+sha256 = "ae4b93f78703af2e7517db94bcc2f00a281556fe38c2bfafc364f899617c68e6"
+line = "static_assert(CheckUnsignedIntegralQualifiers<char32_t>() == !std::is_signed_v<char32_t>);"
+to = "static_assert(!CheckUnsignedIntegralQualifiers<char32_t>());"
+departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"

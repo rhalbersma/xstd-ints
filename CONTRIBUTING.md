@@ -19,7 +19,7 @@ This repository enforces its quality bar through CI rather than through review d
 - **Line and branch coverage stay at 100%, project-wide and for the PR's own diff.** [`codecov.yml`](.github/codecov.yml) sets both the `project` and `patch` Codecov status checks to a 100% target with zero tolerance, backed by the [Coverage workflow](.github/workflows/coverage.yml)'s own `gcovr --fail-under-line 100 --fail-under-branch 100` gate. New code needs a test that exercises every line and branch it adds; existing coverage may not regress. Excluded from this bar: `assert(...)` contract checks (their failure path is undefined behavior by design, not something a correct test can hit), compiler-synthesized `= default;` special members (gcov cannot attribute a hit counter to them regardless of how often they run), and the exception-unwinding branch gcc/gcov attaches to any call that could throw (`--exclude-throw-branches`/`--exclude-unreachable-branches`) - not a code path a test can meaningfully hit either.
 - **No new sanitizer failures.** The [sanitizers workflow](.github/workflows/sanitizers.yml) must stay green.
 - **The bit kernels compile to the instructions they exist for.** The [Codegen workflow](.github/workflows/codegen.yml) compiles [`test/codegen/`](test/codegen) to assembly with the stable rung's GCC and Clang, on an x86-64 and an AArch64 runner, and reads it with FileCheck - see [Codegen tests](#codegen-tests) below.
-- **The standard library's own tests pass.** The [Std test suite workflow](.github/workflows/std-test-suite.yml) runs libc++'s, libstdc++'s and the MSVC STL's tests of the functions, traits and `numeric_limits` xstd mirrors against xstd's, on clang 22 with libc++, on GCC 15 with libstdc++, and on GCC trunk for what only trunk tests - see [Standard library test suites](#standard-library-test-suites) below.
+- **The standard library's own tests pass.** The [Std test suite workflow](.github/workflows/std-test-suite.yml) runs libc++'s, libstdc++'s and the MSVC STL's tests of the functions, traits, concepts and `numeric_limits` xstd mirrors against xstd's, on clang 22 with libc++, on GCC 15 with libstdc++, and on GCC trunk for what only trunk tests - see [Standard library test suites](#standard-library-test-suites) below.
 - **The public headers stay self-sufficient.** Each header is compiled as its own translation unit (see `test/CMakeLists.txt`); don't rely on include order from another header.
 - **The README's examples compile.** `test/CMakeLists.txt` writes each ```` ```cpp ```` block of [README.md](README.md) to a translation unit of its own, `readme.example<n>`, built with the tests' warnings on every leg. An example that includes an `<xstd/ints/ext/>` header is built where the library it adapts resolved, as that header's own test is, and one that names `xstd::int128` or `xstd::uint128` tests `XSTD_HAS_INT128` itself, as a test source does.
 - **The documentation site builds.** The [Pages workflow](.github/workflows/pages.yml) runs `mkdocs build --strict` over the README and `doc/`, which fails on a link to a page or an anchor that does not exist, and deploys the site from `main`.
@@ -288,6 +288,8 @@ libc++, libstdc++ and the MSVC STL each test their standard library against the 
 
 A mapping per suite, [`libcxx.toml`](test/std-test-suite/libcxx.toml), [`libstdcxx.toml`](test/std-test-suite/libstdcxx.toml) and [`msvc-stl.toml`](test/std-test-suite/msvc-stl.toml), takes the directories that test what xstd mirrors, keeps the files that name it, and rewrites each `std::` spelling of it to `xstd::`. Where xstd departs from what a test asserts, the mapping replaces or drops that one line, or expects the whole file to fail, and names the departure. An upstream edit to a mapped file fails configuration, so it is reviewed rather than carried.
 
+`xstd::div` has no test to run. libc++'s `support.runtime/cstdlib.pass.cpp` and libstdc++'s `26_numerics/headers/cstdlib/` check only that `std::div` is declared and that `div_t`, `ldiv_t` and `lldiv_t` have `quot` and `rem` members, which `xstd::div_result` does not mirror. The MSVC STL's tests call `div` once, as a helper in a `vector<bool>` test.
+
 ### libc++
 
 | libc++ directory | Tests | xstd |
@@ -298,12 +300,14 @@ A mapping per suite, [`libcxx.toml`](test/std-test-suite/libcxx.toml), [`libstdc
 | `utilities/meta/meta.unary/meta.unary.prop/` | 2 | `is_signed`, `is_unsigned` |
 | `language.support/support.limits/limits/` | 34 | `numeric_limits` |
 | `utilities/charconv/charconv.to.chars/` | 1 | `to_chars`, through the support header `charconv_test_helpers.h` |
+| `concepts/concepts.lang/concepts.arithmetic/` | 3 | `integer`, `signed_integer`, `unsigned_integer` |
 
-All 52 run, their negative cases included: `bool`, the character types, the signed types, enumerations and class types must stay out of the bit functions. libc++ cannot name the types xstd implements itself, so after its own assertions each bit test and `abs.pass.cpp` run them again over the bit-precise widths 8, 9, 17, 33, 65, 127, 128, 129 and 256, `boost::int128::uint128` and `int128`, and `absl::uint128` and `int128`. [`xstd_types.hpp`](test/std-test-suite/include/xstd_types.hpp), the prelude every test includes, lists them; `absl::uint128` is left out of the constant-evaluated runs, since its operators are not `constexpr`. The departures:
+All 55 run, their negative cases included: `bool`, the character types, the signed types, enumerations and class types must stay out of the bit functions. libc++ cannot name the types xstd implements itself, so after its own assertions each bit test and `abs.pass.cpp` run them again over the bit-precise widths 8, 9, 17, 33, 65, 127, 128, 129 and 256, `boost::int128::uint128` and `int128`, and `absl::uint128` and `int128`. [`xstd_types.hpp`](test/std-test-suite/include/xstd_types.hpp), the prelude every test includes, lists them; `absl::uint128` is left out of the constant-evaluated runs, since its operators are not `constexpr`. The departures:
 
 - `bit_ceil.pass.cpp`'s `LIBCPP_ASSERT_NOEXCEPT` is dropped: [[bit.pow.two]](https://eel.is/c++draft/bit.pow.two) gives `bit_ceil` a precondition and no `noexcept`, which libc++ adds as an extension.
 - The other bit tests' `noexcept` assertions become `noexcept(xstd::f(T())) == xstd::nothrow_const_operators<T>`: `noexcept` for the standard types and Boost's, not for `absl::uint128`, whose operators declare none.
 - `abs.pass.cpp` drops the plain `char` case and the three floating-point ones, since `xstd::abs` takes an `integer`; its return type, the promoted one, is [[c.math.abs]](https://eel.is/c++draft/c.math.abs)'s.
+- The concepts tests expect `bool` and the six character types to be integers, as [[basic.fundamental]](https://eel.is/c++draft/basic.fundamental) makes them integral, or to follow their signedness; the mapping expects each to be turned away instead. `xstd::integer` is P3701R0's boundary, a type that is one half of its own signed and unsigned pair, which none of them is. The rest hold as written: every standard and extended integer type admitted, with its qualifiers, and `void`, the floating-point types, references, pointers, enumerations and classes refused.
 
 Every `std::to_chars` call in `charconv.to.chars/integral.pass.cpp` sits in the support header `charconv_test_helpers.h`, which the mapping's `support` key names: the adapter rewrites a copy of it as it does a test and puts the copy ahead of the original on the include path.
 
@@ -317,14 +321,16 @@ Every `std::to_chars` call in `charconv.to.chars/integral.pass.cpp` sits in the 
 | `20_util/is_signed/`, `20_util/is_unsigned/` | 4 | `is_signed`, `is_unsigned` |
 | `20_util/make_signed/`, `20_util/make_unsigned/` | 8 | `make_signed`, `make_unsigned` |
 | `18_support/numeric_limits/` | 7 | `numeric_limits` |
+| `std/concepts/concepts.lang/concept.arithmetic/` | 3 | `integer`, `signed_integer`, `unsigned_integer` |
 
-All 44 build and the 8 runnable ones run. `bit_ceil_neg.cc` is expected to abort, as libstdc++'s own `dg-xfail-run-if` says: `bit_ceil` past the largest power of two breaks its precondition, and xstd's `assert` catches it. GCC 15 has no `_BitInt` in C++, so the bit-precise widths run on libc++ alone. The departures:
+All 47 build and the 8 runnable ones run. `bit_ceil_neg.cc` is expected to abort, as libstdc++'s own `dg-xfail-run-if` says: `bit_ceil` past the largest power of two breaks its precondition, and xstd's `assert` catches it. GCC 15 has no `_BitInt` in C++, so the bit-precise widths run on libc++ alone. The departures:
 
 - `bit_ceil.cc`'s `static_assert( noexcept(std::bit_ceil(x)) )` is dropped, as for libc++.
 - `bit_ceil.cc` and `bit_ceil_neg.cc` discard `bit_ceil`'s result in three places, which xstd marks `[[nodiscard]]`, as libc++ does; the mapping casts each to `void`.
 - `byteswap.cc`'s `static_assert` on `byteswap<volatile uint32_t>` is dropped: [[expr.const]](https://eel.is/c++draft/expr.const) makes no read of a volatile object a constant expression. GCC lets its own `std::byteswap` make one; Clang rejects that line for `std::byteswap` too.
 - `dr2735.cc` drops the plain `char` case, as for libc++, and `dr2192.cc`, which asks `abs` for the three floating-point types and nothing else, is expected not to compile.
 - `to_chars/103955.cc` writes a `double` and is expected not to compile: [[charconv.to.chars]](https://eel.is/c++draft/charconv.to.chars)'s floating-point overloads stay `<charconv>`'s.
+- The concepts tests turn `bool` and the character types away, as for libc++.
 - `to_chars/3.cc` writes `char16_t`, `char32_t` and `wchar_t`, which the standard's overloads reach only by promoting them to `int`, and is expected not to compile: `xstd::to_chars` takes the integer types and `char`.
 
 ### MSVC STL
@@ -341,7 +347,7 @@ The tests call what they test unqualified, under a using-directive for `std`, so
 - The tests are written for Windows, whose LLP64 model has a 32-bit `long`, and for MSVC's 16-bit `wchar_t`. The legs run on Linux, so the mapping replaces each such expectation with the LP64 answer: `make_signed` and `make_unsigned` of `wchar_t` and of the enumerations over `wchar_t`, `long`, `unsigned long`, `long long` and `unsigned long long`, and `byteswap` of `wchar_t`, `long` and `unsigned long`. [[meta.trans.sign]](https://eel.is/c++draft/meta.trans.sign) picks the lowest-ranked type of an enumeration's size, which under LP64 is `long`.
 - `make_signed` of an enumeration over `bool` is left out under libc++, whose `std::make_signed` rejects what [[meta.trans.sign]](https://eel.is/c++draft/meta.trans.sign) admits, and `xstd::make_signed` delegates to it there.
 
-Two tests are not taken. `P0067R5_charconv` writes integers and floating-point values with the same `to_chars` in one file, and `xstd::to_chars` writes integers only. `VSO_0000000_type_traits` checks `is_signed` and `is_unsigned` in three of its 1473 lines, all of them for `void`.
+Three tests are not taken. `P0898R3_concepts` tests `integral` and its refinements, but its support header includes the MSVC STL's own `<yvals_core.h>`, which no Linux leg has. `P0067R5_charconv` writes integers and floating-point values with the same `to_chars` in one file, and `xstd::to_chars` writes integers only. `VSO_0000000_type_traits` checks `is_signed` and `is_unsigned` in three of its 1473 lines, all of them for `void`.
 
 ### GCC trunk
 
