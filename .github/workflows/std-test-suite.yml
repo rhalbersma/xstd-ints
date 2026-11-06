@@ -41,7 +41,7 @@ jobs:
         run: cmake -S . -B build -DCMAKE_CXX_COMPILER=clang++-22 -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ -DBUILD_TESTING=OFF -DXSTD_INTS_STD_TEST_SUITES=ON
 
       - name: Build
-        run: cmake --build build --parallel
+        run: cmake --build build --parallel "$(nproc)"
 
       - name: Run the suite
         run: ctest --test-dir build --output-on-failure
@@ -66,7 +66,7 @@ jobs:
         run: cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-15 -DBUILD_TESTING=OFF -DXSTD_INTS_STD_TEST_SUITES=ON
 
       - name: Build
-        run: cmake --build build --parallel
+        run: cmake --build build --parallel "$(nproc)"
 
       - name: Run the suite
         run: ctest --test-dir build --output-on-failure
@@ -96,7 +96,7 @@ jobs:
         run: cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-17 -DCMAKE_CXX_FLAGS=-std=gnu++2d -DBUILD_TESTING=OFF -DXSTD_INTS_STD_TEST_SUITES=ON -DXSTD_INTS_STD_TEST_SUITE_RUNG=development
 
       - name: Build the suite
-        run: cmake --build build --parallel
+        run: cmake --build build --parallel "$(nproc)"
 
   # The one name branch protection can require, red unless every leg above succeeded.
   all:
