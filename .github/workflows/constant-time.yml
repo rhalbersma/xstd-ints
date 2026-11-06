@@ -65,7 +65,7 @@ jobs:
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER="${CXX}" -DCMAKE_CXX_FLAGS="${FLAGS}" -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_CONSTANT_TIME_TESTS=ON
 
       - name: Build
-        run: cmake --build build --target constant_time_memcheck --parallel
+        run: cmake --build build --target constant_time_memcheck --parallel "$(nproc)"
 
       - name: Check
         run: ctest --test-dir build --output-on-failure

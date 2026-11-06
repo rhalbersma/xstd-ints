@@ -22,6 +22,13 @@ on:
     branches: [ main ]
     paths:
       - 'include/xstd/ints/bit/**'
+      - 'include/xstd/ints/detail/bit_width.hpp'
+      - 'include/xstd/ints/detail/block_width.hpp'
+      - 'include/xstd/ints/detail/countl_zero.hpp'
+      - 'include/xstd/ints/detail/countr_zero.hpp'
+      - 'include/xstd/ints/detail/popcount.hpp'
+      - 'include/xstd/ints/detail/rotl.hpp'
+      - 'include/xstd/ints/detail/shift_count.hpp'
       - 'examples/perft/**'
       - '.github/workflows/perft.yml'
 
@@ -68,7 +75,7 @@ jobs:
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER="${CXX}" -DCMAKE_CXX_FLAGS="${FLAGS}" -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_EXAMPLES=ON
 
       - name: Build
-        run: cmake --build build --parallel
+        run: cmake --build build --parallel "$(nproc)"
 
       - name: Perft to the published depths
         shell: bash

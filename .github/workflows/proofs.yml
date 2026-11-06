@@ -47,7 +47,7 @@ jobs:
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-15 -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_PROOFS=ON -DXSTD_INTS_PROOFS_DRIFT_32=ON
 
       - name: Build
-        run: cmake --build build --parallel
+        run: cmake --build build --parallel "$(nproc)"
 
       - name: Prove, and hold the models to the compiled kernels
         run: ctest --test-dir build --output-on-failure --verbose
