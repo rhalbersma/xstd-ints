@@ -66,7 +66,6 @@ target_sources(
         include/xstd/ints/bit/detail/block_expand.hpp
         include/xstd/ints/bit/detail/block_reverse.hpp
         include/xstd/ints/bit/detail/block_select.hpp
-        include/xstd/ints/bit/detail/block_width.hpp
         include/xstd/ints/bit/detail/intrinsic/block_compress.hpp
         include/xstd/ints/bit/detail/intrinsic/block_expand.hpp
         include/xstd/ints/bit/detail/intrinsic/block_reverse.hpp
@@ -80,7 +79,6 @@ target_sources(
         include/xstd/ints/bit/detail/portable/block_reverse.hpp
         include/xstd/ints/bit/detail/portable/block_select.hpp
         include/xstd/ints/bit/detail/shift.hpp
-        include/xstd/ints/bit/detail/shift_count.hpp
         include/xstd/ints/bit/detail/std_permutes_bits.hpp
         include/xstd/ints/bit/detail/std_shifts.hpp
         include/xstd/ints/bit/detail/std_swaps_bytes.hpp
@@ -91,7 +89,6 @@ target_sources(
         include/xstd/ints/bit/shl.hpp
         include/xstd/ints/bit/shr.hpp
         include/xstd/ints/charconv.hpp
-        include/xstd/ints/charconv/detail/std_writes_chars.hpp
         include/xstd/ints/charconv/to_chars.hpp
         include/xstd/ints/concepts.hpp
         include/xstd/ints/concepts/alignable.hpp
@@ -113,7 +110,35 @@ target_sources(
         include/xstd/ints/cstdlib/div_result.hpp
         include/xstd/ints/cstdlib/sign.hpp
         include/xstd/ints/cstdlib/unsigned_abs.hpp
+        include/xstd/ints/detail/alignable.hpp
+        include/xstd/ints/detail/bit_int.hpp
+        include/xstd/ints/detail/bit_width.hpp
+        include/xstd/ints/detail/block_width.hpp
+        include/xstd/ints/detail/countl_zero.hpp
+        include/xstd/ints/detail/countr_zero.hpp
         include/xstd/ints/detail/delegates_to_std.hpp
+        include/xstd/ints/detail/digits10.hpp
+        include/xstd/ints/detail/div.hpp
+        include/xstd/ints/detail/div_result.hpp
+        include/xstd/ints/detail/int128.hpp
+        include/xstd/ints/detail/integer.hpp
+        include/xstd/ints/detail/integer_class.hpp
+        include/xstd/ints/detail/is_signed.hpp
+        include/xstd/ints/detail/is_unsigned.hpp
+        include/xstd/ints/detail/make_signed.hpp
+        include/xstd/ints/detail/make_unsigned.hpp
+        include/xstd/ints/detail/nothrow_const_operators.hpp
+        include/xstd/ints/detail/numeric_limits.hpp
+        include/xstd/ints/detail/popcount.hpp
+        include/xstd/ints/detail/promoted.hpp
+        include/xstd/ints/detail/rotl.hpp
+        include/xstd/ints/detail/shift_count.hpp
+        include/xstd/ints/detail/sign.hpp
+        include/xstd/ints/detail/signed_integer.hpp
+        include/xstd/ints/detail/std_writes_chars.hpp
+        include/xstd/ints/detail/to_chars.hpp
+        include/xstd/ints/detail/unsigned_abs.hpp
+        include/xstd/ints/detail/unsigned_integer.hpp
         include/xstd/ints/ext/absl.hpp
         include/xstd/ints/ext/absl/int128.hpp
         include/xstd/ints/ext/boost.hpp
@@ -123,7 +148,6 @@ target_sources(
         include/xstd/ints/format/detail/decimal.hpp
         include/xstd/ints/format/div_result.hpp
         include/xstd/ints/limits.hpp
-        include/xstd/ints/limits/detail/digits10.hpp
         include/xstd/ints/limits/numeric_limits.hpp
         include/xstd/ints/memory.hpp
         include/xstd/ints/memory/align_down.hpp
@@ -134,7 +158,6 @@ target_sources(
         include/xstd/ints/type_traits/is_unsigned.hpp
         include/xstd/ints/type_traits/make_signed.hpp
         include/xstd/ints/type_traits/make_unsigned.hpp
-        include/xstd/ints/type_traits/detail/promoted.hpp
         include/xstd/ints/type_traits/promoted.hpp
 )
 

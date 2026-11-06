@@ -6,14 +6,6 @@
 #ifndef XSTD_INTS_TYPE_TRAITS_PROMOTED_HPP
 #define XSTD_INTS_TYPE_TRAITS_PROMOTED_HPP
 
-#include <xstd/ints/type_traits/detail/promoted.hpp> // promoted
-
-namespace xstd {
-
-// The type of +a for an integral T, which [conv.prom] gives; T itself otherwise.
-template<class T>
-using promoted_t = ints::detail::promoted<T>::type;
-
-} // namespace xstd
+#include <xstd/ints/detail/promoted.hpp> // IWYU pragma: export; promoted_t
 
 #endif // XSTD_INTS_TYPE_TRAITS_PROMOTED_HPP

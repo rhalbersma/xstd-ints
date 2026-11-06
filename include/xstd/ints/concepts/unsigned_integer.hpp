@@ -6,15 +6,6 @@
 #ifndef XSTD_INTS_CONCEPTS_UNSIGNED_INTEGER_HPP
 #define XSTD_INTS_CONCEPTS_UNSIGNED_INTEGER_HPP
 
-#include <xstd/ints/concepts/integer.hpp>        // integer
-#include <xstd/ints/type_traits/is_unsigned.hpp> // is_unsigned_v
-
-namespace xstd {
-
-// Mirrors std::unsigned_integral, keeping integer atomic for subsumption.
-template<class T>
-concept unsigned_integer = integer<T> and is_unsigned_v<T>;
-
-} // namespace xstd
+#include <xstd/ints/detail/unsigned_integer.hpp> // IWYU pragma: export; unsigned_integer
 
 #endif // XSTD_INTS_CONCEPTS_UNSIGNED_INTEGER_HPP

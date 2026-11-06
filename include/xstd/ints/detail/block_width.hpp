@@ -3,8 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_INTS_BIT_DETAIL_BLOCK_WIDTH_HPP
-#define XSTD_INTS_BIT_DETAIL_BLOCK_WIDTH_HPP
+#ifndef XSTD_INTS_DETAIL_BLOCK_WIDTH_HPP
+#define XSTD_INTS_DETAIL_BLOCK_WIDTH_HPP
 
 #include <cstddef> // size_t
 #include <limits>  // numeric_limits
@@ -16,4 +16,4 @@ inline constexpr auto block_width = static_cast<std::size_t>(std::numeric_limits
 
 } // namespace xstd::ints::detail
 
-#endif // XSTD_INTS_BIT_DETAIL_BLOCK_WIDTH_HPP
+#endif // XSTD_INTS_DETAIL_BLOCK_WIDTH_HPP

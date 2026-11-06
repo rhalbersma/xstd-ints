@@ -6,10 +6,10 @@
 #ifndef XSTD_INTS_BIT_COUNTR_ONE_HPP
 #define XSTD_INTS_BIT_COUNTR_ONE_HPP
 
-#include <xstd/ints/bit/countr_zero.hpp>                  // countr_zero
-#include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
-#include <bit>                                            // countr_one
+#include <xstd/ints/detail/countr_zero.hpp>             // countr_zero
+#include <xstd/ints/detail/nothrow_const_operators.hpp> // nothrow_const_operators
+#include <xstd/ints/detail/unsigned_integer.hpp>        // unsigned_integer
+#include <bit>                                          // countr_one
 
 // [bit.count] over every unsigned integer xstd knows.
 namespace xstd {

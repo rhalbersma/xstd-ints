@@ -6,16 +6,16 @@
 #ifndef XSTD_INTS_BIT_BIT_SELECT_HPP
 #define XSTD_INTS_BIT_BIT_SELECT_HPP
 
-#include <xstd/ints/bit/detail/block_select.hpp>   // block_select
-#include <xstd/ints/bit/detail/block_width.hpp>    // block_width
-#include <xstd/ints/bit/detail/shift_count.hpp>    // shift_count_t
-#include <xstd/ints/bit/popcount.hpp>              // popcount
-#include <xstd/ints/concepts/unsigned_integer.hpp> // unsigned_integer
-#include <xstd/ints/limits/numeric_limits.hpp>     // numeric_limits
-#include <bit>                                     // popcount
-#include <cassert>                                 // assert
-#include <cstddef>                                 // size_t
-#include <utility>                                 // unreachable
+#include <xstd/ints/bit/detail/block_select.hpp> // block_select
+#include <xstd/ints/detail/block_width.hpp>      // block_width
+#include <xstd/ints/detail/numeric_limits.hpp>   // numeric_limits
+#include <xstd/ints/detail/popcount.hpp>         // popcount
+#include <xstd/ints/detail/shift_count.hpp>      // shift_count_t
+#include <xstd/ints/detail/unsigned_integer.hpp> // unsigned_integer
+#include <bit>                                   // popcount
+#include <cassert>                               // assert
+#include <cstddef>                               // size_t
+#include <utility>                               // unreachable
 
 // An xstd extension beside P3104's permutations, not a standard function: rank's inverse, with a narrow contract.
 namespace xstd {

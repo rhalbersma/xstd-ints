@@ -6,15 +6,6 @@
 #ifndef XSTD_INTS_CONCEPTS_SIGNED_INTEGER_HPP
 #define XSTD_INTS_CONCEPTS_SIGNED_INTEGER_HPP
 
-#include <xstd/ints/concepts/integer.hpp>      // integer
-#include <xstd/ints/type_traits/is_signed.hpp> // is_signed_v
-
-namespace xstd {
-
-// Mirrors std::signed_integral, keeping integer atomic for subsumption.
-template<class T>
-concept signed_integer = integer<T> and is_signed_v<T>;
-
-} // namespace xstd
+#include <xstd/ints/detail/signed_integer.hpp> // IWYU pragma: export; signed_integer
 
 #endif // XSTD_INTS_CONCEPTS_SIGNED_INTEGER_HPP

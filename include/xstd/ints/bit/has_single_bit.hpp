@@ -6,9 +6,9 @@
 #ifndef XSTD_INTS_BIT_HAS_SINGLE_BIT_HPP
 #define XSTD_INTS_BIT_HAS_SINGLE_BIT_HPP
 
-#include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/concepts/unsigned_integer.hpp>        // unsigned_integer
-#include <bit>                                            // has_single_bit
+#include <xstd/ints/detail/nothrow_const_operators.hpp> // nothrow_const_operators
+#include <xstd/ints/detail/unsigned_integer.hpp>        // unsigned_integer
+#include <bit>                                          // has_single_bit
 
 // [bit.pow.two]'s has_single_bit over every unsigned integer xstd knows.
 namespace xstd {

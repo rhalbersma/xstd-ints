@@ -6,12 +6,12 @@
 #ifndef XSTD_INTS_CSTDLIB_ABS_HPP
 #define XSTD_INTS_CSTDLIB_ABS_HPP
 
-#include <xstd/ints/concepts/integer.hpp>                 // integer
-#include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/limits/numeric_limits.hpp>            // numeric_limits
-#include <xstd/ints/type_traits/is_unsigned.hpp>          // is_unsigned_v
-#include <xstd/ints/type_traits/promoted.hpp>             // promoted_t
-#include <cassert>                                        // assert
+#include <xstd/ints/detail/integer.hpp>                 // integer
+#include <xstd/ints/detail/is_unsigned.hpp>             // is_unsigned_v
+#include <xstd/ints/detail/nothrow_const_operators.hpp> // nothrow_const_operators
+#include <xstd/ints/detail/numeric_limits.hpp>          // numeric_limits
+#include <xstd/ints/detail/promoted.hpp>                // promoted_t
+#include <cassert>                                      // assert
 
 namespace xstd {
 

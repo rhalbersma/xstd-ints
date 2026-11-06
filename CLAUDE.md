@@ -134,6 +134,36 @@ the code that uses it, and no user spells it. Follow the standard's practice wit
 - **A constraint becomes a public concept when users have a reason to name it.** A public concept carries
   semantics: do not promote one to keep a `detail` name out of a signature, and do not merge two to save a name.
 
+## Push implementation down, pull interface up
+
+A definition lives at the lowest folder that every user of it can reach, and a public header is a front over
+it. The folders under `include/xstd/ints/` come in three kinds:
+
+- **The shared `detail/` is the bottom.** It holds every definition more than one folder needs: the concepts and
+  traits the rest is constrained on, `numeric_limits`, the 128-bit and bit-precise aliases, `div` and its result,
+  `sign`, `unsigned_abs`, the bit counts `bit_width`, `countl_zero`, `countr_zero`, `popcount` and `rotl`, and
+  `to_chars`. It includes no public xstd-ints header.
+- **The layers above it are fronts, side by side rather than stacked.** `bit/`, `charconv/`, `concepts/`, `cstdint/`,
+  `cstdlib/`, `format/`, `limits/`, `memory/` and `type_traits/`: each public header re-exports what `detail/`
+  defines, or builds on `detail/` and its own folder's `detail/`, and never on another layer.
+- **`ext/` adapts other libraries' types** and may include any public header.
+
+Concepts and traits define one another wherever that reads best, `integer_class` through `promoted_t` and
+`make_signed` through `integer_class`. They do so between their definitions in `detail/`, so the fronts in
+`concepts/` and `type_traits/` stay independent of each other.
+
+Two rules make every header deletable on its own, and every folder too:
+
+- **A public header is a leaf.** Only an umbrella or `ext/` includes it. The library's own headers include the
+  definition under `detail/` instead, in the shared one where another folder needs it and in the folder's own where
+  only its neighbours do, as `bit/shl.hpp` builds on `bit/detail/shift.hpp`.
+- **A folder's own `detail/` is private to it.** What a second folder needs moves to the shared `detail/`.
+
+cpp-ci's layering action, in the Layering workflow and `tools/ci-local.sh layering`, checks all of it from the
+`#include` lines against [`tools/layering.toml`](tools/layering.toml), and fails on a folder that file does not
+classify, so a new folder says which kind it is before it lands. A public header keeps its path when its definition
+moves down: users include the front, and the front stays where it was.
+
 ## Tests: Murphy, not Machiavelli
 
 Easy to use and hard to misuse holds in the tests too. Test a concept, and any other functionality, against the
@@ -198,7 +228,7 @@ Each step toward GitHub runs more:
 | Step | Run | Takes |
 | :-- | :-- | :-- |
 | While editing | the tests the change touches, on one compiler | seconds |
-| Before a commit | `tools/ci-local.sh --quick`: format, actionlint, GCC 15, clang 22, clang-tidy 22 | about 10 min |
+| Before a commit | `tools/ci-local.sh --quick`: format, actionlint, layering, GCC 15, clang 22, clang-tidy 22 | about 10 min |
 | Before a push or a pull request | `tools/ci-local.sh`: every leg | an hour or more |
 | On the pull request | CI: all of it, on every platform | CI's queue |
 

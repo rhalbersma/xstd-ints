@@ -3,11 +3,11 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_INTS_CHARCONV_DETAIL_STD_WRITES_CHARS_HPP
-#define XSTD_INTS_CHARCONV_DETAIL_STD_WRITES_CHARS_HPP
+#ifndef XSTD_INTS_DETAIL_STD_WRITES_CHARS_HPP
+#define XSTD_INTS_DETAIL_STD_WRITES_CHARS_HPP
 
-#include <xstd/ints/concepts/integer.hpp>        // integer
 #include <xstd/ints/detail/delegates_to_std.hpp> // delegates_to_std
+#include <xstd/ints/detail/integer.hpp>          // integer
 #include <charconv>                              // to_chars
 #include <concepts>                              // same_as
 
@@ -23,4 +23,4 @@ concept std_writes_chars =
 
 } // namespace xstd::ints::detail
 
-#endif // XSTD_INTS_CHARCONV_DETAIL_STD_WRITES_CHARS_HPP
+#endif // XSTD_INTS_DETAIL_STD_WRITES_CHARS_HPP

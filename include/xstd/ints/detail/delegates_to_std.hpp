@@ -6,8 +6,8 @@
 #ifndef XSTD_INTS_DETAIL_DELEGATES_TO_STD_HPP
 #define XSTD_INTS_DETAIL_DELEGATES_TO_STD_HPP
 
-#include <xstd/ints/cstdint/int128.hpp>        // XSTD_HAS_INT128, uint128
-#include <xstd/ints/limits/numeric_limits.hpp> // numeric_limits
+#include <xstd/ints/detail/int128.hpp>         // XSTD_HAS_INT128, uint128
+#include <xstd/ints/detail/numeric_limits.hpp> // numeric_limits
 #include <concepts>                            // integral
 
 namespace xstd::ints::detail {

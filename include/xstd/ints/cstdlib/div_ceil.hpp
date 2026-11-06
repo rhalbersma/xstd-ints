@@ -6,14 +6,14 @@
 #ifndef XSTD_INTS_CSTDLIB_DIV_CEIL_HPP
 #define XSTD_INTS_CSTDLIB_DIV_CEIL_HPP
 
-#include <xstd/ints/concepts/integer.hpp>                 // integer
-#include <xstd/ints/concepts/nothrow_const_operators.hpp> // nothrow_const_operators
-#include <xstd/ints/cstdlib/div.hpp>                      // div
-#include <xstd/ints/cstdlib/div_result.hpp>               // IWYU pragma: export; div_result
-#include <xstd/ints/cstdlib/sign.hpp>                     // sign
-#include <xstd/ints/cstdlib/unsigned_abs.hpp>             // unsigned_abs
-#include <xstd/ints/type_traits/is_unsigned.hpp>          // is_unsigned_v
-#include <cassert>                                        // assert
+#include <xstd/ints/detail/div.hpp>                     // div
+#include <xstd/ints/detail/div_result.hpp>              // IWYU pragma: export; div_result
+#include <xstd/ints/detail/integer.hpp>                 // integer
+#include <xstd/ints/detail/is_unsigned.hpp>             // is_unsigned_v
+#include <xstd/ints/detail/nothrow_const_operators.hpp> // nothrow_const_operators
+#include <xstd/ints/detail/sign.hpp>                    // sign
+#include <xstd/ints/detail/unsigned_abs.hpp>            // unsigned_abs
+#include <cassert>                                      // assert
 
 namespace xstd {
 

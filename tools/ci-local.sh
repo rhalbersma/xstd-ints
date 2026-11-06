@@ -33,10 +33,10 @@ cmake="${local_bin}/cmake"
 readonly cmake
 
 # Cheapest first, so a slip in formatting or a workflow fails in seconds rather than after an hour of compiling.
-readonly all_legs=(format actionlint site gcc-15 clang-22 tidy-22 codegen std-test-suite consumption gcc-16 clang-23 gcc-17 clang-24
+readonly all_legs=(format actionlint layering site gcc-15 clang-22 tidy-22 codegen std-test-suite consumption gcc-16 clang-23 gcc-17 clang-24
                    libcxx-22 i686 gcc-bmi2 clang-bmi2 tidy-23 tidy-24 coverage asan-gcc ubsan-gcc ubsan-clang
                    implicit-conversion)
-readonly quick_legs=(format actionlint gcc-15 clang-22 tidy-22)
+readonly quick_legs=(format actionlint layering gcc-15 clang-22 tidy-22)
 
 # Each clang uses the libstdc++ of its own rung, as on the runners, rather than the newest GCC installed.
 gcc_for_clang() {
@@ -184,6 +184,22 @@ actionlint() {
         "${local_bin}/actionlint" -shellcheck= "${root}"/.github/workflows/*.yml
 }
 
+# cpp-ci's layering check, at the commit the workflows pin, over the folder kinds tools/layering.toml names.
+layering() {
+        local sha script
+        sha="$(grep -oE 'rhalbersma/cpp-ci/\.github/workflows/clang-tidy\.yml@[0-9a-f]{40}' "${root}/.github/workflows/clang-tidy.yml" | head -1)"
+        sha="${sha##*@}"
+        [ -n "${sha}" ] || { echo "no cpp-ci pin in .github/workflows/clang-tidy.yml" >&2; return 1; }
+        script="${out}/cpp-ci/${sha}/layering.py"
+        if [ ! -s "${script}" ]; then
+                mkdir -p "${script%/*}"
+                curl -fsSL --retry 3 -o "${script}.part" \
+                        "https://raw.githubusercontent.com/rhalbersma/cpp-ci/${sha}/.github/actions/layering/layering.py" \
+                        && mv "${script}.part" "${script}" || { rm -f "${script}.part"; return 1; }
+        fi
+        (cd "${root}" && python3 -I "${script}" tools/layering.toml)
+}
+
 # The format gate: the stable rung's clang-format over include/ and test/, reporting rather than rewriting.
 format() {
         find "${root}/include" "${root}/test" -regex '.*\.\(hpp\|cpp\)' -print0 | xargs -0 clang-format-22 --dry-run --Werror
@@ -204,6 +220,7 @@ run_leg() {
         case "$1" in
                 format) format ;;
                 actionlint) actionlint ;;
+                layering) layering ;;
                 site) site ;;
                 gcc-1[56]) suite "$1" "g++-${1#gcc-}" "" "${build_type}" ;;
                 clang-2[23]) suite "$1" "clang++-${1#clang-}" "$(gcc_for_clang "${1#clang-}")" "${build_type}" ;;

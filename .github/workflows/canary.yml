@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Install the GCC trunk snapshot
-        uses: rhalbersma/cpp-ci/.github/actions/install-gcc@47d56c00db0024b6a5a22a0d1e8bec06f40163ff # main after rhalbersma/cpp-ci#85, which reads dg-xfail-run-if and pins GCC trunk's test suite
+        uses: rhalbersma/cpp-ci/.github/actions/install-gcc@0e0b8a1ec3476589bb39dc798d41551e18165916 # main after rhalbersma/cpp-ci#90, which adds the layering action
         with:
           version: "17"
           trunk: "true"
