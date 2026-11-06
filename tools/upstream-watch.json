@@ -6,7 +6,7 @@
       "charconv.to.chars",
       "iterator.concept.winc"
     ],
-    "commit": "47974a2fafeca9a2207d3b5eff3dfd65ce771277"
+    "commit": "d4d6f38143c1b495aa33b2e5de0e0ec2daa173ca"
   },
   "libraries": {
     "libc++": {
@@ -34,7 +34,8 @@
     "4539": "New",
     "4546": "Ready",
     "4583": "NAD",
-    "4602": "Ready"
+    "4602": "Ready",
+    "4636": "New"
   },
   "tracking": {
     "P3104": {
@@ -53,7 +54,8 @@
         "C++29",
         "CWG",
         "LEWG",
-        "ready-for-library-evolution-meeting-review"
+        "ready-for-library-evolution-meeting-review",
+        "scheduled-for-library-evolution"
       ],
       "milestone": "2026-telecon",
       "state": "open"
@@ -64,6 +66,7 @@
         "C++29",
         "IS",
         "LEWG",
+        "needs-revision",
         "ready-for-library-evolution-meeting-review",
         "size - small"
       ],
