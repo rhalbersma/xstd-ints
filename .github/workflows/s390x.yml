@@ -22,7 +22,7 @@ jobs:
   # Big-endian: the one leg where an integer's first byte is its highest, so
   # a byte copy or a test that assumes otherwise fails here and nowhere else.
   s390x:
-    uses: rhalbersma/cpp-ci/.github/workflows/s390x.yml@a634ddb30dc4da914d7eb281029e8f9bb85e2d63 # v0.16.0
+    uses: rhalbersma/cpp-ci/.github/workflows/s390x.yml@ca4f638dfd1e7cc1818bbaa63c354db8ed019856
     with:
       # Boost.Test, which vcpkg.json keeps out of its default features so that
       # consuming this library resolves no Boost at all.
