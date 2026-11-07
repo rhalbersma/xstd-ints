@@ -505,7 +505,7 @@ conan create /tmp/pinned/conan --version 0.1.0 -s compiler.cppstd=23
 
 The commit has to be on GitHub, since the archive is GitHub's. The [Packaging workflow](.github/workflows/packaging.yml) does the same for the commit under test on Linux, macOS and Windows: the port through a clean CMake project whose manifest names only `xstd-ints`, and the recipe through its `test_package`. Conan installs from [`packaging/conan-requirements.txt`](packaging/conan-requirements.txt), pinned by hash.
 
-A release is a tag `vX.Y.Z` matching `project(VERSION)`. After the tag is pushed, `python3 packaging/pin.py vX.Y.Z packaging --version X.Y.Z` fills in both hashes in place, and the port directory and the recipe go to [microsoft/vcpkg](https://github.com/microsoft/vcpkg) and [conan-io/conan-center-index](https://github.com/conan-io/conan-center-index) as each repository's contributing guide describes.
+A release is a tag `vX.Y.Z` matching `project(VERSION)`. Before the tag, [CHANGELOG.md](CHANGELOG.md) has the release's entry, written from the pull requests merged since the previous tag and grouped by what a user meets, with its date in place of "unreleased". After the tag is pushed, `python3 packaging/pin.py vX.Y.Z packaging --version X.Y.Z` fills in both hashes in place, and the port directory and the recipe go to [microsoft/vcpkg](https://github.com/microsoft/vcpkg) and [conan-io/conan-center-index](https://github.com/conan-io/conan-center-index) as each repository's contributing guide describes.
 
 ## Standards-paper tracking
 
