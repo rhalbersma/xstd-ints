@@ -2,7 +2,7 @@ vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO rhalbersma/xstd-ints
     REF "v${VERSION}"
-    SHA512 0
+    SHA512 8702dfa178261e8b0ab9cd352af720e745c4841d065c051e900bfbcb70bf5c51789e93f394f1a4c12bef99497e175fee0ee715502f43001b685032f4bb95c4fe
     HEAD_REF main
 )
 
