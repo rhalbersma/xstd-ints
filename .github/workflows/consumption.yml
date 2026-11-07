@@ -21,4 +21,4 @@ on:
 
 jobs:
   consumption:
-    uses: rhalbersma/cpp-ci/.github/workflows/consumption.yml@0e0b8a1ec3476589bb39dc798d41551e18165916 # main after rhalbersma/cpp-ci#90, which adds the layering action
+    uses: rhalbersma/cpp-ci/.github/workflows/consumption.yml@a634ddb30dc4da914d7eb281029e8f9bb85e2d63 # v0.16.0

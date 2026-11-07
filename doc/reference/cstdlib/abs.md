@@ -4,6 +4,7 @@
 
 ```cpp
 template<integer I>
+    requires (not is_unsigned_v<promoted_t<I>>)
   constexpr auto abs(I x) noexcept(nothrow_const_operators<I>) -> promoted_t<I>;
 ```
 
@@ -15,15 +16,17 @@ The magnitude of an integer, in the type `std::abs` gives: its promoted type, `i
 | :-------- | :------ |
 | `x` | an integer value |
 
-*Constraints:* `I` models `integer`.
+*Constraints:* `I` models `integer`, and `promoted_t<I>` is not unsigned: an unsigned type takes part only where
+[[conv.prom]](https://eel.is/c++draft/conv.prom) promotes it to `int`, as
+[[c.math.abs]/2](https://eel.is/c++draft/c.math.abs#2) has it since [LWG 2192](https://wg21.link/lwg2192).
+`abs(0u)` is ill-formed; [`unsigned_abs`](unsigned_abs.md) is what such a call means.
 
-*Preconditions:* For a signed `promoted_t<I>`, `x != xstd::numeric_limits<promoted_t<I>>::min()`, whose negation
+*Preconditions:* `x != xstd::numeric_limits<promoted_t<I>>::min()`, whose negation
 `promoted_t<I>` cannot hold. Below `int` no value violates it: `abs` of `int8_t`'s minimum is `128`.
 
 ### Return value
 
-*Returns:* `x` converted to `promoted_t<I>` if it is not negative, and the negation of that otherwise; over an
-unsigned `promoted_t<I>`, `x` converted to it.
+*Returns:* `x` converted to `promoted_t<I>` if it is not negative, and the negation of that otherwise.
 
 ### Exceptions
 

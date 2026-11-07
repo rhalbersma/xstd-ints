@@ -5,7 +5,7 @@ Each release of xstd-ints, newest first. A version is a tag `vX.Y.Z` matching `p
 by what a user of the library meets. The numbers are this repository's pull requests; what predates the first, #239, which split the repository out of
 earlier work, carries none.
 
-## 0.1.0 (unreleased)
+## 0.1.0 (2026-11-07)
 
 The first release: integer extensions to the C++ standard library, open to the 128-bit integer classes and to
 bit-precise integers where the standard is closed over the built-in types. It needs a C++23 compiler, and CMake 3.30
@@ -38,7 +38,8 @@ or later for the supplied CMake project.
 
 - `div`, `div_floor`, `div_ceil` and `div_euclid`, each returning a `div_result` at the operands' own width (#274),
   with `sign` and `unsigned_abs`.
-- `abs`, returning the promoted type as `std::abs` does for the built-in types (#370).
+- `abs`, returning the promoted type as `std::abs` does for the built-in types (#370), and ill-formed, as LWG 2192 makes
+  `std::abs`, for an unsigned type that promotes to no `int`.
 - `to_chars` for every xstd integer, forwarding where `std::to_chars` takes the type (#339), and a `std::formatter`
   for `div_result` with the tuple's format specifications (#269, #333).
 - `align_up`, `align_down` and `is_aligned`.
@@ -48,7 +49,8 @@ or later for the supplied CMake project.
 - `<xstd/ints/ext/boost/int128.hpp>` and `<xstd/ints/ext/absl/int128.hpp>` make Boost.Int128's and Abseil's 128-bit
   types xstd integers, held to the integer concepts by tests over both (#333).
 - `<xstd/ints/ext/boost/hash2.hpp>` hashes every xstd integer through Boost.Hash2 with `hash_append_int` (#273).
-- A vcpkg port and a Conan 2 recipe, tested from a clean project on Linux, macOS and Windows (#373).
+- A vcpkg overlay port and a Conan 2 recipe in the repository, tested from a clean project on Linux, macOS and Windows;
+  neither goes to its registry before v1.0.0 (#373).
 
 ### Platforms
 
