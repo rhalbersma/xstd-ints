@@ -211,7 +211,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(UnsignedExtremes, T, test::bit_precise_unsigned_ty
 
         BOOST_CHECK(xstd::sign(limits::min()) == 0);
         BOOST_CHECK(xstd::sign(limits::max()) == +1);
-        BOOST_CHECK(xstd::abs(limits::max()) == limits::max());
+        // [c.math.abs]/2: no bit-precise unsigned type promotes, so abs refuses each, where unsigned_abs answers.
+        static_assert(not has_abs<T>);
         BOOST_CHECK(xstd::unsigned_abs(limits::max()) == limits::max());
         BOOST_CHECK(xstd::div(limits::max(), limits::max()).quotient == T(1));
 }

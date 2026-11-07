@@ -17,20 +17,17 @@ namespace xstd {
 
 // constexpr generalization of abs/labs/llabs/imaxabs, in the type std::abs gives: a type narrower than int becomes int.
 template<integer I>
+// [c.math.abs]/2 after LWG 2192: abs(0u) is almost always a mistake, so an unsigned type no int holds is refused.
+        requires (not is_unsigned_v<promoted_t<I>>)
 [[nodiscard]] constexpr auto abs(I x) noexcept(nothrow_const_operators<I>)
         -> promoted_t<I>
 {
-        using P = promoted_t<I>;
-        // An unsigned value is its own magnitude, and its min() is 0.
-        if constexpr (is_unsigned_v<P>) {
-                return +x;
-        } else {
-                auto const p    = +x;
-                auto const zero = static_cast<P>(0);
-                assert(p != numeric_limits<P>::min()); // -p would overflow
-                // At zero both arms give zero, so < and <= are the same test.
-                return static_cast<P>(p < zero ? -p : p); // mull-ignore: cxx_lt_to_le
-        }
+        using P         = promoted_t<I>;
+        auto const p    = +x;
+        auto const zero = static_cast<P>(0);
+        assert(p != numeric_limits<P>::min()); // -p would overflow
+        // At zero both arms give zero, so < and <= are the same test.
+        return static_cast<P>(p < zero ? -p : p); // mull-ignore: cxx_lt_to_le
 }
 
 } // namespace xstd

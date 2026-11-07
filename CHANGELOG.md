@@ -38,7 +38,8 @@ or later for the supplied CMake project.
 
 - `div`, `div_floor`, `div_ceil` and `div_euclid`, each returning a `div_result` at the operands' own width (#274),
   with `sign` and `unsigned_abs`.
-- `abs`, returning the promoted type as `std::abs` does for the built-in types (#370).
+- `abs`, returning the promoted type as `std::abs` does for the built-in types (#370), and ill-formed, as LWG 2192 makes
+  `std::abs`, for an unsigned type that promotes to no `int`.
 - `to_chars` for every xstd integer, forwarding where `std::to_chars` takes the type (#339), and a `std::formatter`
   for `div_result` with the tuple's format specifications (#269, #333).
 - `align_up`, `align_down` and `is_aligned`.
