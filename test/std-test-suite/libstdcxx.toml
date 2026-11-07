@@ -182,3 +182,25 @@ sha256 = "3253350162db4d25a3ff2974f61f84a50a3104f60107e58d3daed029f71e7fd8"
 line = "static_assert( std::is_signed_v<wchar_t> ? true : std::unsigned_integral<wchar_t> );"
 to = "static_assert( !std::unsigned_integral<wchar_t> );"
 departure = "xstd::integer is P3701R0's boundary, one half of its own signed and unsigned pair, which bool and the character types are not; [basic.fundamental] makes them integral"
+
+# xstd's sign traits have no member type outside their domain, where libstdc++'s are incomplete: both reject the test's
+# code, with different words than its dg-error lines ask for.
+[[libstdcxx.expect]]
+file = "libstdc++-v3/testsuite/20_util/make_signed/requirements/typedefs_neg.cc"
+sha256 = "bb2f4bf7499ab359cc819304eada347cebbe1365acb252236d4bea4f32bfbf1c"
+fails = "compile"
+paragraph = "[meta.trans.sign]: xstd::make_signed names no type for bool, a class, an array, a function or a floating-point type, which libstdc++ rejects as an incomplete type"
+
+[[libstdcxx.expect]]
+file = "libstdc++-v3/testsuite/20_util/make_unsigned/requirements/typedefs_neg.cc"
+sha256 = "415b2b4a90a28306a8a1905fe4240542366b0205dcf51f40d572c74684f60394"
+fails = "compile"
+paragraph = "[meta.trans.sign]: xstd::make_unsigned names no type for bool, a class, an array, a function or a floating-point type, which libstdc++ rejects as an incomplete type"
+
+# xstd::abs refuses an unsigned argument that promotes to no int by its constraint, where libstdc++'s overloads are
+# ambiguous: both reject the test's calls, with other words than its dg-error lines ask for.
+[[libstdcxx.expect]]
+file = "libstdc++-v3/testsuite/26_numerics/headers/cstdlib/dr2192_neg.cc"
+sha256 = "b9f1f85cb8bf4117c3660aebe2afd680a9d9a516f72f3501d66d5bc55fd331d5"
+fails = "compile"
+paragraph = "[c.math.abs]/2: xstd::abs has no candidate for abs(0u), which libstdc++ rejects as an ambiguous call"

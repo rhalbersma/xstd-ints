@@ -10,6 +10,9 @@ elseif(NOT CMAKE_CXX_FLAGS MATCHES "-std=")
     set(CMAKE_CXX_STANDARD 23)
 endif()
 
+# No suite test is a module, and a test of diagnostics builds under -verify, which fails a dependency scan given its flags.
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
+
 # cpp-ci at the commit the clang ladder pins, so libc++'s tag is the one its stable rung builds with.
 file(STRINGS "${PROJECT_SOURCE_DIR}/.github/workflows/clang.yml" cpp_ci_uses REGEX "uses: rhalbersma/cpp-ci/[^@]+@[0-9a-f]+" LIMIT_COUNT 1)
 if(NOT cpp_ci_uses MATCHES "@([0-9a-f]+)")
