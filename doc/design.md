@@ -802,6 +802,50 @@ xstd-bits.
 wasm32 has no bit-permute instruction, so the portable kernels are already its
 answer.
 
+### Saturation and checked arithmetic
+
+C++26's saturation arithmetic ([P0543](https://wg21.link/P0543): `add_sat`, `sub_sat`, `mul_sat`, `div_sat` and
+`saturate_cast` in `<numeric>`) and C23's checked arithmetic (`ckd_add`, `ckd_sub` and
+`ckd_mul` in `<stdckdint.h>`, which C++26 also provides) are defined only for the
+standard and extended integer types: the restriction this library lifts for `<bit>`
+and the `div` family. Both would fit its pattern, forwarding to `std::` where the
+feature-test macro says the call exists and running a portable `constexpr` kernel
+otherwise, checked against an oracle such as `_BitInt(256)` arithmetic or
+Boost.Multiprecision for the 128-bit types.
+
+Three questions come first. Whether `saturate_cast` belongs here or with a conversion
+facility. Whether checked arithmetic keeps C's `bool` and out-parameter, as the
+standard spells it, which is this library's usual answer. And whether they belong
+here at all: the README's scope, integer extensions open to integer-class types where
+the standard is closed over the built-ins, describes them, but nothing in xstd-bits
+or xstd-misc needs them yet.
+
+### A paper on `bit_select` and rank
+
+`bit_select`, the position of the k-th set bit, has no standard counterpart, and with
+rank, a masked `popcount`, it is the primitive every succinct data structure is built
+on. As a follow-up to [P3104](https://github.com/cplusplus/papers/issues/1768) it would be the smallest paper this library could write:
+one or two free functions shaped like the rest of `<bit>`. A draft is kept on the
+branch `claude/bit-select-paper`, with the implementation experience it cites: the
+portable kernel and the `PDEP` one with the Zen 1 and 2 exclusion, the oracle and
+fuzz tests, the proofs, and the rank/select comparison against sux and SDSL under
+`benchmark/succinct/`.
+
+What it still has to settle: the result for `k >= popcount(x)`, a precondition or
+`numeric_limits<T>::digits`, surveyed against SDSL, folly and Rust's proposals;
+whether to propose rank or leave it as the masked `popcount` it is; and `int` as the
+result type, as `countr_zero` returns. Its links to the benchmark and proof
+directories predate their move under `benchmark/` and `test/`, and need updating
+before it is sent.
+
+### Release notes and versioned documentation
+
+Once the library has tagged releases, as packaging through vcpkg and Conan needs,
+each release can carry a `CHANGELOG.md` entry written from its squash-merge titles,
+and the site can keep one version of the documentation per release, through `mike`
+for MkDocs Material, as xstd-misc plans to. Neither has anything to record before the
+first tag.
+
 ## Contracts
 
 
