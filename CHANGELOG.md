@@ -5,7 +5,7 @@ Each release of xstd-ints, newest first. A version is a tag `vX.Y.Z` matching `p
 by what a user of the library meets. The numbers are this repository's pull requests; what predates the first, #239, which split the repository out of
 earlier work, carries none.
 
-## 0.1.0 (unreleased)
+## 0.1.0 (2026-11-07)
 
 The first release: integer extensions to the C++ standard library, open to the 128-bit integer classes and to
 bit-precise integers where the standard is closed over the built-in types. It needs a C++23 compiler, and CMake 3.30
