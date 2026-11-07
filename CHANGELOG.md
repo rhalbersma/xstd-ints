@@ -48,7 +48,8 @@ or later for the supplied CMake project.
 - `<xstd/ints/ext/boost/int128.hpp>` and `<xstd/ints/ext/absl/int128.hpp>` make Boost.Int128's and Abseil's 128-bit
   types xstd integers, held to the integer concepts by tests over both (#333).
 - `<xstd/ints/ext/boost/hash2.hpp>` hashes every xstd integer through Boost.Hash2 with `hash_append_int` (#273).
-- A vcpkg port and a Conan 2 recipe, tested from a clean project on Linux, macOS and Windows (#373).
+- A vcpkg overlay port and a Conan 2 recipe in the repository, tested from a clean project on Linux, macOS and Windows;
+  neither goes to its registry before v1.0.0 (#373).
 
 ### Platforms
 
