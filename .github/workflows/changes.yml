@@ -51,7 +51,7 @@ jobs:
           # the tools those use, the site's configuration, and the workflows
           # that are not ladders. The reference pages' examples build.
           # Anything else, a new directory included, builds.
-          unbuilt='\.md$|^LICENSE_1_0\.txt$|^doc/|^benchmark/|^examples/perft/|^test/codegen/|^test/constant_time/|^test/exhaustive/|^test/fuzz/|^test/mutation/|^test/proofs/|^test/std-test-suite/|^tools/|^mkdocs\.yml$|^\.clang-format$|^\.git-blame-ignore-revs$'
+          unbuilt='\.md$|^LICENSE_1_0\.txt$|^doc/|^benchmark/|^examples/perft/|^test/codegen/|^test/constant_time/|^test/exhaustive/|^test/fuzz/|^test/mutation/|^test/proofs/|^packaging/|^test/std-test-suite/|^tools/|^mkdocs\.yml$|^\.clang-format$|^\.git-blame-ignore-revs$'
           unbuilt="${unbuilt}"'|^\.github/workflows/(actionlint|benchmark|canary|cflite_batch|cflite_pr|clang-format|codegen|codeql|constant-time|consumption|coverage|exhaustive|layering|mutation|pages|perft|proofs|scorecard|std-test-suite|upstream-watch)\.yml$'
           # The README's C++ examples, fenced as the test suite's CMake finds
           # them: a line ```cpp opens one and a line ``` closes it. Its prose
