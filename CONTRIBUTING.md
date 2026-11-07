@@ -185,14 +185,14 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
   -DCMAKE_CXX_FLAGS="--coverage -O0 -g" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
 cmake --build build
 ctest --test-dir build --output-on-failure
-gcovr --root . --exclude 'test/.*' --exclude 'build/.*' --exclude 'examples/.*' \
-  --exclude-lines-by-pattern '^\s*assert\(' \
-  --exclude-lines-by-pattern '=\s*default;' \
-  --exclude-branches-by-pattern '^\s*assert\(' \
-  --exclude-branches-by-pattern '^\s*.*=\s*default;' \
-  --exclude-throw-branches --exclude-unreachable-branches \
-  --print-summary --fail-under-line 100 --fail-under-branch 100
+sha="$(grep -m1 -oE 'rhalbersma/cpp-ci/[^@ ]+@[0-9a-f]{40}' .github/workflows/coverage.yml | sed 's/.*@//')"
+curl -fsSL "https://raw.githubusercontent.com/rhalbersma/cpp-ci/${sha}/.github/actions/gcovr/gcovr.sh" -o build/gcovr.sh
+GCOV=gcov EXCLUDE='test/.* build/.* examples/.*' bash build/gcovr.sh
 ```
+
+The last three lines run cpp-ci's own gate, `.github/actions/gcovr/gcovr.sh`, at the commit the Coverage workflow
+pins, with the `exclude` its stub passes, so the exclusion patterns and bars are the workflow's rather than a copy of
+them. `GCOV` names the gcov matching the compiler that built the tests.
 
 ### Reproducing the clang-tidy gate
 

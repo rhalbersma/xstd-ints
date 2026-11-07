@@ -8,7 +8,7 @@
 # A diagnostic raised inside a header is reported only if that header matches HeaderFilterRegex, which is why
 # the filter carries test/include as well as include/xstd: a fixture header left out of it is analyzed and
 # then silently discarded.
-# test/.clang-tidy inherits this and drops the four checks that only misfire on fixtures.
+# test/.clang-tidy inherits this and drops the checks that only misfire on fixtures.
 Checks: >
   bugprone-*,
   clang-analyzer-*,
@@ -29,7 +29,7 @@ CheckOptions:
   # Prefer alternative tokens for logical operators.
   readability-operators-representation.BinaryOperators: 'not;and;or'
   # No Boost library ships IWYU pragmas, so nothing there is attributable to a header a consumer names.
-  # Any project including a Boost library needs this line of its own; see README.md and doc/design.md.
+  # Any project including a Boost library needs this line of its own.
   misc-include-cleaner.IgnoreHeaders: 'boost/.*'
   # A lambda already writes its return type after the parameter list, which is
   # the whole of what this check is for, so for a generic one its suggestion is

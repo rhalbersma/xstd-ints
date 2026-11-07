@@ -2,7 +2,7 @@
   "version": 8,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 28,
+    "minor": 30,
     "patch": 0
   },
   "configurePresets": [
@@ -46,13 +46,19 @@
     {
       "name": "dev-vcpkg",
       "displayName": "Developer debug build (Boost.Test via vcpkg, needs VCPKG_ROOT)",
-      "inherits": ["dev", "vcpkg"],
+      "inherits": [
+        "dev",
+        "vcpkg"
+      ],
       "binaryDir": "${sourceDir}/build/dev-vcpkg"
     },
     {
       "name": "release-vcpkg",
       "displayName": "Release build (Boost.Test via vcpkg, needs VCPKG_ROOT)",
-      "inherits": ["release", "vcpkg"],
+      "inherits": [
+        "release",
+        "vcpkg"
+      ],
       "binaryDir": "${sourceDir}/build/release-vcpkg"
     }
   ],
