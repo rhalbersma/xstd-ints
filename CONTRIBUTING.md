@@ -82,7 +82,7 @@ The library itself has no dependencies outside `<xstd/ints/ext/>`, whose headers
 | [Boost.Int128](https://github.com/cppalliance/int128) | testing the integer-class extension points against a type from outside the library, and the `<xstd/ints/ext/boost/int128.hpp>` associations that pair it | Optional, and resolved without a manual step: `test/CMakeLists.txt` uses an installed copy where `find_package(boost_int128 CONFIG)` finds one and otherwise fetches a pinned commit from GitHub, as CI does: it is a pre-release library, in no Boost release yet. Configure with `-DXSTD_INTS_TEST_FETCH_BOOST_INT128=OFF` to build offline without it; the affected cases then run over xstd's own types alone |
 | [Abseil](https://github.com/abseil/abseil-cpp) | testing the same extension points against a type that declares no `noexcept` anywhere, and the `<xstd/ints/ext/absl/int128.hpp>` associations that pair it | Optional, and resolved the same way: an installed copy where `find_package(absl CONFIG)` finds one, and otherwise a pinned release tag, of which only `absl/numeric/int128.cc` is compiled. Configure with `-DXSTD_INTS_TEST_FETCH_ABSL_INT128=OFF` to build offline without it; the affected cases then do not run, no other type in the suite leaving `noexcept` off |
 | [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) | testing `<xstd/ints/ext/boost/hash2.hpp>`, and the `<xstd/ints/ext/boost.hpp>` umbrella that exports it | Optional: `test/CMakeLists.txt` uses an installed copy where `find_package(boost_hash2 CONFIG)` finds one - Boost ships it from 1.88, and the `test` feature of [`vcpkg.json`](vcpkg.json) names it - and fetches nothing otherwise, its own Boost dependencies being too many to fetch alone; the hashing cases then do not run |
-| [gcovr](https://gcovr.com/) | reproducing the coverage gate | Pinned by hash in [`tools/gcovr-requirements.txt`](tools/gcovr-requirements.txt) as the coverage job pins it; `setup-toolchain.sh` installs it, and `tools/ci-local.sh coverage` runs the gate |
+| [gcovr](https://gcovr.com/) | reproducing the coverage gate | Pinned by hash in cpp-ci's `install-gcovr` action, which the coverage job runs; `setup-toolchain.sh` installs it from there, and `tools/ci-local.sh coverage` runs the gate |
 | `clang-tidy` and `run-clang-tidy` | reproducing the clang-tidy gate | Only for the workflow below |
 | `clang-format` 22+ | the formatting gate | Run `clang-format -i` on changed files before pushing; older versions rewrite the requires-expressions in `concepts/` |
 | [FileCheck](https://pypi.org/project/filecheck/) | the codegen tests | The pure-Python port of LLVM's, pinned by hash in [`tools/filecheck-requirements.txt`](tools/filecheck-requirements.txt), which `setup-toolchain.sh` installs; LLVM's own `FileCheck` reads the same directives |
@@ -95,13 +95,17 @@ rejects `-std=c++2c`, `CMakeLists.txt` asks for CMake 3.30, clang-format before 
 requires-expression as a pointer declaration, so it calls files dirty that are clean against
 [`.clang-format`](.clang-format), and Boost 1.83 has neither the [Boost.Align](https://www.boost.org/doc/libs/latest/libs/align/) package the test suite asks for nor
 [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/). [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) brings a container as close to the GitHub Actions
-ladders as an Ubuntu box gets, every rung of [README.md](README.md)'s matrix and the Boost CI resolves:
+ladders as an Ubuntu box gets, every rung of [README.md](README.md)'s matrix and the Boost CI resolves. It runs cpp-ci's
+own `tools/setup-toolchain.sh`, from a checkout at the commit the workflows pin that
+[`tools/cpp-ci.sh`](tools/cpp-ci.sh) fetches once into `~/.cache/cpp-ci`, so the rungs come from the same toolchain table
+CI's jobs read, and adds what is this repository's own:
 
 - GCC 15 and 16 from the Ubuntu toolchain PPA, and the GCC trunk snapshot the development rung uses, as `g++-17`;
 - clang 22, 23 and trunk, as `clang++-24`, each with its clang-tidy, and clang-format 22 and libc++ 22, from apt.llvm.org;
 - GCC 15's 32-bit multilib, for the i686 leg;
 - the same clang-format 22 as an unversioned `clang-format`, FileCheck, gcovr and CMake, from PyPI, pinned by hash;
 - actionlint at the release the actionlint job installs, checked against its published SHA-256;
+- vcpkg at the commit CI's jobs check out, for `CI_LOCAL_DEPS=vcpkg`;
 - Boost 1.92's Align, Hash2 and Test, built by GCC 15 from Boost's CMake release tarball, checked against the SHA-256
   Boost publishes, into `/usr/local`.
 
@@ -113,7 +117,7 @@ apt's libc++ packages exclude one another, so libc++ stays at 22; the script nam
 for a libc++ leg of a newer rung. The script is idempotent, so re-running it on a warm container is safe.
 
 `tools/setup-toolchain.sh --stable` installs the stable rung alone: GCC 15, clang 22 with its clang-tidy and libc++,
-clang-format 22, FileCheck and CMake. The codegen, benchmark, exhaustive and proof workflows build on that rung and
+clang-format 22 and the tools, but no Boost. The codegen, benchmark, exhaustive and proof workflows build on that rung and
 nothing else, so they call it that way rather than spend minutes on the rest.
 
 In a [Claude Code cloud](https://code.claude.com/docs/en/claude-code-on-the-web) environment, the environment's
@@ -161,11 +165,11 @@ cmake --build --preset dev
 ctest --preset dev
 ```
 
-The Boost.Test that `setup-toolchain.sh` builds is GCC 15's, and serves the released rungs, GCC 15 and 16 and clang 22 and 23. A compiler on another standard library, or on the trunk snapshot's libstdc++, needs a Boost.Test built against it: linked with libc++ or with GCC 17's libstdc++, GCC 15's fails before the first test, on a corrupted parameter. CI gets one from vcpkg, which builds Boost with the compiler under test. Locally, [`tools/boost-test.sh`](tools/boost-test.sh) builds the framework from the installed headers with the compiler and flags given, in about a minute, and prints the `-D` that makes the suite use it:
+The Boost.Test that `setup-toolchain.sh` builds is GCC 15's, and serves the released rungs, GCC 15 and 16 and clang 22 and 23. A compiler on another standard library, or on the trunk snapshot's libstdc++, needs a Boost.Test built against it: linked with libc++ or with GCC 17's libstdc++, GCC 15's fails before the first test, on a corrupted parameter. CI gets one from vcpkg, which builds Boost with the compiler under test. Locally, cpp-ci's `tools/boost-test.sh` builds the framework from the installed headers with the compiler and flags given, in about a minute, and prints the `-D` that makes the suite use it; `ci-local.sh` does this for each such leg:
 
 ```sh
 cmake -S . -B build-libcxx -DCMAKE_CXX_COMPILER=clang++-22 -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ \
-      "$(tools/boost-test.sh build-boost-test-libcxx clang++-22 -stdlib=libc++)"
+      "$("$(tools/cpp-ci.sh)/tools/boost-test.sh" build-boost-test-libcxx clang++-22 -stdlib=libc++)"
 ```
 
 The `*-vcpkg` presets additionally resolve the Boost dependencies through vcpkg, using the toolchain at `VCPKG_ROOT`:
@@ -201,25 +205,27 @@ cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 run-clang-tidy -quiet -p build "$PWD/build/test/header_self_sufficiency/.*"
 ```
 
-[`tools/ci-local.sh`](tools/ci-local.sh) runs the CI jobs' Linux legs on what `setup-toolchain.sh` installs, so a change fails here, fast, rather than after hours in CI's queue:
+[`tools/ci-local.sh`](tools/ci-local.sh) runs the CI jobs' Linux legs on what `setup-toolchain.sh` installs, so a change fails here, fast, rather than after hours in CI's queue. The legs from cpp-ci's shared workflows run through cpp-ci's `tools/ci_local.py`, from the same pinned checkout, which reads them from this repository's workflow stubs, so a leg a stub adds or drops is added or dropped here too; the jobs this repository defines itself, layering, site, codegen and std-test-suite, run in `ci-local.sh` beside them:
 - the format gate, actionlint and the layering check, and the site, built as the Pages workflow builds it;
 - the suite on GCC 15, 16 and 17-SVN, and on clang 22, 23 and 24-SVN, each clang on its own rung's libstdc++;
-- the libc++ 22, i686 and BMI2 legs;
+- the libc++ 22, i686 and BMI2 legs, and GCC 17-SVN in C++29 mode;
 - clang-tidy 22, 23 and 24-SVN, with the clang-tidy job's passes;
 - the codegen tests on GCC 15 and clang 22, libc++'s, libstdc++'s and GCC trunk's tests of what xstd mirrors on clang 22 with libc++, GCC 15 and GCC 17-SVN, and the three consumption models;
 - the coverage gate, gcovr over GCC 15's instrumented suite at 100% of lines and branches;
-- the sanitizer ladder's five kinds on the stable rung: ASan and LSan, and UBSan, on GCC 15; UBSan and implicit conversions on clang 22.
+- the sanitizer ladder's legs on the stable rung: ASan and LSan, and UBSan, on GCC 15; ASan on clang 22 with libc++; UBSan and implicit conversions on clang 22.
 
-Legs run cheapest first, so a formatting slip fails in seconds, and the run stops at the first failure; `--keep-going` runs them all regardless. `--quick` is the set to pass before a commit, and a full run is the one to pass before a push or a pull request. Each leg logs to `build/ci-local/<leg>.log`, and the run ends in one line per leg. The suite legs build in Debug, or in `CI_LOCAL_BUILD_TYPE`; CI builds both.
+Legs run cheapest first, so a formatting slip fails in seconds, and the run stops at the first failure; `--keep-going` runs them all regardless. `--quick` is the set to pass before a commit, and a full run is the one to pass before a push or a pull request. Each leg logs to `build/ci-local/<leg>.log`, and the run ends in one line per leg. The suite legs build in Debug where the stub lists it, as the pull-request ladders do.
+
+The dependencies come from what `setup-toolchain.sh` installs, the Boost in `/usr/local`, and a leg on libc++, on the trunk snapshot's libstdc++ or on i686 builds a Boost.Test of its own first. That works on a machine whose network refuses the source archives vcpkg's Boost ports download, as a Claude Code cloud container's does. `CI_LOCAL_DEPS=vcpkg` resolves them through vcpkg instead, as CI does. `CPP_CI_DIR` runs a cpp-ci checkout of your own in place of the pinned one, to try a cpp-ci change against this repository before it lands.
 
 ```sh
 tools/ci-local.sh --quick          # before a commit
 tools/ci-local.sh                  # before a push or a pull request
-tools/ci-local.sh gcc-17 tidy-24   # the legs named
+tools/ci-local.sh gcc-17-svn clang-tidy-24-svn   # the legs named
 tools/ci-local.sh --list           # every leg, in the order a full run takes them
 ```
 
-MSVC, clang-cl, MinGW and Apple Clang have no Linux equivalent, and Emscripten, CodeQL and the sanitizer ladder's other rungs stay CI's.
+MSVC, clang-cl, MinGW and Apple Clang have no Linux equivalent, and Emscripten, CodeQL, s390x and the libc++ and sanitizer legs above the stable rung stay CI's; `--list` names the legs a full run takes.
 
 ### Building the documentation
 
