@@ -336,6 +336,7 @@ All 47 build and the 8 runnable ones run. `bit_ceil_neg.cc` is expected to abort
 - `bit_ceil.cc` and `bit_ceil_neg.cc` discard `bit_ceil`'s result in three places, which xstd marks `[[nodiscard]]`, as libc++ does; the mapping casts each to `void`.
 - `byteswap.cc`'s `static_assert` on `byteswap<volatile uint32_t>` is dropped: [[expr.const]](https://eel.is/c++draft/expr.const) makes no read of a volatile object a constant expression. GCC lets its own `std::byteswap` make one; Clang rejects that line for `std::byteswap` too.
 - `dr2735.cc` drops the plain `char` case, as for libc++, and `dr2192.cc`, which asks `abs` for the three floating-point types and nothing else, is expected not to compile.
+- `dr2192_neg.cc` and the two `typedefs_neg.cc` are expected not to compile, as libstdc++'s are, but with other diagnostics than their `dg-error` lines ask for: `xstd::abs` refuses `abs(0u)` by its constraint rather than as an ambiguous call, and `xstd::make_signed` and `make_unsigned` name no type outside their domain rather than being incomplete.
 - `to_chars/103955.cc` writes a `double` and is expected not to compile: [[charconv.to.chars]](https://eel.is/c++draft/charconv.to.chars)'s floating-point overloads stay `<charconv>`'s.
 - The concepts tests turn `bool` and the character types away, as for libc++.
 - `to_chars/3.cc` writes `char16_t`, `char32_t` and `wchar_t`, which the standard's overloads reach only by promoting them to `int`, and is expected not to compile: `xstd::to_chars` takes the integer types and `char`.
