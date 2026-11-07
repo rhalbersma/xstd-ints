@@ -10,14 +10,15 @@
 #include <xstd/ints/cstdint/int128.hpp>     // XSTD_HAS_INT128, uint128
 #include <array>                            // array
 #include <cstdint>                          // uint32_t
-#include <iomanip>                          // boolalpha, setw
+#include <iomanip>                          // setw
 #include <iostream>                         // cout
 
 auto main() -> int
 {
         std::cout << "  x  single  floor  ceil  width\n";
         for (auto const x : std::array<std::uint32_t, 6>{0, 1, 5, 8, 12, 100}) {
-                std::cout << std::setw(3) << x << std::setw(8) << std::boolalpha << xstd::has_single_bit(x);
+                // A string pads to the width on every standard library, where boolalpha output does not.
+                std::cout << std::setw(3) << x << std::setw(8) << (xstd::has_single_bit(x) ? "true" : "false");
                 std::cout << std::setw(7) << xstd::bit_floor(x) << std::setw(6) << xstd::bit_ceil(x);
                 std::cout << std::setw(7) << xstd::bit_width(x) << '\n';
         }
