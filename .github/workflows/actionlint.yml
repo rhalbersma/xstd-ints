@@ -22,4 +22,4 @@ on:
 jobs:
   # No inputs: the defaults are the policy this repository already had.
   actionlint:
-    uses: rhalbersma/cpp-ci/.github/workflows/actionlint.yml@0e0b8a1ec3476589bb39dc798d41551e18165916 # main after rhalbersma/cpp-ci#90, which adds the layering action
+    uses: rhalbersma/cpp-ci/.github/workflows/actionlint.yml@1e974d191cafdc2dbc4bbc7c3900c97416e06e47 # v0.16.0

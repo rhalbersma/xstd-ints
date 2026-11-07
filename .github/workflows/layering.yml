@@ -28,6 +28,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: rhalbersma/cpp-ci/.github/actions/layering@0e0b8a1ec3476589bb39dc798d41551e18165916 # main after rhalbersma/cpp-ci#90, which adds the layering action
+      - uses: rhalbersma/cpp-ci/.github/actions/layering@1e974d191cafdc2dbc4bbc7c3900c97416e06e47 # v0.16.0
         with:
           config: tools/layering.toml
