@@ -60,6 +60,18 @@ Repeats the low bits of an unsigned integer across its width.
 - A call is a constant expression for every type it takes.
 - The result has type `T`, not the `int` that integral promotion makes of a narrow `T`.
 
+### Example
+
+```cpp
+--8<-- "examples/bit/bit_repeat.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/bit/bit_repeat.out"
+```
+
 ### See also
 
 | Entity | Relation |

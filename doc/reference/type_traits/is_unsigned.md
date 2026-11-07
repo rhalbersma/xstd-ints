@@ -24,6 +24,18 @@ Whether a type is unsigned, for the built-in types and for integer-class types a
 - It is `true` for `uint128` under every cv-qualification.
 - An incomplete class type gives `false` rather than an error.
 
+### Example
+
+```cpp
+--8<-- "examples/type_traits/is_unsigned.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/type_traits/is_unsigned.out"
+```
+
 ### See also
 
 | Entity | Relation |

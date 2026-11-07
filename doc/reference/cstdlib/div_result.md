@@ -55,6 +55,18 @@ friend auto operator==(const div_result&, const div_result&) -> bool = default;
 
 It is usable in constant expressions.
 
+### Example
+
+```cpp
+--8<-- "examples/cstdlib/div_result.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/cstdlib/div_result.out"
+```
+
 ### See also
 
 | Entity | Relation |

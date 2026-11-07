@@ -32,6 +32,18 @@ The exception specification is `nothrow_const_operators<I>`.
 - Over an unsigned `I` it is `div`, and over a signed one it agrees with `div` wherever the division is exact.
 - A call is a constant expression wherever `I`'s own `/` and `%` are.
 
+### Example
+
+```cpp
+--8<-- "examples/cstdlib/div_euclid.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/cstdlib/div_euclid.out"
+```
+
 ### See also
 
 | Entity | Relation |

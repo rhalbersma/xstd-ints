@@ -63,6 +63,18 @@ An `integer` whose operations throw nothing. It asks that every operation and co
   operator, the conjunction stopping at `integer`.
 - It is the exception specification of the integer functions of `<xstd/ints/cstdlib.hpp>` and `<xstd/ints/bit.hpp>`.
 
+### Example
+
+```cpp
+--8<-- "examples/concepts/nothrow_const_operators.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/concepts/nothrow_const_operators.out"
+```
+
 ### See also
 
 | Entity | Relation |

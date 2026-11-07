@@ -32,6 +32,18 @@ The exception specification is `nothrow_const_operators<I>`.
 - Over an unsigned type the result type is `I` itself.
 - Over a signed type the result type is the unsigned counterpart.
 
+### Example
+
+```cpp
+--8<-- "examples/cstdlib/unsigned_abs.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/cstdlib/unsigned_abs.out"
+```
+
 ### See also
 
 | Entity | Relation |

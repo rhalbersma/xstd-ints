@@ -114,6 +114,18 @@ It is not `noexcept`, as `std::to_chars` is not.
 - A type narrower than the radix takes every base: `bit_uint<2>` in base 36, `bit_uint<4>` in base 16.
 - A call is a constant expression on either path, for every type whose own arithmetic is `constexpr`.
 
+### Example
+
+```cpp
+--8<-- "examples/charconv/to_chars.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/charconv/to_chars.out"
+```
+
 ### See also
 
 | Entity | Relation |

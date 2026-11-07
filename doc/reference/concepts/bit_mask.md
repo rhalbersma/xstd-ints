@@ -47,6 +47,18 @@ no kind of integer and has the operators.
 - No ordering is asked for: `bitset`, which has no `operator<`, models it.
 - No shifts are asked for: the standard's bitmask enumerations, which have none, model it.
 
+### Example
+
+```cpp
+--8<-- "examples/concepts/bit_mask.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/concepts/bit_mask.out"
+```
+
 ### See also
 
 | Entity | Relation |

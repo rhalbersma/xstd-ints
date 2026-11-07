@@ -305,6 +305,10 @@ if(readme_example EQUAL 0)
     message(FATAL_ERROR "README.md has no ```cpp block, so no example of it is compiled")
 endif()
 
+# Each reference page's Example section is a program under examples/, built here with the tests' warnings and run with
+# its output checked against the page's Output section.
+add_subdirectory(${PROJECT_SOURCE_DIR}/examples ${CMAKE_CURRENT_BINARY_DIR}/examples)
+
 set(current_source_dir ${CMAKE_CURRENT_SOURCE_DIR}/src)
 file(
     GLOB_RECURSE targets

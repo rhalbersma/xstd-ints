@@ -40,6 +40,18 @@ formatter copies out unchanged; and `formatter<basic_string_view<charT>, charT>`
 - The text is the same over an unsigned element type, `std::uint8_t` included, whose members are written as numbers
   rather than as characters.
 
+### Example
+
+```cpp
+--8<-- "examples/format/div_result.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/format/div_result.out"
+```
+
 ### See also
 
 | Entity | Relation |

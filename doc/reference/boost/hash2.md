@@ -59,6 +59,18 @@ It is a function to call in place of `boost::hash2::hash_append`, not a customiz
 - Only the value is hashed: the padding of a `bit_int<24>` never reaches the message, under the default flavor too.
 - The header compiles on its own wherever [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) is found.
 
+### Example
+
+```cpp
+--8<-- "examples/boost/hash2.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/boost/hash2.out"
+```
+
 ### See also
 
 | Entity | Relation |

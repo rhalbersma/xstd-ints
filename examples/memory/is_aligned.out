@@ -1,0 +1,6 @@
+0 is 8-aligned: true
+12 is 8-aligned: false
+24 is 8-aligned: true
+40 is 8-aligned: true
+first is 64-aligned: true
+first + 8 is 16-aligned: false

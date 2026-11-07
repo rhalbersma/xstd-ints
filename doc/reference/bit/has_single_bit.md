@@ -70,6 +70,18 @@ Where `std::f(x)` is well-formed, each returns `std::f(x)`.
 
 A call is a constant expression, for `bit_ceil` one within its precondition.
 
+### Example
+
+```cpp
+--8<-- "examples/bit/has_single_bit.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/bit/has_single_bit.out"
+```
+
 ### See also
 
 | Entity | Relation |

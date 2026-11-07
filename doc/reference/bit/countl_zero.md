@@ -77,6 +77,18 @@ overloads is viable.
 - A signed 128-bit class has no bits to count, as a signed built-in has none for `std::popcount`.
 - A call is a constant expression.
 
+### Example
+
+```cpp
+--8<-- "examples/bit/countl_zero.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/bit/countl_zero.out"
+```
+
 ### See also
 
 | Entity | Relation |

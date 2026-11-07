@@ -121,6 +121,18 @@ library does not specialize it, as libstdc++ does not, and libc++'s where it doe
 A translation unit that can name `xstd::numeric_limits` has them, whatever else it includes: `_BitInt` is a keyword, so
 a program can ask about one with no other xstd header, and gets the answer it would get with every header.
 
+### Example
+
+```cpp
+--8<-- "examples/limits/numeric_limits.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/limits/numeric_limits.out"
+```
+
 ### See also
 
 | Entity | Relation |
