@@ -51,6 +51,18 @@ Rounds down to a multiple of a power-of-two alignment.
 - (1) It is exact at the maximum of `size_t`.
 - (2) It returns a `T*`.
 
+### Example
+
+```cpp
+--8<-- "examples/memory/align_down.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/memory/align_down.out"
+```
+
 ### See also
 
 | Entity | Relation |

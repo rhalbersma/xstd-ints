@@ -37,6 +37,18 @@ integer-class types that a specialization of `make_signed` and `make_unsigned` p
 - A pair whose round trip lands on a third type is turned away by the two `same_as` clauses that compose the
   transformations.
 
+### Example
+
+```cpp
+--8<-- "examples/concepts/integer.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/concepts/integer.out"
+```
+
 ### See also
 
 | Entity | Relation |

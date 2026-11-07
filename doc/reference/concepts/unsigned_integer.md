@@ -18,6 +18,18 @@ Every unsigned exact-width type models it under every cv-qualification, and no s
 It subsumes `integer<T>`, as `std::unsigned_integral` subsumes `std::integral`. An overload on `unsigned_integer` is
 chosen over one on `integer` for `unsigned`, not ambiguous with it.
 
+### Example
+
+```cpp
+--8<-- "examples/concepts/unsigned_integer.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/concepts/unsigned_integer.out"
+```
+
 ### See also
 
 | Entity | Relation |

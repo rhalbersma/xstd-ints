@@ -97,6 +97,18 @@ It does not ask for the width requirement of [/3](https://eel.is/c++draft/iterat
 integer-class compound assignment ([/7.4](https://eel.is/c++draft/iterator.concept.winc#7.4)) or the common types of
 [/12](https://eel.is/c++draft/iterator.concept.winc#12).
 
+### Example
+
+```cpp
+--8<-- "examples/concepts/integer_class.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/concepts/integer_class.out"
+```
+
 ### See also
 
 | Entity | Relation |

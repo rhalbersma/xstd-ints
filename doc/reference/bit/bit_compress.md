@@ -70,6 +70,18 @@ for `absl::uint128`.
 - A call is a constant expression for every type it takes.
 - The result has type `T`, not the `int` that integral promotion makes of a narrow `T`.
 
+### Example
+
+```cpp
+--8<-- "examples/bit/bit_compress.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/bit/bit_compress.out"
+```
+
 ### See also
 
 | Entity | Relation |

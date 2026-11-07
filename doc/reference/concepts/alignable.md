@@ -87,6 +87,18 @@ all `noexcept`.
 
 It asks the special members a call by value spends and every relation, not only the ones the alignment functions use.
 
+### Example
+
+```cpp
+--8<-- "examples/concepts/alignable.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/concepts/alignable.out"
+```
+
 ### See also
 
 | Entity | Relation |

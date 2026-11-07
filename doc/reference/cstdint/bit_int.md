@@ -72,6 +72,18 @@ Clang's `-Wbit-int-extension` is suppressed within the header, and within each o
 - At widths 2, 17 and 64 the two are a pair, and `bit_int<17> const` pairs with `bit_uint<17> const`.
 - `bit_int<17>` and `bit_uint<17>` model `nothrow_const_operators`.
 
+### Example
+
+```cpp
+--8<-- "examples/cstdint/bit_int.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/cstdint/bit_int.out"
+```
+
 ### See also
 
 | Entity | Relation |

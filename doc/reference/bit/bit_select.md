@@ -54,6 +54,18 @@ rank `k`, counting from zero at the least significant end.
 - Every rank of a full value is its own position, and the ones on either side of bit 64 are found in order.
 - A call is a constant expression for every type it takes.
 
+### Example
+
+```cpp
+--8<-- "examples/bit/bit_select.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/bit/bit_select.out"
+```
+
 ### See also
 
 | Entity | Relation |

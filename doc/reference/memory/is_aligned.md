@@ -49,6 +49,18 @@ Whether a value is a multiple of a power-of-two alignment.
 
 (1) It holds of what `align_up` and `align_down` return, and of `value` exactly when `align_down` leaves it unchanged.
 
+### Example
+
+```cpp
+--8<-- "examples/memory/is_aligned.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/memory/is_aligned.out"
+```
+
 ### See also
 
 | Entity | Relation |

@@ -1,0 +1,6 @@
+period  2: 5555555555555555
+period  4: 3333333333333333
+period  8: 0f0f0f0f0f0f0f0f
+period 16: 00ff00ff00ff00ff
+period 32: 0000ffff0000ffff
+period 64: 00000000ffffffff

@@ -9,7 +9,7 @@
 # documentation as the Pages workflow does. Each leg works under build/ci-local/<leg> and logs to
 # build/ci-local/<leg>.log, and the run ends in one line per leg.
 #
-#   tools/ci-local.sh --quick             before a commit: format, actionlint, GCC 15, clang 22 and clang-tidy 22
+#   tools/ci-local.sh --quick             before a commit: format, actionlint, layering, GCC 15, clang 22 and clang-tidy 22
 #   tools/ci-local.sh                     before a push or a pull request: every leg
 #   tools/ci-local.sh gcc-17 tidy-24      the legs named, in the order given
 #   tools/ci-local.sh --keep-going ...    every leg asked for, whatever fails
@@ -131,7 +131,7 @@ coverage() {
                 && "${cmake}" --build "${dir}" --parallel "${jobs}" \
                 && ctest --test-dir "${dir}" --output-on-failure --parallel "${jobs}" \
                 && (cd "${root}" && PATH="${local_bin}:${PATH}" GCOV=gcov-15 BUILD_DIR="${dir}" \
-                        EXCLUDE="test/.* build/.*" FAIL_UNDER_LINE=100 FAIL_UNDER_BRANCH=100 SEARCH_PATHS="${dir}" \
+                        EXCLUDE="test/.* build/.* examples/.*" FAIL_UNDER_LINE=100 FAIL_UNDER_BRANCH=100 SEARCH_PATHS="${dir}" \
                         bash "${script}")
 }
 
@@ -200,9 +200,9 @@ layering() {
         (cd "${root}" && python3 -I "${script}" tools/layering.toml)
 }
 
-# The format gate: the stable rung's clang-format over include/ and test/, reporting rather than rewriting.
+# The format gate: the stable rung's clang-format over include/, test/ and examples/, reporting rather than rewriting.
 format() {
-        find "${root}/include" "${root}/test" -regex '.*\.\(hpp\|cpp\)' -print0 | xargs -0 clang-format-22 --dry-run --Werror
+        find "${root}/include" "${root}/test" "${root}/examples" -regex '.*\.\(hpp\|cpp\)' -print0 | xargs -0 clang-format-22 --dry-run --Werror
 }
 
 # The Pages workflow's build: MkDocs Material, pinned by hash, into a virtual environment of its own, then the site in

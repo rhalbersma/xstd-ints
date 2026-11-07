@@ -59,6 +59,18 @@ representable.
 - (2):
     - It returns a `T*`, keeping the pointee type where Boost.Align returns `void*`.
 
+### Example
+
+```cpp
+--8<-- "examples/memory/align_up.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/memory/align_up.out"
+```
+
 ### See also
 
 | Entity | Relation |

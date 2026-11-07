@@ -16,6 +16,11 @@ prose is reported as a warning, which --strict makes a failure.
 Python-Markdown nests a list item, and a paragraph, table or fence that continues one after a blank line, only when it
 is indented four spaces past its parent's marker, where GitHub nests it at two. Either indented one to three spaces is
 reported as a warning too: on the site it would render outside the list it belongs to.
+
+Each header's page under reference/ shows an example, pulled in from examples/ by pymdownx.snippets with what it prints,
+and every example there is shown on a page. A page without an Example section, or an example no page shows, is
+reported as a warning too. An example is shown from its first line of code: the licence notice that opens its source
+is the repository's, as the site's footer states.
 """
 
 import logging
@@ -38,7 +43,12 @@ UNNESTED_ITEM = re.compile(r"^ {1,3}(?:[-*+]|\d+[.)]) ")
 UNNESTED_BLOCK = re.compile(r"^ {1,3}\S")
 FENCE = re.compile(r"^ *(?:```|~~~)")
 
+# A snippet that pymdownx.snippets replaces with the file it names, here an example or the output it prints.
+SNIPPET = re.compile(r'^--8<-- "([^"]+)"$', re.M)
+
 log = logging.getLogger("mkdocs.hooks.citations")
+examples_log = logging.getLogger("mkdocs.hooks.examples")
+shown = set()
 
 
 def on_files(files, config):
@@ -46,8 +56,23 @@ def on_files(files, config):
     return files
 
 
+def from_first_code_line(snippet):
+    path = snippet.group(1)
+    if not path.endswith(".cpp"):
+        return snippet.group(0)
+    lines = (ROOT / path).read_text(encoding="utf-8").splitlines()
+    first = next(number for number, line in enumerate(lines, 1) if line.strip() and not line.startswith("//"))
+    return f'--8<-- "{path}:{first}:"'
+
+
 def on_page_markdown(markdown, page, config, files):
     docs = pathlib.Path(config["docs_dir"]).resolve().relative_to(ROOT).as_posix()
+
+    shown.update(SNIPPET.findall(markdown))
+    markdown = SNIPPET.sub(from_first_code_line, markdown)
+    uri = pathlib.PurePosixPath(page.file.src_uri)
+    if uri.parts[0] == "reference" and len(uri.parts) == 3 and uri.name != "index.md" and "### Example" not in markdown:
+        examples_log.warning("%s/%s has no Example section", docs, uri)
 
     def in_repository(uri):
         return "README.md" if uri == "index.md" else f"{docs}/{uri}"
@@ -78,3 +103,11 @@ def on_page_markdown(markdown, page, config, files):
         return f"]({target}{link.group(2) or ''})"
 
     return LINK.sub(relink, markdown)
+
+
+def on_env(env, config, files):
+    for example in sorted((ROOT / "examples").rglob("*")):
+        relative = example.relative_to(ROOT).as_posix()
+        if example.suffix in (".cpp", ".out") and not relative.startswith("examples/perft/") and relative not in shown:
+            examples_log.warning("no reference page shows %s", relative)
+    return env

@@ -49,6 +49,18 @@ The exception specification is `true` for the forwarding overload, and otherwise
   same count is the identity.
 - A call is a constant expression.
 
+### Example
+
+```cpp
+--8<-- "examples/bit/rotl.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/bit/rotl.out"
+```
+
 ### See also
 
 | Entity | Relation |
