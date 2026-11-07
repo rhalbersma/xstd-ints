@@ -26,7 +26,7 @@ template<xstd::integer_class T>
         auto const ten  = static_cast<T>(10);
         auto const zero = static_cast<T>(0);
         auto digits     = 1;
-        while ((value /= ten) != zero) {
+        while ((value = static_cast<T>(value / ten)) != zero) {
                 ++digits;
         }
         return digits;
