@@ -1,0 +1,2 @@
+uint8_t const: digits 8, digits10 2, min 0, max 255
+int32_t volatile: digits 31, digits10 9, min -2147483648, max 2147483647

@@ -41,6 +41,18 @@ itself for `int` and wider, `xstd::int128` and `bit_int<N>`, which
 
 A call is a constant expression.
 
+### Example
+
+```cpp
+--8<-- "examples/cstdlib/abs.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/cstdlib/abs.out"
+```
+
 ### See also
 
 | Entity | Relation |

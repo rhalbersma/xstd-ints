@@ -35,6 +35,18 @@ The exception specification is `nothrow_const_operators<I>`.
 - The quotient is one more than `div_floor`'s wherever that leaves a remainder, and equal to it elsewhere.
 - A call is a constant expression wherever `I`'s own `/` and `%` are.
 
+### Example
+
+```cpp
+--8<-- "examples/cstdlib/div_ceil.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/cstdlib/div_ceil.out"
+```
+
 ### See also
 
 | Entity | Relation |

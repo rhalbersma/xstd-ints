@@ -29,6 +29,18 @@ The exception specification is `nothrow_const_operators<I>`.
 - It is total, `min()` and `max()` included, and a call is a constant expression.
 - The result has type `int` whatever `I` is.
 
+### Example
+
+```cpp
+--8<-- "examples/cstdlib/sign.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/cstdlib/sign.out"
+```
+
 ### See also
 
 | Entity | Relation |

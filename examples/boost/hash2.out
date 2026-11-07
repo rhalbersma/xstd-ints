@@ -1,0 +1,6 @@
+std::int32_t{-42}:          e5f37730f27e5128
+std::int64_t{-42}:          eeb07d2ce8108904
+boost::int128::int128{-42}: 63a9fa3557b7fdfc
+its words, low first:       63a9fa3557b7fdfc
+boost::int128::uint128{42}: be4a4087bd2f4ecf
+its words, low first:       be4a4087bd2f4ecf

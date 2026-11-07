@@ -18,6 +18,18 @@ Every signed exact-width type models it under every cv-qualification, and no uns
 It subsumes `integer<T>`, which it names as an atomic conjunct, as `std::signed_integral` subsumes `std::integral`. An
 overload on `signed_integer` is chosen over one on `integer` for `int`, not ambiguous with it.
 
+### Example
+
+```cpp
+--8<-- "examples/concepts/signed_integer.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/concepts/signed_integer.out"
+```
+
 ### See also
 
 | Entity | Relation |

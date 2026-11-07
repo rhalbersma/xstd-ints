@@ -33,6 +33,18 @@ A program may specialize it for the signed half of an integer-class pair, as the
 
 Every signed exact-width type maps to a type modelling `unsigned_integer`.
 
+### Example
+
+```cpp
+--8<-- "examples/type_traits/make_unsigned.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/type_traits/make_unsigned.out"
+```
+
 ### See also
 
 | Entity | Relation |

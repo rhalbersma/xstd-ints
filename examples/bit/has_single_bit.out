@@ -1,0 +1,7 @@
+  x  single  floor  ceil  width
+  0   false      0     1      0
+  1    true      1     1      1
+  5   false      4     8      3
+  8    true      8     8      4
+ 12   false      8    16      4
+100   false     64   128      7

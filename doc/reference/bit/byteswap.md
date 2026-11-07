@@ -49,6 +49,18 @@ including the `_BitInt` widths libc++ calls integral and then refuses to swap.
   the object has four.
 - A call is a constant expression.
 
+### Example
+
+```cpp
+--8<-- "examples/bit/byteswap.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/bit/byteswap.out"
+```
+
 ### See also
 
 | Entity | Relation |

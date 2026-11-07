@@ -9,6 +9,11 @@ When adding or changing a public utility:
 3. Build and test locally (see below).
 4. Update the feature table and examples in [README.md](README.md) when the public API changes. Each ```` ```cpp ```` block
    there is compiled as a test, so an example includes what it uses and declares what it names.
+5. Give a new header's reference page an `### Example` section before *See also*: a short program of typical use, at
+   `examples/<group>/<header>.cpp`, and what it prints, at `<header>.out` beside it, which is written by running the
+   example, never by hand. The page pulls both in with a `--8<--` line, so no code is copied into it. What it prints
+   must be the same on every target, so it shows nothing that depends on the width of `long` or `wchar_t`, on
+   endianness, or on `_BitInt` being available.
 
 ## What a PR must satisfy before it can merge
 
@@ -23,8 +28,9 @@ This repository enforces its quality bar through CI rather than through review d
 - **The headers stay layered.** The [Layering workflow](.github/workflows/layering.yml) runs cpp-ci's layering check over the `#include` lines, against the folder kinds in [`tools/layering.toml`](tools/layering.toml). Every public header is a leaf that only the umbrellas and `ext/` include, a front over its definition in the shared `detail/`, so deleting one breaks nothing else. The shared `detail/` includes no public header, and a folder's own `detail/` serves that folder alone. A new folder is listed in `tools/layering.toml` before it lands. `tools/ci-local.sh layering` runs the same check.
 - **The public headers stay self-sufficient.** Each header is compiled as its own translation unit (see `test/CMakeLists.txt`); don't rely on include order from another header.
 - **The README's examples compile.** `test/CMakeLists.txt` writes each ```` ```cpp ```` block of [README.md](README.md) to a translation unit of its own, `readme.example<n>`, built with the tests' warnings on every leg. An example that includes an `<xstd/ints/ext/>` header is built where the library it adapts resolved, as that header's own test is, and one that names `xstd::int128` or `xstd::uint128` tests `XSTD_HAS_INT128` itself, as a test source does.
+- **The reference's examples print what their pages show.** [`examples/CMakeLists.txt`](examples/CMakeLists.txt) builds each `examples/<group>/<header>.cpp` with the tests' warnings on every leg, and CTest runs it through [`examples/check_output.cmake`](examples/check_output.cmake), which compares what it prints with the `.out` beside it, line endings aside. An example of an `ext/` header builds where its library resolved, as the README's do. The site build fails on a header page without an Example section and on an example no page shows.
 - **The documentation site builds.** The [Pages workflow](.github/workflows/pages.yml) runs `mkdocs build --strict` over the README and `doc/`, which fails on a link to a page or an anchor that does not exist, and deploys the site from `main`.
-- **`clang-format` is clean.** The [Clang-Format workflow](.github/workflows/clang-format.yml) runs `clang-format --dry-run --Werror` over every header and test source against [`.clang-format`](.clang-format), so any diff fails the job. Run `clang-format -i` on changed files before pushing, with **version 22 or newer**: before 22, clang-format reads `{ a * b }` in a requires-expression as a pointer declaration and rewrites the binary-operator rows of `integer_class.hpp` and `nothrow_const_operators.hpp`. The remaining `// clang-format off` / `// clang-format on` guards are the hand-laid-out test-data tables, which clang-format cannot express; don't add new guards without a comparable reason.
+- **`clang-format` is clean.** The [Clang-Format workflow](.github/workflows/clang-format.yml) runs `clang-format --dry-run --Werror` over every header, test source and example against [`.clang-format`](.clang-format), so any diff fails the job. Run `clang-format -i` on changed files before pushing, with **version 22 or newer**: before 22, clang-format reads `{ a * b }` in a requires-expression as a pointer declaration and rewrites the binary-operator rows of `integer_class.hpp` and `nothrow_const_operators.hpp`. The remaining `// clang-format off` / `// clang-format on` guards are the hand-laid-out test-data tables, which clang-format cannot express; don't add new guards without a comparable reason.
 - **Workflow files pass `actionlint`.** The [Actionlint workflow](.github/workflows/actionlint.yml) validates GitHub Actions syntax and expressions.
 - **The documented consumption methods work.** The [Consumption workflow](.github/workflows/consumption.yml) builds a consumer using `find_package`, `add_subdirectory`, and `FetchContent`.
 - **CodeQL analysis is clean.** The [CodeQL workflow](.github/workflows/codeql.yml) runs the C/C++ `security-extended` query suite.
@@ -179,7 +185,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
   -DCMAKE_CXX_FLAGS="--coverage -O0 -g" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
 cmake --build build
 ctest --test-dir build --output-on-failure
-gcovr --root . --exclude 'test/.*' --exclude 'build/.*' \
+gcovr --root . --exclude 'test/.*' --exclude 'build/.*' --exclude 'examples/.*' \
   --exclude-lines-by-pattern '^\s*assert\(' \
   --exclude-lines-by-pattern '=\s*default;' \
   --exclude-branches-by-pattern '^\s*assert\(' \
@@ -461,7 +467,7 @@ ctest --test-dir build-ct --output-on-failure
 
 ## Examples
 
-[`examples/perft/`](examples/perft) is a chess move generator built on the library as an engine author would use it: `xstd::countr_zero` to walk a bitboard, and the attacks of the sliding pieces found three ways, each its own table, `xstd::bit_compress` indexing a table as Stockfish's BMI2 path does, hyperbola quintessence over `xstd::bit_reverse`, and magic bitboards, which use no xstd function, as the baseline. Perft counts the leaves of the legal move tree, and every count must equal the one chessprogramming.org publishes for the start position, Kiwipete and positions 3 to 6, so a wrong bit primitive anywhere fails it. Every table is also checked against a square-by-square walk before it is used.
+Each header's reference page shows a short program from `examples/<group>/`, built and run with the tests, as the gate above says. [`examples/perft/`](examples/perft) is a program of its own, behind `XSTD_INTS_BUILD_EXAMPLES`: a chess move generator built on the library as an engine author would use it: `xstd::countr_zero` to walk a bitboard, and the attacks of the sliding pieces found three ways, each its own table, `xstd::bit_compress` indexing a table as Stockfish's BMI2 path does, hyperbola quintessence over `xstd::bit_reverse`, and magic bitboards, which use no xstd function, as the baseline. Perft counts the leaves of the legal move tree, and every count must equal the one chessprogramming.org publishes for the start position, Kiwipete and positions 3 to 6, so a wrong bit primitive anywhere fails it. Every table is also checked against a square-by-square walk before it is used.
 
 ```sh
 cmake -S . -B build-perft -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_CXX_FLAGS=-march=x86-64-v3 -DBUILD_TESTING=OFF -DXSTD_INTS_BUILD_EXAMPLES=ON

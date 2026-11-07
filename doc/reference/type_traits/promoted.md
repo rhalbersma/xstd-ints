@@ -22,6 +22,18 @@ promotes as the unqualified type does, `short const` to `int`.
   `absl::uint128`, `bit_uint<17>` and `bit_int<9>` are their own.
 - It keeps every signed exact-width type signed.
 
+### Example
+
+```cpp
+--8<-- "examples/type_traits/promoted.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/type_traits/promoted.out"
+```
+
 ### See also
 
 | Entity | Relation |

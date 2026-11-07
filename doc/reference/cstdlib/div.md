@@ -44,6 +44,18 @@ since [P0533R9](https://github.com/cplusplus/papers/issues/104)) to every `integ
 - Both operands have the one type `I`: a literal divisor beside an integer-class numerator deduces `int` for it, and the
   call is ill-formed rather than converted.
 
+### Example
+
+```cpp
+--8<-- "examples/cstdlib/div.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/cstdlib/div.out"
+```
+
 ### See also
 
 | Entity | Relation |

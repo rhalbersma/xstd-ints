@@ -24,3 +24,6 @@ jobs:
   # the code base, which is not something a compiler bump should decide.
   clang_format:
     uses: rhalbersma/cpp-ci/.github/workflows/clang-format.yml@0e0b8a1ec3476589bb39dc798d41551e18165916 # main after rhalbersma/cpp-ci#90, which adds the layering action
+    with:
+      # The reference pages' examples are code their readers copy, so they are held to the same layout.
+      paths: include test examples

@@ -30,6 +30,18 @@ not by specializing it.
 - It is `true` for `int128` under every cv-qualification, a class type on one toolchain.
 - An incomplete class type gives `false` rather than an error.
 
+### Example
+
+```cpp
+--8<-- "examples/type_traits/is_signed.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/type_traits/is_signed.out"
+```
+
 ### See also
 
 | Entity | Relation |

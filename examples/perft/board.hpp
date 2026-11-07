@@ -19,12 +19,15 @@
 // A chess position, its pseudo-legal moves, and copy-make, over bitboards whose squares run a1 = 0 to h8 = 63.
 namespace perft {
 
-enum piece : int { pawn,
-                   knight,
-                   bishop,
-                   rook,
-                   queen,
-                   king };
+enum piece : int
+{
+        pawn,
+        knight,
+        bishop,
+        rook,
+        queen,
+        king
+};
 
 inline constexpr auto white = 0;
 inline constexpr auto black = 1;

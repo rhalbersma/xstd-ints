@@ -80,6 +80,18 @@ A translation unit that can name either trait has them, whatever else it include
 They are more specialized than the partial specialization that forwards to the standard library, so they apply on
 libc++, which makes `_BitInt` integral, as well as elsewhere.
 
+### Example
+
+```cpp
+--8<-- "examples/type_traits/make_signed.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/type_traits/make_signed.out"
+```
+
 ### See also
 
 | Entity | Relation |
