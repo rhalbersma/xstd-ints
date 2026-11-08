@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Install the GCC trunk snapshot
-        uses: rhalbersma/cpp-ci/.github/actions/install-gcc@36a6706f4bd71818af4f80ea97937aa31c2dc719
+        uses: rhalbersma/cpp-ci/.github/actions/install-gcc@46625f976faaa32503d9b73479fb7cff298f66b1
         with:
           version: "17"
           trunk: "true"

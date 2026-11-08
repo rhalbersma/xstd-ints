@@ -32,7 +32,7 @@ jobs:
   # cannot lower it without a commit in this repository. xstd-bits and tabula
   # state theirs for the same reason; tabula's is a ratchet below 100.
   coverage:
-    uses: rhalbersma/cpp-ci/.github/workflows/coverage.yml@36a6706f4bd71818af4f80ea97937aa31c2dc719
+    uses: rhalbersma/cpp-ci/.github/workflows/coverage.yml@46625f976faaa32503d9b73479fb7cff298f66b1
     with:
       fail_under_line: 100
       fail_under_branch: 100
