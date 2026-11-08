@@ -82,7 +82,7 @@ jobs:
           persist-credentials: false
 
       - name: Install the GCC trunk snapshot
-        uses: rhalbersma/cpp-ci/.github/actions/install-gcc@a634ddb30dc4da914d7eb281029e8f9bb85e2d63 # v0.16.0
+        uses: rhalbersma/cpp-ci/.github/actions/install-gcc@46625f976faaa32503d9b73479fb7cff298f66b1
         with:
           version: "17"
           trunk: "true"

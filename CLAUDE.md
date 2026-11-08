@@ -216,12 +216,13 @@ Fail early, fail fast: break things here, not on CI's runners, where a push wait
 closer a change gets to a push and a pull request, the more of CI it has already passed locally. Two scripts make
 that possible, and the work relies on them rather than on whatever happens to be installed:
 
-- [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) installs what CI builds with: every rung of
-  [README.md](README.md)'s matrix, clang-tidy for each of the three clangs, the format gate's clang-format 22,
-  actionlint, gcovr, the CMake the workflows pin and the Boost CI resolves. Run it once per container; it is
-  idempotent.
+- [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) installs what CI builds with, through cpp-ci's own setup
+  script at the commit the workflows pin: every rung of [README.md](README.md)'s matrix, clang-tidy for each of the
+  three clangs, the format gate's clang-format 22, actionlint, gcovr, the CMake the workflows pin and the Boost CI
+  resolves. Run it once per container; it is idempotent.
 - [`tools/ci-local.sh`](tools/ci-local.sh) runs the CI jobs' Linux legs on that toolchain, cheapest first, and stops
-  at the first that fails.
+  at the first that fails. cpp-ci's `ci_local.py` derives the shared workflows' legs from the stubs, so a leg a stub
+  gains is a leg the script gains; the jobs this repository defines run beside them.
 
 Each step toward GitHub runs more:
 

@@ -29,7 +29,7 @@ jobs:
   clang_cl_ladder:
     needs: changes
     if: needs.changes.outputs.build == 'true'
-    uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@a634ddb30dc4da914d7eb281029e8f9bb85e2d63 # v0.16.0
+    uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@46625f976faaa32503d9b73479fb7cff298f66b1
     with:
       toolset: ClangCL,host=x64
       preview_toolset_prefix: "ClangCL,"
