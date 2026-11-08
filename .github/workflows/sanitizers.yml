@@ -31,7 +31,7 @@ jobs:
   sanitizers_ladder:
     needs: changes
     if: needs.changes.outputs.build == 'true'
-    uses: rhalbersma/cpp-ci/.github/workflows/sanitizers.yml@ca4f638dfd1e7cc1818bbaa63c354db8ed019856
+    uses: rhalbersma/cpp-ci/.github/workflows/sanitizers.yml@36a6706f4bd71818af4f80ea97937aa31c2dc719
     with:
       # Boost.Test, which vcpkg.json keeps out of its default features so that
       # consuming this library resolves no Boost at all.
